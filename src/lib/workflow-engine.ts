@@ -43,9 +43,9 @@ export interface UniversalGatepassRequest {
   createdAt: string;
 }
 
-const STORAGE_KEY_LEAVES = "attendex_universal_leaves_v4";
-const STORAGE_KEY_GATEPASSES = "attendex_universal_gatepasses_v4";
-const CHANNEL_NAME = "attendex_live_cross_portal_sync_v4";
+const STORAGE_KEY_LEAVES = "attendex_universal_leaves_v5";
+const STORAGE_KEY_GATEPASSES = "attendex_universal_gatepasses_v5";
+const CHANNEL_NAME = "attendex_live_cross_portal_sync_v5";
 const LOCAL_EVENT_NAME = "attendex_workflow_event";
 
 function generateUUID(): string {
@@ -184,7 +184,7 @@ export const universalWorkflow = {
           displayCode = data.displayCode;
         }
       } catch {
-        // Fall back to client persistence
+        // Fall back
       }
     }
 
@@ -249,7 +249,7 @@ export const universalWorkflow = {
           body: JSON.stringify({ leaveId, decision, reviewNotes: notes })
         });
       } catch {
-        // Fall back to client persistence
+        // Fall back
       }
     }
 
