@@ -2,7 +2,7 @@
  * ATTENDEX — Universal Realtime Cross-Portal Workflow Engine
  * 
  * Provides end-to-end synchronization across Parent, Student, Teacher, and Principal portals.
- * Integrates Supabase PostgreSQL persistence with Cross-Tab BroadcastChannel + Storage + CustomEvent telemetry.
+ * Uses RFC-4122 standard UUIDs to guarantee full compatibility with PostgreSQL/Supabase.
  */
 
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
@@ -11,7 +11,8 @@ export type WorkflowStatus = "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
 export type LeaveClassification = "MEDICAL" | "ON_DUTY" | "FAMILY_EMERGENCY" | "SPORTS" | "CASUAL";
 
 export interface UniversalLeaveRequest {
-  id: string;
+  id: string; // Valid UUID
+  displayCode: string; // User-friendly badge (e.g. LV-8091)
   studentId: string;
   studentName: string;
   rollNumber: string;
@@ -29,7 +30,8 @@ export interface UniversalLeaveRequest {
 }
 
 export interface UniversalGatepassRequest {
-  id: string;
+  id: string; // Valid UUID
+  displayCode: string; // User-friendly badge (e.g. GP-9021)
   studentId: string;
   studentName: string;
   rollNumber: string;
@@ -44,10 +46,26 @@ export interface UniversalGatepassRequest {
   createdAt: string;
 }
 
-const STORAGE_KEY_LEAVES = "attendex_universal_leaves_v2";
-const STORAGE_KEY_GATEPASSES = "attendex_universal_gatepasses_v2";
-const CHANNEL_NAME = "attendex_live_cross_portal_sync";
+const STORAGE_KEY_LEAVES = "attendex_universal_leaves_v3";
+const STORAGE_KEY_GATEPASSES = "attendex_universal_gatepasses_v3";
+const CHANNEL_NAME = "attendex_live_cross_portal_sync_v3";
 const LOCAL_EVENT_NAME = "attendex_workflow_event";
+
+function generateUUID(): string {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  // Fallback RFC 4122 v4 UUID generator
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+function isValidUUID(id: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
+}
 
 // Shared Broadcast Channel across tabs
 let broadcastChannel: BroadcastChannel | null = null;
@@ -76,10 +94,11 @@ function dispatchRealtimeEvent(event: any) {
   }
 }
 
-// Initial seed records
+// Initial seed records with guaranteed valid UUIDs
 const INITIAL_LEAVES: UniversalLeaveRequest[] = [
   {
-    id: "LV-8091",
+    id: "c1111111-0000-4000-a000-000000000001",
+    displayCode: "LV-8091",
     studentId: "00000000-0000-0000-0000-000000000030",
     studentName: "Rahul Deshmukh",
     rollNumber: "21CS042",
@@ -95,7 +114,8 @@ const INITIAL_LEAVES: UniversalLeaveRequest[] = [
 
 const INITIAL_GATEPASSES: UniversalGatepassRequest[] = [
   {
-    id: "GP-9021",
+    id: "d1111111-0000-4000-a000-000000000001",
+    displayCode: "GP-9021",
     studentId: "00000000-0000-0000-0000-000000000032",
     studentName: "Priya Patel",
     rollNumber: "21CS002",
@@ -115,14 +135,17 @@ let memoryGatepasses: UniversalGatepassRequest[] = [...INITIAL_GATEPASSES];
 
 export const universalWorkflow = {
   /**
-   * Reads all leave requests from persistent storage & Supabase.
+   * Reads all leave requests.
    */
   getAllLeaves(): UniversalLeaveRequest[] {
     if (typeof window === "undefined") return memoryLeaves;
     try {
       const stored = localStorage.getItem(STORAGE_KEY_LEAVES);
       if (stored) {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
       }
       localStorage.setItem(STORAGE_KEY_LEAVES, JSON.stringify(INITIAL_LEAVES));
       return INITIAL_LEAVES;
@@ -132,7 +155,7 @@ export const universalWorkflow = {
   },
 
   /**
-   * Submits a new leave request (From Parent or Student).
+   * Submits a new leave request.
    */
   async submitLeave(payload: {
     studentId?: string;
@@ -144,17 +167,20 @@ export const universalWorkflow = {
     endDate: string;
     reason: string;
     documentUrl?: string;
-  }): Promise<{ success: boolean; message: string; leaveId: string }> {
+  }): Promise<{ success: boolean; message: string; leaveId: string; displayCode: string }> {
     if (new Date(payload.endDate) < new Date(payload.startDate)) {
-      return { success: false, message: "End date cannot precede start date.", leaveId: "" };
+      return { success: false, message: "End date cannot precede start date.", leaveId: "", displayCode: "" };
     }
     if (!payload.reason || payload.reason.trim().length < 5) {
-      return { success: false, message: "Please provide a descriptive reason (minimum 5 characters).", leaveId: "" };
+      return { success: false, message: "Please provide a descriptive reason (minimum 5 characters).", leaveId: "", displayCode: "" };
     }
 
-    const leaveId = `LV-${Math.floor(1000 + Math.random() * 9000)}`;
+    const leaveId = generateUUID();
+    const displayCode = `LV-${Math.floor(1000 + Math.random() * 9000)}`;
+
     const newRecord: UniversalLeaveRequest = {
       id: leaveId,
+      displayCode,
       studentId: payload.studentId || "00000000-0000-0000-0000-000000000030",
       studentName: payload.studentName || "Rahul Deshmukh",
       rollNumber: payload.rollNumber || "21CS042",
@@ -182,10 +208,11 @@ export const universalWorkflow = {
       payload: newRecord
     });
 
-    // 3. Sync to Supabase PostgreSQL in background
-    try {
-      if (isSupabaseConfigured) {
+    // 3. Attempt sync to Supabase PostgreSQL only with valid UUID
+    if (isSupabaseConfigured && isValidUUID(leaveId)) {
+      try {
         await supabase.from("leave_requests").insert({
+          id: leaveId,
           institution_id: "00000000-0000-0000-0000-000000000001",
           student_id: newRecord.studentId,
           applied_by_user_id: "00000000-0000-0000-0000-000000000005",
@@ -196,15 +223,16 @@ export const universalWorkflow = {
           document_url: newRecord.documentUrl || null,
           status: "PENDING"
         });
+      } catch {
+        // Silently preserve in authoritative local sync layer
       }
-    } catch {
-      // Retain in local vault
     }
 
     return {
       success: true,
       message: "Leave application submitted and transmitted to Class Teacher & Proctor.",
-      leaveId
+      leaveId,
+      displayCode
     };
   },
 
@@ -247,8 +275,9 @@ export const universalWorkflow = {
       notes
     });
 
-    try {
-      if (isSupabaseConfigured) {
+    // Attempt Supabase sync if valid UUID
+    if (isSupabaseConfigured && isValidUUID(leaveId)) {
+      try {
         await supabase
           .from("leave_requests")
           .update({
@@ -258,9 +287,9 @@ export const universalWorkflow = {
             review_notes: notes || null
           })
           .eq("id", leaveId);
+      } catch {
+        // preserve
       }
-    } catch {
-      // ignore
     }
 
     return {
@@ -299,7 +328,10 @@ export const universalWorkflow = {
     try {
       const stored = localStorage.getItem(STORAGE_KEY_GATEPASSES);
       if (stored) {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
       }
       localStorage.setItem(STORAGE_KEY_GATEPASSES, JSON.stringify(INITIAL_GATEPASSES));
       return INITIAL_GATEPASSES;
@@ -320,14 +352,17 @@ export const universalWorkflow = {
     destination: string;
     reason: string;
     emergencyContact: string;
-  }): { success: boolean; message: string; gatepassId: string } {
+  }): { success: boolean; message: string; gatepassId: string; displayCode: string } {
     if (!payload.destination || !payload.reason) {
-      return { success: false, message: "Please provide both destination and purpose.", gatepassId: "" };
+      return { success: false, message: "Please provide both destination and purpose.", gatepassId: "", displayCode: "" };
     }
 
-    const gpId = `GP-${Math.floor(1000 + Math.random() * 9000)}`;
+    const gpId = generateUUID();
+    const displayCode = `GP-${Math.floor(1000 + Math.random() * 9000)}`;
+
     const newRecord: UniversalGatepassRequest = {
       id: gpId,
+      displayCode,
       studentId: payload.studentId || "00000000-0000-0000-0000-000000000030",
       studentName: payload.studentName || "Rahul Deshmukh",
       rollNumber: payload.rollNumber || "21CS042",
@@ -353,7 +388,8 @@ export const universalWorkflow = {
     return {
       success: true,
       message: "Gatepass request dispatched to Class Teacher & Campus Warden.",
-      gatepassId: gpId
+      gatepassId: gpId,
+      displayCode
     };
   },
 
@@ -388,7 +424,6 @@ export const universalWorkflow = {
 
   /**
    * Realtime Event Listener Hook for components.
-   * Listens across BroadcastChannel, window CustomEvents, and Storage events.
    */
   subscribe(callback: (event: any) => void): () => void {
     const channelHandler = (msg: MessageEvent) => {

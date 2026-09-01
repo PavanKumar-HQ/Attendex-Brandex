@@ -249,7 +249,9 @@ export default function ParentLeavePage() {
                             )}>
                               {leave.leaveType.replace("_", " ")}
                             </span>
-                            <span className="font-mono text-[10px] text-slate-400">#{leave.id}</span>
+                            <span className="font-mono text-[10px] text-slate-400 font-semibold">
+                              #{leave.displayCode || `LV-${leave.id.slice(0, 4).toUpperCase()}`}
+                            </span>
                           </div>
 
                           <div className="flex items-center gap-2">
