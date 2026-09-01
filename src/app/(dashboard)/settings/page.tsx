@@ -23,32 +23,33 @@ export default function SettingsPage() {
   const { data: profileData, isLoading } = useQuery({
     queryKey: ['profile'],
     queryFn: async () => {
-      const DEMO_PROFILE = {
-        full_name: "Dr. S. Kulkarni",
-        email: "s.kulkarni@institution.edu",
-        phone: "+91 98450 12345",
-        role: "FACULTY",
-        department: "Computer Science & Engineering",
-        metadata: { full_name: "Dr. S. Kulkarni", phone: "+91 98450 12345" }
-      };
-
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return DEMO_PROFILE;
+        if (!user) {
+          return {
+            full_name: "Staff Member",
+            email: "faculty@attendex.edu",
+            phone: "+91 98450 12345",
+            role: "FACULTY",
+            department: "Computer Science & Engineering",
+            metadata: {}
+          };
+        }
 
         const { data } = await supabase
-          .from('profiles')
+          .from('user_profiles')
           .select('*')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
         return {
           ...data,
-          email: user.email,
-          metadata: user.user_metadata
+          full_name: data?.full_name || user.user_metadata?.full_name || "Faculty Member",
+          email: user.email || data?.email || "",
+          metadata: user.user_metadata || {}
         };
       } catch {
-        return DEMO_PROFILE;
+        return null;
       }
     }
   });
