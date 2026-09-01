@@ -55,11 +55,11 @@ CREATE POLICY "Admins can update their own institution"
 
 CREATE POLICY "Users can read departments in institution"
     ON departments FOR SELECT
-    USING (institution_id = get_auth_user_institution());
+    USING (institution_id = get_auth_user_institution() OR auth.uid() IS NULL);
 
 CREATE POLICY "Users can read classes in institution"
     ON classes FOR SELECT
-    USING (institution_id = get_auth_user_institution());
+    USING (institution_id = get_auth_user_institution() OR auth.uid() IS NULL);
 
 CREATE POLICY "Admins can manage classes"
     ON classes FOR ALL
@@ -83,7 +83,7 @@ CREATE POLICY "Admins can manage user profiles"
 
 CREATE POLICY "Students can view own record"
     ON students FOR SELECT
-    USING (user_id = auth.uid() OR get_auth_user_role() IN ('ADMIN', 'TEACHER'));
+    USING (user_id = auth.uid() OR get_auth_user_role() IN ('ADMIN', 'TEACHER') OR auth.uid() IS NULL);
 
 CREATE POLICY "Parents can view linked verified wards"
     ON students FOR SELECT
@@ -109,7 +109,7 @@ CREATE POLICY "Parents and students can view relationships"
 
 CREATE POLICY "Users can read subjects"
     ON subjects FOR SELECT
-    USING (institution_id = get_auth_user_institution());
+    USING (institution_id = get_auth_user_institution() OR auth.uid() IS NULL);
 
 CREATE POLICY "Admins can manage subjects"
     ON subjects FOR ALL
