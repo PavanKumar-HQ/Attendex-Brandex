@@ -9,25 +9,39 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UserCheck, WifiOff, CheckCircle2, CalendarIcon, Search } from "lucide-react";
+import { 
+  UserCheck, 
+  WifiOff, 
+  CheckCircle2, 
+  CalendarIcon, 
+  Search, 
+  Users, 
+  UserX, 
+  Activity, 
+  Sparkles, 
+  LayoutList, 
+  LayoutGrid, 
+  Send, 
+  RotateCcw,
+  Zap,
+  BookOpen,
+  Layers,
+  GraduationCap,
+  ShieldCheck
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { offlineService } from "@/services/offline";
 import { haptics } from "@/lib/haptics";
 import { toast } from "sonner";
 import { cn, fuzzySearch } from "@/lib/utils";
-import { StudentProfile } from "@/components/students/student-profile";
-import { academicService } from "@/services/academic";
-import { subjectService, Subject } from "@/services/subjects";
+import { subjectService } from "@/services/subjects";
 import { supabase } from "@/lib/supabase";
 import { StudentList } from "@/components/attendance/student-list";
 import { AttendanceSyncDialog } from "@/components/attendance/sync-dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { LoadingScreen } from "@/components/ui/loading-screen";
 import { useStudents, useClasses } from "@/hooks/use-academic";
-import { TableRowSkeleton } from "@/components/ui/skeletons";
-import { PullToRefresh } from "@/components/ui/pull-to-refresh";
-
+import { academicService } from "@/services/academic";
 
 export default function AttendancePage() {
   const [selectedClassId, setSelectedClassId] = useState<string>("");
@@ -41,44 +55,32 @@ export default function AttendancePage() {
   const [absentIds, setAbsentIds] = useState<Set<string>>(new Set());
   const [onDutyIds, setOnDutyIds] = useState<Set<string>>(new Set());
   const [medicalIds, setMedicalIds] = useState<Set<string>>(new Set());
+  const [fastInput, setFastInput] = useState("");
   
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState<any>(null);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
-  
-  // Auto-hide filters on mobile if selections are made
-  useEffect(() => {
-    if (selectedClassId && selectedSubjectId) {
-      setShowFilters(false);
-    } else {
-      setShowFilters(true);
-    }
-  }, [selectedClassId, selectedSubjectId]);
-  
+
   const queryClient = useQueryClient();
   const router = useRouter();
 
   // Queries
   const { data: classes = [], isLoading: classesLoading, refetch: refetchClasses } = useClasses();
-
   const { data: students = [], isLoading: studentsLoading, refetch: refetchStudents } = useStudents(selectedClassId, selectedSubjectId);
 
-  const [userProfile, setUserProfile] = useState<any>({ role: 'ADMIN', full_name: 'Faculty Member' });
+  const [userProfile, setUserProfile] = useState<any>({ role: 'TEACHER', full_name: 'Faculty Member' });
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-        if (user) {
-            supabase.from('profiles').select('*').eq('id', user.id).single().then(({ data }) => {
-              if (data) setUserProfile(data);
-            });
-        }
+      if (user) {
+        supabase.from('profiles').select('*').eq('id', user.id).single().then(({ data }) => {
+          if (data) setUserProfile(data);
+        });
+      }
     });
   }, []);
 
   const filteredClasses = useMemo(() => {
-    if (!userProfile || userProfile.role === 'ADMIN') return classes;
+    if (!userProfile || userProfile.role === 'ADMIN' || userProfile.role === 'SUPER_ADMIN' || userProfile.role === 'PRINCIPAL') return classes;
     const claimed = classes.filter((c: any) => 
-        c.class_claims?.some((claim: any) => claim.teacher_id === userProfile.id)
+      c.class_claims?.some((claim: any) => claim.teacher_id === userProfile.id)
     );
     return claimed.length > 0 ? claimed : classes;
   }, [classes, userProfile]);
@@ -107,12 +109,6 @@ export default function AttendancePage() {
     setSelectedSubjectId("");
   }, [selectedClassId]);
 
-  const handleRefresh = async () => {
-    await Promise.all([refetchClasses(), refetchStudents()]);
-    toast.success("Institutional Records Synced");
-  };
-
-
   const { data: assignments = [] } = useQuery({
     queryKey: ['assignments', selectedClassId],
     queryFn: () => subjectService.getAssignmentsForClass(selectedClassId),
@@ -123,6 +119,27 @@ export default function AttendancePage() {
     return assignments.find((a: any) => a.subject_id === selectedSubjectId) || null;
   }, [assignments, selectedSubjectId]);
 
+  const filteredSubjects = useMemo(() => {
+    if (!userProfile || !subjects.length) return [];
+    if (userProfile.role === 'ADMIN' || userProfile.role === 'PRINCIPAL') return subjects;
+    
+    const currentClass = classes.find((c: any) => c.id === selectedClassId);
+    const claimedSubjectIds = currentClass?.class_claims
+      ?.filter((cl: any) => cl.teacher_id === userProfile.id)
+      .map((cl: any) => cl.subject_id) || [];
+        
+    if (claimedSubjectIds.length > 0) {
+      return subjects.filter(s => claimedSubjectIds.includes(s.id));
+    }
+    return subjects;
+  }, [subjects, userProfile, selectedClassId, classes]);
+
+  useEffect(() => {
+    if (filteredSubjects.length > 0 && !selectedSubjectId) {
+      setSelectedSubjectId(filteredSubjects[0].id);
+    }
+  }, [filteredSubjects, selectedSubjectId]);
+
   const claimMutation = useMutation({
     mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -130,7 +147,7 @@ export default function AttendancePage() {
       return subjectService.claimSubject(selectedSubjectId, selectedClassId, user.id);
     },
     onSuccess: () => {
-      toast.success("Subject Locked Successfully", { description: "You are now the primary faculty for this course." });
+      toast.success("Subject Claimed Successfully", { description: "You are registered as the primary faculty for this course." });
       queryClient.invalidateQueries({ queryKey: ['assignments', selectedClassId] });
     },
     onError: (err: any) => toast.error("Claim Failed", { description: err.message }),
@@ -140,126 +157,69 @@ export default function AttendancePage() {
     mutationFn: async () => {
       const periods = selectedLecture.startsWith('DP') 
         ? (selectedLecture === 'DP1' ? [1, 2] : [3, 4])
-        : [parseInt(selectedLecture.replace('L', ''))];
+        : [parseInt(selectedLecture.replace('L', '')) || 1];
 
       const formattedDate = date.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
       const attendanceData: any[] = [];
 
       periods.forEach(period => {
-          students.forEach((student: any) => {
-              let status = 'present';
-              if (absentIds.has(student.id)) status = 'absent';
-              else if (onDutyIds.has(student.id)) status = 'od';
-              else if (medicalIds.has(student.id)) status = 'ml';
-              
-              attendanceData.push({
-                  studentId: student.id,
-                  status,
-                  period
-              });
+        students.forEach((student: any) => {
+          let status = 'present';
+          if (absentIds.has(student.id)) status = 'absent';
+          else if (onDutyIds.has(student.id)) status = 'od';
+          else if (medicalIds.has(student.id)) status = 'ml';
+          
+          attendanceData.push({
+            studentId: student.id,
+            status,
+            period
           });
+        });
       });
 
       return academicService.saveAttendance(selectedClassId, formattedDate, attendanceData, selectedSubjectId);
     },
-    onSuccess: (_, variables, context) => {
+    onSuccess: () => {
       const periodsCount = selectedLecture.startsWith('DP') ? 2 : 1;
-      toast.success("Academic Sheet Synchronized", {
-          description: `Logged attendance for ${periodsCount} sessions across ${students.length} students.`
+      toast.success("Academic Roll-Call Finalized", {
+        description: `Recorded attendance for ${periodsCount} period(s) across ${students.length} students.`
       });
       setIsConfirmOpen(false);
       setAbsentIds(new Set());
       setOnDutyIds(new Set());
+      setMedicalIds(new Set());
       queryClient.invalidateQueries({ queryKey: ['attendance'] });
     },
     onError: async (err: any) => {
-        const records = students.map((s: any) => {
-          let st: "PRESENT" | "ABSENT" | "OD" | "ML" = "PRESENT";
-          if (absentIds.has(s.id)) st = "ABSENT";
-          else if (onDutyIds.has(s.id)) st = "OD";
-          else if (medicalIds.has(s.id)) st = "ML";
-          return { student_id: s.id, status: st };
-        });
-        const periodNum = parseInt(selectedLecture.replace(/[^\d]/g, '') || '1', 10);
-        const draft = await offlineService.saveDraft({
-            classId: selectedClassId,
-            subjectId: selectedSubjectId,
-            period: periodNum,
-            lectureType: selectedLecture.startsWith('DP') ? 'Double Period' : 'Theory',
-            date: format(date, "yyyy-MM-dd"),
-            clientVersion: 1,
-            records
-        });
+      const records = students.map((s: any) => {
+        let st: "PRESENT" | "ABSENT" | "OD" | "ML" = "PRESENT";
+        if (absentIds.has(s.id)) st = "ABSENT";
+        else if (onDutyIds.has(s.id)) st = "OD";
+        else if (medicalIds.has(s.id)) st = "ML";
+        return { student_id: s.id, status: st };
+      });
+      const periodNum = parseInt(selectedLecture.replace(/[^\d]/g, '') || '1', 10);
+      const draft = await offlineService.saveDraft({
+        classId: selectedClassId,
+        subjectId: selectedSubjectId,
+        period: periodNum,
+        lectureType: selectedLecture.startsWith('DP') ? 'Double Period' : 'Theory',
+        date: format(date, "yyyy-MM-dd"),
+        clientVersion: 1,
+        records
+      });
 
-        if (draft) {
-             toast.warning("Institutional Offline Mode", {
-                description: "Cloud unreachable. Session securely buffered in local vault.",
-                icon: <WifiOff className="w-5 h-5" />
-            });
-            setIsConfirmOpen(false);
-            setAbsentIds(new Set());
-            setOnDutyIds(new Set());
-        } else {
-            toast.error("Cloud Synchronization Failed", {
-                description: err.message || "Database cluster unreachable. Check connectivity."
-            });
-        }
+      if (draft) {
+        toast.warning("Offline Buffer Saved", {
+          description: "Session buffered in browser vault. Will auto-sync when connection restores.",
+          icon: <WifiOff className="w-5 h-5" />
+        });
+        setIsConfirmOpen(false);
+      } else {
+        toast.error("Sync Error", { description: err.message || "Failed to log attendance." });
+      }
     }
   });
-
-  useEffect(() => {
-    if (selectedClassId) {
-        const draft = localStorage.getItem(`draft_${selectedClassId}_${selectedLecture}`);
-        if (draft) {
-            const { absent, od } = JSON.parse(draft);
-            setAbsentIds(new Set(absent));
-            setOnDutyIds(new Set(od));
-            toast.info("Draft Recovered", { description: "Resuming your previous roll call session." });
-        }
-    }
-  }, [selectedClassId, selectedLecture]);
-
-
-  const loading = classesLoading || studentsLoading || subjectsLoading;
-  const isClaiming = claimMutation.isPending;
-  const isSaving = saveMutation.isPending;
-  const handleClaim = () => claimMutation.mutate();
-  const handleSave = () => saveMutation.mutate();
-
-  const filteredStudents = useMemo(() => {
-    return students.filter((s: any) => {
-      const matchesSearch = fuzzySearch(search, `${s.name} ${s.roll_number}`);
-      const matchesSection = selectedSection === "all" || s.section === selectedSection;
-      const matchesBatch = selectedBatch === "all" || s.batch === selectedBatch;
-      return matchesSearch && matchesSection && matchesBatch;
-    });
-  }, [search, selectedSection, selectedBatch, students]);
-
-  const filteredSubjects = useMemo(() => {
-    if (!userProfile || !subjects.length) return [];
-    if (userProfile.role === 'ADMIN') return subjects;
-    
-    const currentClass = classes.find((c: any) => c.id === selectedClassId);
-    const claimedSubjectIds = currentClass?.class_claims
-        ?.filter((cl: any) => cl.teacher_id === userProfile.id)
-        .map((cl: any) => cl.subject_id) || [];
-        
-    if (claimedSubjectIds.length > 0) {
-        return subjects.filter(s => claimedSubjectIds.includes(s.id));
-    }
-    
-    // If teacher but no claims yet, show all so they can claim. 
-    // If admin, show all (handled above).
-    return subjects;
-  }, [subjects, userProfile, selectedClassId, classes]);
-
-  useEffect(() => {
-    if (filteredSubjects.length === 1 && !selectedSubjectId) {
-      setSelectedSubjectId(filteredSubjects[0].id);
-    }
-  }, [filteredSubjects, selectedSubjectId]);
-
-  if (!userProfile) return null; // Let the layout handle unauthenticated/unverified state
 
   const toggleAttendance = (id: string, type: 'present' | 'absent' | 'od') => {
     haptics.light();
@@ -285,352 +245,386 @@ export default function AttendancePage() {
   };
 
   const markAllPresent = () => {
-    const newAbsent = new Set(absentIds);
-    const newOD = new Set(onDutyIds);
-    filteredStudents.forEach(s => {
-      newAbsent.delete(s.id);
-      newOD.delete(s.id);
+    setAbsentIds(new Set());
+    setOnDutyIds(new Set());
+    setMedicalIds(new Set());
+    toast.success(`Marked all ${students.length} students as Present`);
+  };
+
+  const handleFastAbsentSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (!fastInput.trim()) return;
+
+      const tokens = fastInput.split(/[,\s]+/).map(t => t.trim().toLowerCase()).filter(Boolean);
+      const newAbsent = new Set(absentIds);
+      let matched = 0;
+
+      students.forEach(s => {
+        const roll = (s.roll_number || s.rollNumber || "").toLowerCase();
+        const shortRoll = roll.slice(-3); // e.g. '042'
+        if (tokens.some(t => roll.includes(t) || shortRoll === t || s.name.toLowerCase().includes(t))) {
+          newAbsent.add(s.id);
+          matched++;
+        }
+      });
+
+      setAbsentIds(newAbsent);
+      setFastInput("");
+      if (matched > 0) {
+        toast.success(`Marked ${matched} student(s) absent via rapid scanner`);
+      } else {
+        toast.error("No student matched the entered roll numbers");
+      }
+    }
+  };
+
+  const filteredStudents = useMemo(() => {
+    return students.filter((s: any) => {
+      const matchesSearch = fuzzySearch(search, `${s.name} ${s.roll_number || s.rollNumber}`);
+      const matchesSection = selectedSection === "all" || s.section === selectedSection;
+      const matchesBatch = selectedBatch === "all" || s.batch === selectedBatch;
+      return matchesSearch && matchesSection && matchesBatch;
     });
-    setAbsentIds(newAbsent);
-    setOnDutyIds(newOD);
-    toast.success(`Marked ${filteredStudents.length} students as present`);
-  };
+  }, [search, selectedSection, selectedBatch, students]);
 
+  const presentCount = students.length - absentIds.size - onDutyIds.size - medicalIds.size;
+  const absentCount = absentIds.size;
+  const odCount = onDutyIds.size + medicalIds.size;
+  const attendanceRate = students.length > 0 
+    ? Math.round((presentCount / students.length) * 100) 
+    : 100;
 
-
-  const stats = {
-    present: students.length - absentIds.size - onDutyIds.size,
-    absent: absentIds.size,
-    od: onDutyIds.size
-  };
+  const currentClassName = classes.find(c => c.id === selectedClassId)?.name || "Select Class";
+  const currentSubjectName = filteredSubjects.find(s => s.id === selectedSubjectId)?.name || "Select Subject";
 
   return (
-    <>
-      <PageTransition>
-        <div className="flex flex-col min-h-screen bg-slate-50/50">
-          <Header
-            title={
-              <div className="flex items-center gap-2">
-                <span className="text-slate-900 font-bold text-lg md:text-xl tracking-tight">Attendance</span>
-                {selectedClassId && (
-                  <>
-                    <div className="w-1 h-1 rounded-full bg-slate-300 mx-1" />
-                    <span className="text-slate-500 text-xs md:text-sm font-bold truncate max-w-[120px]">
-                      {classes.find(c => c.id === selectedClassId)?.name}
-                    </span>
-                  </>
-                )}
-              </div>
-            }
-          />
+    <PageTransition>
+      <div className="space-y-6">
+        <Header 
+          title={
+            <div className="flex items-center gap-2">
+              <span>Classroom Roll-Call Execution</span>
+              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                {currentClassName}
+              </span>
+            </div>
+          } 
+        />
 
-          <div className="flex-1 flex flex-col pb-32">
-            {/* Mobile Filter Toggle */}
-            <div className="md:hidden mt-4 mb-2">
-              <Button 
-                variant="outline" 
-                onClick={() => setShowFilters(!showFilters)}
-                className="w-full h-12 rounded-2xl border-slate-200 bg-white shadow-sm font-black uppercase tracking-widest text-[10px] gap-2"
+        {/* 1. Executive Filter Toolbar */}
+        <Card className="p-4 md:p-5 bg-white border-slate-200/90 shadow-sm rounded-xl space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
+            {/* Class Selector */}
+            <div className="space-y-1">
+              <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px] flex items-center gap-1">
+                <GraduationCap className="w-3 h-3 text-blue-600" />
+                <span>Academic Cohort</span>
+              </label>
+              <Select value={selectedClassId} onValueChange={(val) => val && setSelectedClassId(val)}>
+                <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-slate-50 text-slate-800 font-semibold text-xs focus:ring-slate-900">
+                  <SelectValue placeholder="Select Class">
+                    {currentClassName}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-slate-200">
+                  {filteredClasses.map(cls => (
+                    <SelectItem key={cls.id} value={cls.id} className="text-xs font-medium">
+                      {cls.name} ({cls.section || 'Sec A'})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Batch Selector */}
+            <div className="space-y-1">
+              <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px] flex items-center gap-1">
+                <Layers className="w-3 h-3 text-indigo-600" />
+                <span>Batch Division</span>
+              </label>
+              <Select value={selectedBatch} onValueChange={(val) => val && setSelectedBatch(val)}>
+                <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-slate-50 text-slate-800 font-semibold text-xs focus:ring-slate-900">
+                  <SelectValue placeholder="Batch" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-slate-200">
+                  <SelectItem value="all" className="text-xs">All Batches (Full Cohort)</SelectItem>
+                  <SelectItem value="A" className="text-xs">Batch A (Roll 1-30)</SelectItem>
+                  <SelectItem value="B" className="text-xs">Batch B (Roll 31-60)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Lecture / Period */}
+            <div className="space-y-1">
+              <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px] flex items-center gap-1">
+                <Zap className="w-3 h-3 text-amber-600" />
+                <span>Lecture Slot</span>
+              </label>
+              <Select value={selectedLecture} onValueChange={(val) => val && setSelectedLecture(val)}>
+                <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-slate-50 text-slate-800 font-semibold text-xs focus:ring-slate-900">
+                  <SelectValue placeholder="Lecture" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-slate-200">
+                  <SelectItem value="L1" className="text-xs">Period 1 (09:00 - 10:00 AM)</SelectItem>
+                  <SelectItem value="L2" className="text-xs">Period 2 (10:00 - 11:00 AM)</SelectItem>
+                  <SelectItem value="L3" className="text-xs">Period 3 (11:15 - 12:15 PM)</SelectItem>
+                  <SelectItem value="DP1" className="text-xs">Lab Block (Period 1 + 2)</SelectItem>
+                  <SelectItem value="DP2" className="text-xs">Lab Block (Period 3 + 4)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Subject */}
+            <div className="space-y-1">
+              <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px] flex items-center gap-1">
+                <BookOpen className="w-3 h-3 text-emerald-600" />
+                <span>Mapped Subject</span>
+              </label>
+              <Select value={selectedSubjectId} onValueChange={(val) => val && setSelectedSubjectId(val)}>
+                <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-slate-50 text-slate-800 font-semibold text-xs focus:ring-slate-900">
+                  <SelectValue>
+                    <span className="truncate">{currentSubjectName}</span>
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-slate-200">
+                  {filteredSubjects.map(s => (
+                    <SelectItem key={s.id} value={s.id} className="text-xs">
+                      {s.name} ({s.code})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Date */}
+            <div className="space-y-1">
+              <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px] flex items-center gap-1">
+                <CalendarIcon className="w-3 h-3 text-purple-600" />
+                <span>Session Date</span>
+              </label>
+              <Popover>
+                <PopoverTrigger
+                  className="h-10 border border-slate-200 bg-slate-50 hover:bg-white text-slate-800 font-semibold rounded-lg px-3 w-full text-xs flex items-center justify-between transition-all"
+                >
+                  <span className="truncate">{date ? format(date, "MMM d, yyyy") : "Today"}</span>
+                  <CalendarIcon className="w-3.5 h-3.5 text-slate-400" />
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 rounded-xl shadow-xl border-slate-200" align="end">
+                  <Calendar mode="single" selected={date} onSelect={(d) => d && setDate(d)} initialFocus />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+        </Card>
+
+        {/* 2. Roll-Call Live KPI HUD */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card className="p-4 bg-white border-slate-200/90 shadow-sm rounded-xl space-y-1">
+            <div className="flex items-center justify-between text-slate-500 text-xs">
+              <span className="font-bold uppercase tracking-wider text-[10px]">Roster Enrolled</span>
+              <Users className="w-4 h-4 text-blue-600" />
+            </div>
+            <h3 className="text-2xl font-extrabold text-slate-900">{students.length}</h3>
+            <p className="text-[11px] text-slate-500 font-medium">Verified Active Profiles</p>
+          </Card>
+
+          <Card className="p-4 bg-emerald-50/60 border-emerald-200/80 shadow-sm rounded-xl space-y-1">
+            <div className="flex items-center justify-between text-emerald-800 text-xs">
+              <span className="font-bold uppercase tracking-wider text-[10px]">Present</span>
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            </div>
+            <h3 className="text-2xl font-extrabold text-emerald-700">{presentCount}</h3>
+            <p className="text-[11px] text-emerald-600 font-medium">In Lecture Hall</p>
+          </Card>
+
+          <Card className="p-4 bg-rose-50/60 border-rose-200/80 shadow-sm rounded-xl space-y-1">
+            <div className="flex items-center justify-between text-rose-800 text-xs">
+              <span className="font-bold uppercase tracking-wider text-[10px]">Absentees</span>
+              <UserX className="w-4 h-4 text-rose-600" />
+            </div>
+            <h3 className="text-2xl font-extrabold text-rose-700">{absentCount}</h3>
+            <p className="text-[11px] text-rose-600 font-medium">Parent SMS Alert Ready</p>
+          </Card>
+
+          <Card className="p-4 bg-slate-900 text-white border-slate-800 shadow-sm rounded-xl space-y-1">
+            <div className="flex items-center justify-between text-slate-400 text-xs">
+              <span className="font-bold uppercase tracking-wider text-[10px]">Session Rate</span>
+              <Activity className="w-4 h-4 text-blue-400" />
+            </div>
+            <h3 className="text-2xl font-extrabold text-white">{attendanceRate}%</h3>
+            <p className="text-[11px] text-emerald-400 font-medium">
+              {attendanceRate >= 85 ? "✓ Optimal Cohort Standing" : "⚠ Defaulter Threshold"}
+            </p>
+          </Card>
+        </div>
+
+        {/* 3. Main Roster Table & Marking Command Console */}
+        <Card className="bg-white border-slate-200/90 shadow-sm rounded-xl overflow-hidden">
+          {/* Top Action Console */}
+          <div className="p-4 md:p-5 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50/50">
+            {/* Search Input */}
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Input
+                placeholder="Search by student name or roll number..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-10 pl-9 bg-white border-slate-200 text-xs font-medium rounded-lg"
+              />
+            </div>
+
+            {/* Fast Absent Scanner Input */}
+            <div className="relative w-full md:w-72">
+              <Zap className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-amber-500" />
+              <Input
+                placeholder="Type absent roll (e.g. 01, 04, 12) + Enter"
+                value={fastInput}
+                onChange={(e) => setFastInput(e.target.value)}
+                onKeyDown={handleFastAbsentSubmit}
+                className="h-10 pl-9 bg-white border-slate-200 text-xs font-medium rounded-lg placeholder:text-slate-400 focus-visible:ring-amber-500"
+              />
+            </div>
+
+            {/* Quick Action Buttons */}
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={markAllPresent}
+                className="h-10 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200 font-bold text-xs rounded-lg px-3.5 flex items-center gap-1.5 shadow-xs"
               >
-                {showFilters ? "Hide Selection" : "Refine Selection"}
-                <Search className={cn("w-4 h-4 transition-transform", showFilters && "rotate-180")} />
+                <CheckCircle2 className="w-4 h-4" />
+                <span>All Present</span>
+              </Button>
+
+              <div className="flex items-center p-1 bg-slate-200/80 rounded-lg">
+                <button
+                  type="button"
+                  onClick={() => setEntryMode('list')}
+                  className={cn("p-1.5 rounded-md transition-all", entryMode === 'list' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900")}
+                  title="List View"
+                >
+                  <LayoutList className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEntryMode('grid')}
+                  className={cn("p-1.5 rounded-md transition-all", entryMode === 'grid' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900")}
+                  title="Grid View"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </button>
+              </div>
+
+              <Button
+                size="sm"
+                onClick={() => setIsConfirmOpen(true)}
+                disabled={saveMutation.isPending || students.length === 0}
+                className="h-10 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-lg px-4 flex items-center gap-2 shadow-sm"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span>Finalize & Sync</span>
               </Button>
             </div>
+          </div>
 
-            {/* Academic Filters Section */}
-            <div className={cn(
-              "bg-white border border-slate-200 rounded-[2rem] p-5 md:p-6 mb-6 shadow-sm transition-all duration-300 overflow-hidden",
-              !showFilters && "hidden md:block"
-            )}>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Academic Class</label>
-                  <Select value={selectedClassId} onValueChange={(val) => val && setSelectedClassId(val)}>
-                    <SelectTrigger className="w-full h-12 border-slate-200 bg-slate-50/50 hover:bg-white transition-colors shadow-sm font-bold rounded-2xl text-slate-700">
-                      <SelectValue>
-                        {filteredClasses.find(c => c.id === selectedClassId)?.name || "Select Class"}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent className="rounded-2xl border-slate-200">
-                      {filteredClasses.map(cls => (
-                          <SelectItem key={cls.id} value={cls.id}>{cls.name} {cls.section}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid grid-cols-2 lg:contents gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Batch</label>
-                    <Select value={selectedBatch} onValueChange={(val) => val && setSelectedBatch(val)}>
-                      <SelectTrigger className="w-full h-12 border-slate-200 bg-slate-50/50 hover:bg-white transition-colors shadow-sm font-bold rounded-2xl text-slate-700">
-                        <SelectValue placeholder="Batch" />
-                      </SelectTrigger>
-                      <SelectContent className="rounded-2xl border-slate-200">
-                        <SelectItem value="all">All Batches</SelectItem>
-                        <SelectItem value="A">Batch A</SelectItem>
-                        <SelectItem value="B">Batch B</SelectItem>
-                        <SelectItem value="C">Batch C</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Lecture</label>
-                    <Select value={selectedLecture} onValueChange={(val) => val && setSelectedLecture(val)}>
-                      <SelectTrigger className="w-full h-12 border-slate-200 bg-slate-50/50 hover:bg-white transition-colors shadow-sm font-bold rounded-2xl text-slate-700">
-                        <SelectValue placeholder="Lecture" />
-                      </SelectTrigger>
-                      <SelectContent className="rounded-2xl border-slate-200">
-                        <SelectItem value="L1">L1</SelectItem>
-                        <SelectItem value="L2">L2</SelectItem>
-                        <SelectItem value="L3">L3</SelectItem>
-                        <SelectItem value="DP1">L1+L2</SelectItem>
-                        <SelectItem value="DP2">L3+L4</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Mapped Subject</label>
-                  <Select value={selectedSubjectId} onValueChange={(val) => val && setSelectedSubjectId(val)}>
-                    <SelectTrigger className="w-full h-12 border-slate-200 bg-slate-50/50 hover:bg-white transition-colors shadow-sm font-bold rounded-2xl text-slate-700">
-                      <SelectValue>
-                        <span className="truncate">{filteredSubjects.find(s => s.id === selectedSubjectId)?.name || "Select Subject"}</span>
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent className="rounded-2xl border-slate-200">
-                      {filteredSubjects.length > 0 ? (
-                        filteredSubjects.map(s => (
-                          <SelectItem key={s.id} value={s.id}>{s.name} ({s.code})</SelectItem>
-                        ))
-                      ) : (
-                        <div className="p-3 text-xs font-bold text-slate-400">No subjects claimed yet</div>
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Attendance Date</label>
-                  <Popover>
-                    <PopoverTrigger
-                      className={cn("h-12 border border-slate-200 bg-slate-50/50 hover:bg-white shadow-sm font-bold rounded-2xl text-left px-4 w-full text-slate-800 transition-all flex items-center")}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4 text-slate-500" />
-                      <span className="truncate">{date ? format(date, "MMM d, yyyy") : "Select Date"}</span>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 rounded-[2rem] overflow-hidden shadow-2xl border-slate-200" align="end">
-                      <Calendar mode="single" selected={date} onSelect={(d) => d && setDate(d)} initialFocus />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </div>
-
-              {selectedSubjectId && !currentAssignment && (
-                <div className="mt-4 pt-4 border-t border-slate-100 flex justify-end">
-                  <Button 
-                      variant="outline" 
-                      className="h-12 px-6 rounded-2xl border-blue-200 bg-blue-50 text-blue-700 font-black uppercase tracking-widest hover:bg-blue-100 transition-all gap-2 shadow-sm text-xs"
-                      onClick={handleClaim}
-                      disabled={isClaiming}
+          {/* Absent Tags Banner if any absentees marked */}
+          {absentIds.size > 0 && (
+            <div className="px-5 py-2.5 bg-rose-50 border-b border-rose-100 flex items-center gap-2 flex-wrap text-xs">
+              <span className="font-bold text-rose-800 text-[11px] uppercase tracking-wider">Marked Absent:</span>
+              {Array.from(absentIds).map(id => {
+                const s = students.find((st: any) => st.id === id);
+                return (
+                  <span
+                    key={id}
+                    onClick={() => toggleAttendance(id, 'present')}
+                    className="cursor-pointer inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-100 hover:bg-rose-200 text-rose-800 font-mono text-[11px] font-bold border border-rose-200 transition-colors"
+                    title="Click to toggle Present"
                   >
-                      <UserCheck className="w-5 h-5" />
-                      Claim Subject
-                  </Button>
-                </div>
-              )}
+                    {s?.roll_number || s?.rollNumber || "ID"} ×
+                  </span>
+                );
+              })}
             </div>
+          )}
 
-            {/* Master Control Bar */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 md:mb-8">
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div className="relative flex-1 group">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
-                  <Input
-                    placeholder="Search student list..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="pl-12 h-12 md:h-14 w-full border-slate-200 bg-white shadow-lg shadow-slate-200/20 rounded-2xl md:rounded-[1.25rem] focus-visible:ring-blue-500 font-bold text-slate-700"
-                  />
-                </div>
-                <Button 
-                  variant="outline"
-                  onClick={markAllPresent}
-                  className="h-12 md:h-14 px-5 rounded-2xl md:rounded-[1.25rem] border-emerald-100 bg-emerald-50 text-emerald-700 font-black uppercase tracking-widest hover:bg-emerald-100 transition-all gap-2 hidden md:flex shadow-sm"
-                >
-                  <CheckCircle2 className="w-5 h-5" />
-                  All Present
-                </Button>
-              </div>
+          {/* Roster Header */}
+          <div className="bg-slate-50 px-5 py-2.5 flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+            <span>Student Identity & Standing ({filteredStudents.length})</span>
+            <span>Attendance Status (P / A / OD / ML)</span>
+          </div>
 
-              <div className="hidden lg:flex items-center justify-end gap-6">
-                <div className="text-right">
-                  <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Roll Call Summary</div>
-                  <div className="flex items-center gap-3 mt-1">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                      <span className="text-xs font-black text-slate-700">{stats.present} P</span>
+          {/* View Modes */}
+          {entryMode === 'list' ? (
+            <StudentList
+              students={filteredStudents}
+              absentIds={absentIds}
+              onDutyIds={onDutyIds}
+              medicalIds={medicalIds}
+              onToggle={toggleAttendance}
+              onMedical={setMedical}
+              loading={studentsLoading}
+            />
+          ) : (
+            <div className="p-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+              {filteredStudents.map((s: any) => {
+                const isAbsent = absentIds.has(s.id);
+                const isOD = onDutyIds.has(s.id);
+                const isMedical = medicalIds.has(s.id);
+                const isPresent = !isAbsent && !isOD && !isMedical;
+
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => toggleAttendance(s.id, isAbsent ? 'present' : 'absent')}
+                    className={cn(
+                      "p-3 rounded-xl border text-left transition-all space-y-1.5 flex flex-col justify-between h-28 shadow-xs",
+                      isAbsent
+                        ? "bg-rose-50 border-rose-300 ring-2 ring-rose-500/20"
+                        : isOD
+                        ? "bg-blue-50 border-blue-300 ring-2 ring-blue-500/20"
+                        : isMedical
+                        ? "bg-amber-50 border-amber-300 ring-2 ring-amber-500/20"
+                        : "bg-white border-slate-200 hover:border-slate-300"
+                    )}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
+                        {s.roll_number?.slice(-3) || "001"}
+                      </span>
+                      <span className={cn(
+                        "w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold text-white",
+                        isAbsent ? "bg-rose-600" : isOD ? "bg-blue-600" : isMedical ? "bg-amber-500" : "bg-emerald-600"
+                      )}>
+                        {isAbsent ? "A" : isOD ? "OD" : isMedical ? "ML" : "P"}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2 h-2 rounded-full bg-red-500" />
-                      <span className="text-xs font-black text-red-600">{stats.absent} A</span>
+
+                    <div>
+                      <p className="font-bold text-xs text-slate-900 truncate leading-tight">{s.name}</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5">{s.attendance ?? 90}% Standing</p>
                     </div>
-                  </div>
-                </div>
-                
-                <div className="hidden sm:block">
-                  <AttendanceSyncDialog 
-                    isOpen={isConfirmOpen}
-                    onOpenChange={setIsConfirmOpen}
-                    onSync={handleSave}
-                    isSaving={isSaving}
-                    stats={stats}
-                    lecture={selectedLecture}
-                    date={date}
-                    sampleAbsentRoll={students.find(s => absentIds.has(s.id))?.roll_number}
-                  />
-                </div>
-              </div>
+                  </button>
+                );
+              })}
             </div>
+          )}
+        </Card>
 
-            <Card className="flex-1 rounded-[2rem] overflow-hidden bg-white border-slate-200 shadow-xl shadow-slate-200/50 flex flex-col relative min-h-[400px]">
-              <div className="p-4 md:p-6 border-b border-slate-100 bg-white flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="text-[10px] md:text-sm font-black text-slate-900 uppercase tracking-widest">Marking Mode</h4>
-                    <p className="hidden md:block text-xs text-slate-500 mt-1">Touch-optimized for rapid entry</p>
-                  </div>
-                  <div className="flex items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200">
-                    <button
-                      onClick={() => setEntryMode('list')}
-                      className={cn("px-4 py-2 rounded-lg text-[10px] md:text-xs font-black uppercase tracking-wider transition-all", entryMode === 'list' ? "bg-white text-slate-900 shadow-sm border border-slate-200" : "text-slate-400 hover:text-slate-600")}
-                    >List View</button>
-                    <button
-                      onClick={() => setEntryMode('grid')}
-                      className={cn("px-4 py-2 rounded-lg text-[10px] md:text-xs font-black uppercase tracking-wider transition-all", entryMode === 'grid' ? "bg-white text-slate-900 shadow-sm border border-slate-200" : "text-slate-400 hover:text-slate-600")}
-                    >Grid View</button>
-                  </div>
-                </div>
-
-                {entryMode === 'list' ? (
-                  <div className="flex items-center gap-2">
-                    <Input
-                      placeholder="Enter absent roll numbers (e.g. 001, 005 or 001 005)..."
-                      className="flex-1 bg-white h-11 md:h-12 text-sm rounded-xl border-slate-200 font-medium px-4 shadow-sm"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          const val = (e.target as HTMLInputElement).value;
-                          if (!val.trim()) return;
-                          
-                          // Handle both commas and spaces as separators
-                          const rolls = val.split(/[,\s]+/).map(r => r.trim().toLowerCase()).filter(Boolean);
-                          const newAbsent = new Set(absentIds);
-                          let matchedCount = 0;
-
-                          students.forEach(s => {
-                            const rollNum = (s.roll_number || s.rollNumber || "").toLowerCase();
-                            if (!rollNum) return;
-                            const simpleRoll = rollNum.slice(-3); // Last 3 digits
-                            
-                            if (rolls.includes(rollNum) || rolls.includes(simpleRoll)) {
-                              newAbsent.add(s.id);
-                              matchedCount++;
-                            }
-                          });
-
-                          setAbsentIds(newAbsent);
-                          (e.target as HTMLInputElement).value = '';
-                          if (matchedCount > 0) {
-                            toast.success(`Marked ${matchedCount} students absent`);
-                          } else {
-                            toast.error("No matching roll numbers found");
-                          }
-                        }
-                      }}
-                    />
-                  </div>
-                ) : (
-                  <div className="flex flex-wrap gap-2 animate-in fade-in zoom-in-95 duration-300">
-                    {students.slice(0, 12).map((s) => (
-                      <button
-                        key={s.id}
-                        onClick={() => toggleAttendance(s.id, absentIds.has(s.id) ? 'present' : 'absent')}
-                        className={cn(
-                          "h-10 px-3 rounded-lg text-[10px] font-bold border transition-all active:scale-95",
-                          absentIds.has(s.id) ? "bg-red-500 text-white border-red-600" : "bg-white text-slate-800 border-slate-200"
-                        )}
-                      >
-                        {s.roll_number?.slice(-4)}
-                      </button>
-                    ))}
-                    {students.length > 12 && <span className="text-[10px] text-slate-400 flex items-center px-2">+{students.length - 12} more</span>}
-                  </div>
-                )}
-              </div>
-
-              <div className="bg-slate-50/95 backdrop-blur-sm px-3 md:px-6 py-3 flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                <div className="flex-1">Institutional Roster</div>
-                <div className="w-[150px] md:w-[180px] text-center">Action</div>
-              </div>
-
-              <div className="flex-1 overflow-visible">
-                <StudentList 
-                  students={filteredStudents}
-                  absentIds={absentIds}
-                  onDutyIds={onDutyIds}
-                  medicalIds={medicalIds}
-                  onToggle={toggleAttendance}
-                  onMedical={setMedical}
-                  loading={loading}
-                />
-              </div>
-            </Card>
-          </div>
-
-          <StudentProfile
-            student={selectedStudent}
-            onClose={() => setIsProfileOpen(false)}
-          />
-        </div>
-      </PageTransition>
-
-      {/* Floating Action Bar (Mobile Only) - Moved outside PageTransition to fix viewport anchoring */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[94%] max-w-[420px] h-16 px-5 rounded-full bg-slate-900 shadow-[0_20px_50px_rgba(0,0,0,0.3)] z-[100] flex md:hidden items-center justify-between gap-4 border border-white/20 backdrop-blur-md">
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white font-black text-xs border border-white/10 shadow-inner">
-            {absentIds.size}
-          </div>
-          <div className="flex flex-col">
-            <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter leading-none opacity-80">Absentees</span>
-            <span className="text-xs font-black text-white leading-none mt-1.5">
-              {absentIds.size} <span className="text-white/30 ml-0.5">Total</span>
-            </span>
-          </div>
-        </div>
-
-        <div className="h-8 w-px bg-white/10 mx-1" />
-
-        <div className="flex-1 flex justify-end">
-          <AttendanceSyncDialog
-            isOpen={isConfirmOpen}
-            onOpenChange={setIsConfirmOpen}
-            onSync={handleSave}
-            isSaving={isSaving}
-            stats={stats}
-            lecture={selectedLecture || 'Subject'}
-            date={date}
-            sampleAbsentRoll={students.find(s => absentIds.has(s.id))?.roll_number}
-            triggerClassName="h-11 px-6 rounded-full bg-white text-slate-900 hover:bg-slate-50 text-[11px] font-black shadow-xl border-none shrink-0 active:scale-95 transition-all"
-          />
-        </div>
+        {/* Confirmation Modal */}
+        <AttendanceSyncDialog
+          isOpen={isConfirmOpen}
+          onOpenChange={setIsConfirmOpen}
+          onSync={() => saveMutation.mutate()}
+          isSaving={saveMutation.isPending}
+          stats={{ present: presentCount, absent: absentCount, od: odCount }}
+          lecture={selectedLecture}
+          date={date}
+          sampleAbsentRoll={students.find((s: any) => absentIds.has(s.id))?.roll_number}
+        />
       </div>
-    </>
+    </PageTransition>
   );
-}
-
-function Badge({ children, variant = "default", className, ...props }: any) {
-  return <span className={cn("inline-flex items-center justify-center", className)} {...props}>{children}</span>;
 }
