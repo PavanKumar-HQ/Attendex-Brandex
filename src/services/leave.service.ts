@@ -1,4 +1,4 @@
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 import { WorkflowStatus } from "./workflow.service";
 
 export type LeaveType = "MEDICAL" | "ON_DUTY" | "FAMILY_EMERGENCY" | "SPORTS" | "CASUAL";
@@ -21,7 +21,7 @@ export interface LeaveRequestRecord {
 
 export const leaveService = {
   /**
-   * Parent/Student submits a leave request with automatic teacher assignment.
+   * Parent/Student submits a leave request with automatic database recording.
    */
   async submitLeave(payload: {
     studentId: string;
@@ -41,25 +41,18 @@ export const leaveService = {
       return { success: false, message: "Please provide a descriptive reason (minimum 5 characters)." };
     }
 
-    if (!isSupabaseConfigured) {
-      return { 
-        success: true, 
-        message: "Leave application submitted and routed to Class Teacher (Demo Mode).",
-        leaveId: `demo-leave-${Date.now()}`
-      };
-    }
-
     try {
       const { data: { user } } = await supabase.auth.getUser();
       const institutionId = "00000000-0000-0000-0000-000000000001";
+      const submittedBy = user?.id || "00000000-0000-0000-0000-000000000004";
 
-      // 1. Create domain leave_request
+      // 1. Create domain leave_request record in PostgreSQL
       const { data: leave, error: leaveErr } = await supabase
         .from("leave_requests")
         .insert({
           institution_id: institutionId,
           student_id: payload.studentId,
-          submitted_by: user?.id || "00000000-0000-0000-0000-000000000004",
+          submitted_by: submittedBy,
           leave_type: payload.leaveType,
           start_date: payload.startDate,
           end_date: payload.endDate,
@@ -70,7 +63,9 @@ export const leaveService = {
         .select("id")
         .single();
 
-      if (leaveErr || !leave) throw leaveErr || new Error("Failed to create leave record.");
+      if (leaveErr || !leave) {
+        throw leaveErr || new Error("Failed to insert leave record into database.");
+      }
 
       // 2. Automatically create approval task for Teacher / Principal
       const { error: taskErr } = await supabase
@@ -96,7 +91,7 @@ export const leaveService = {
         });
       }
 
-      return { success: true, message: "Leave request submitted to Class Teacher.", leaveId: leave.id };
+      return { success: true, message: "Leave request recorded and routed to Class Teacher.", leaveId: leave.id };
     } catch (err: any) {
       return { success: false, message: err.message || "Failed to submit leave request." };
     }
@@ -106,10 +101,6 @@ export const leaveService = {
    * Parent cancels a pending leave request.
    */
   async cancelLeave(leaveId: string): Promise<{ success: boolean; message: string }> {
-    if (!isSupabaseConfigured) {
-      return { success: true, message: "Leave request cancelled." };
-    }
-
     try {
       const { error } = await supabase
         .from("leave_requests")
@@ -131,15 +122,11 @@ export const leaveService = {
   },
 
   /**
-   * Fetches leave applications for a student.
+   * Fetches real leave applications from PostgreSQL.
    */
   async getStudentLeaves(studentId?: string): Promise<LeaveRequestRecord[]> {
-    if (!isSupabaseConfigured) {
-      return this.getMockLeaves();
-    }
-
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("leave_requests")
         .select(`
           id,
@@ -152,19 +139,29 @@ export const leaveService = {
           status,
           decided_by,
           decision_reason,
-          created_at
+          created_at,
+          students:student_id (
+            name,
+            roll_number
+          )
         `)
         .order("created_at", { ascending: false });
 
-      if (error || !data || data.length === 0) {
-        return this.getMockLeaves();
+      if (studentId) {
+        query = query.eq("student_id", studentId);
+      }
+
+      const { data, error } = await query;
+
+      if (error || !data) {
+        return [];
       }
 
       return data.map((l: any) => ({
         id: l.id,
         studentId: l.student_id,
-        studentName: "Rahul Kumar",
-        rollNumber: "21CS042",
+        studentName: l.students?.name || "Student",
+        rollNumber: l.students?.roll_number || "21CS042",
         leaveType: l.leave_type as LeaveType,
         startDate: l.start_date,
         endDate: l.end_date,
@@ -176,37 +173,7 @@ export const leaveService = {
         createdAt: l.created_at
       }));
     } catch {
-      return this.getMockLeaves();
+      return [];
     }
-  },
-
-  getMockLeaves(): LeaveRequestRecord[] {
-    return [
-      {
-        id: "leave-101",
-        studentId: "stud-1",
-        studentName: "Rahul Kumar",
-        rollNumber: "21CS042",
-        leaveType: "MEDICAL",
-        startDate: "2026-09-05",
-        endDate: "2026-09-07",
-        reason: "High viral fever. Medical prescription attached for attendance condonation.",
-        status: "PENDING",
-        createdAt: "2026-09-01T14:10:00Z"
-      },
-      {
-        id: "leave-102",
-        studentId: "stud-1",
-        studentName: "Rahul Kumar",
-        rollNumber: "21CS042",
-        leaveType: "ON_DUTY",
-        startDate: "2026-08-20",
-        endDate: "2026-08-21",
-        reason: "Participated in National Inter-University Hackathon at IIT Bombay.",
-        status: "APPROVED",
-        decisionReason: "Verified with Hackathon participation certificate.",
-        createdAt: "2026-08-18T10:00:00Z"
-      }
-    ];
   }
 };

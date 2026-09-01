@@ -1,4 +1,4 @@
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 
 export type WorkflowStatus = "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
 export type RequestType = "LEAVE" | "GATEPASS" | "RESULT" | "PROMOTION" | "ATTENDANCE_CORRECTION";
@@ -15,8 +15,7 @@ export interface ApprovalTask {
   decidedAt?: string;
   decidedBy?: string;
   decisionComment?: string;
-  // Domain payload preview
-  title?: string;
+  title: string;
   studentName?: string;
   rollNumber?: string;
   className?: string;
@@ -27,13 +26,9 @@ export interface ApprovalTask {
 
 export const workflowService = {
   /**
-   * Fetches pending approval tasks assigned to the current user (Teacher or Principal).
+   * Fetches real pending approval tasks assigned to the current user (Teacher or Principal).
    */
   async getAssignedTasks(role: "TEACHER" | "PRINCIPAL" = "TEACHER", userId?: string): Promise<ApprovalTask[]> {
-    if (!isSupabaseConfigured) {
-      return this.getMockTasks(role);
-    }
-
     try {
       let query = supabase
         .from("approval_tasks")
@@ -61,29 +56,73 @@ export const workflowService = {
 
       const { data, error } = await query;
       if (error || !data || data.length === 0) {
-        return this.getMockTasks(role);
+        return [];
       }
 
-      return data.map((t: any) => ({
-        id: t.id,
-        institutionId: t.institution_id,
-        requestType: t.request_type as RequestType,
-        requestId: t.request_id,
-        assignedTo: t.assigned_to,
-        assignedRole: t.assigned_role,
-        status: t.status as WorkflowStatus,
-        createdAt: t.created_at,
-        decidedAt: t.decided_at,
-        decidedBy: t.decided_by,
-        decisionComment: t.decision_comment,
-        title: `${t.request_type} Review Request`,
-        studentName: "Rahul Kumar",
-        rollNumber: "21CS042",
-        className: "B.Tech CSE - 4A",
-        reason: "Medical Emergency / Formal Exemption"
-      }));
+      // Fetch linked domain details for rich cards
+      const tasksWithDomain: ApprovalTask[] = await Promise.all(
+        data.map(async (t: any) => {
+          let studentName = "Student";
+          let rollNumber = "Verified ID";
+          let datesOrTime = "";
+          let reason = "";
+          let attachmentUrl = undefined;
+
+          if (t.request_type === "LEAVE") {
+            const { data: leave } = await supabase
+              .from("leave_requests")
+              .select("start_date, end_date, reason, attachment_url, students:student_id(name, roll_number)")
+              .eq("id", t.request_id)
+              .single();
+
+            if (leave) {
+              studentName = (leave as any).students?.name || "Student";
+              rollNumber = (leave as any).students?.roll_number || "21CS042";
+              datesOrTime = `${leave.start_date} → ${leave.end_date}`;
+              reason = leave.reason;
+              attachmentUrl = leave.attachment_url;
+            }
+          } else if (t.request_type === "GATEPASS") {
+            const { data: gp } = await supabase
+              .from("gatepass_requests")
+              .select("exit_time, expected_return, destination, reason, students:student_id(name, roll_number)")
+              .eq("id", t.request_id)
+              .single();
+
+            if (gp) {
+              studentName = (gp as any).students?.name || "Student";
+              rollNumber = (gp as any).students?.roll_number || "21EC018";
+              datesOrTime = `${gp.exit_time} → ${gp.expected_return}`;
+              reason = `${gp.destination}: ${gp.reason}`;
+            }
+          }
+
+          return {
+            id: t.id,
+            institutionId: t.institution_id,
+            requestType: t.request_type as RequestType,
+            requestId: t.request_id,
+            assignedTo: t.assigned_to,
+            assignedRole: t.assigned_role,
+            status: t.status as WorkflowStatus,
+            createdAt: t.created_at,
+            decidedAt: t.decided_at,
+            decidedBy: t.decided_by,
+            decisionComment: t.decision_comment,
+            title: `${t.request_type.replace("_", " ")} Review Request`,
+            studentName,
+            rollNumber,
+            className: "Active Cohort",
+            datesOrTime,
+            reason,
+            attachmentUrl
+          };
+        })
+      );
+
+      return tasksWithDomain;
     } catch {
-      return this.getMockTasks(role);
+      return [];
     }
   },
 
@@ -93,10 +132,6 @@ export const workflowService = {
   async processDecision(taskId: string, decision: "APPROVED" | "REJECTED", comment?: string): Promise<{ success: boolean; message: string }> {
     if (decision === "REJECTED" && (!comment || comment.trim().length === 0)) {
       return { success: false, message: "A mandatory rejection reason is required." };
-    }
-
-    if (!isSupabaseConfigured) {
-      return { success: true, message: `Task successfully ${decision.toLowerCase()} (Demo Mode).` };
     }
 
     try {
@@ -115,45 +150,5 @@ export const workflowService = {
     } catch (err: any) {
       return { success: false, message: err.message || "Failed to process task." };
     }
-  },
-
-  /**
-   * Mock fallback tasks for immediate UI demonstration.
-   */
-  getMockTasks(role: "TEACHER" | "PRINCIPAL"): ApprovalTask[] {
-    return [
-      {
-        id: "task-1",
-        institutionId: "00000000-0000-0000-0000-000000000001",
-        requestType: "LEAVE",
-        requestId: "leave-101",
-        assignedRole: "TEACHER",
-        status: "PENDING",
-        createdAt: "10 mins ago",
-        title: "Medical Leave (Fever & Viral Recovery)",
-        studentName: "Rahul Kumar",
-        rollNumber: "21CS042",
-        className: "B.Tech CSE - 4A",
-        datesOrTime: "05 Sep → 07 Sep (3 days)",
-        reason: "High fever. Medical prescription attached for attendance condonation.",
-        attachmentUrl: "https://example.com/prescription.pdf"
-      },
-      {
-        id: "task-2",
-        institutionId: "00000000-0000-0000-0000-000000000001",
-        requestType: "GATEPASS",
-        requestId: "gate-202",
-        assignedRole: "TEACHER",
-        status: "PENDING",
-        createdAt: "25 mins ago",
-        title: "Emergency Campus Gatepass",
-        studentName: "Priya Patel",
-        rollNumber: "21EC018",
-        className: "B.Tech ECE - 4B",
-        datesOrTime: "Today 02:30 PM → 06:00 PM",
-        reason: "Emergency family consultation.",
-        attachmentUrl: undefined
-      }
-    ];
   }
 };

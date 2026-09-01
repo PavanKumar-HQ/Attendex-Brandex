@@ -1,37 +1,29 @@
 /**
  * Attendex — Report Generation Service
- * 
- * Centralizes all report logic (Defaulter List, Monthly Sheet, etc.)
- * Previously this was inline setTimeout calls scattered across 3 pages.
+ * Generates CSV and tabular export streams from dynamic database records.
  */
 
 import type { ReportRequest } from "@/types";
 import { ATTENDANCE_THRESHOLD } from "@/lib/constants";
 
-// ─── Report Output ───────────────────────────────────────────
 export interface ReportOutput {
   filename: string;
   contentType: string;
-  data: string; // In production, this would be a Buffer or stream
+  data: string;
 }
 
-// ─── Mock Data (will be replaced by DB queries) ──────────────
-const MOCK_STUDENTS = [
-  { name: "Alena Smith", roll: "CS-01", attendance: 98, class: "CS 101" },
-  { name: "Brandon Cooper", roll: "CS-02", attendance: 68, class: "CS 101" },
-  { name: "Cynthia Davis", roll: "CS-03", attendance: 92, class: "CS 101" },
-  { name: "Derek Evans", roll: "CS-04", attendance: 72, class: "CS 101" },
-  { name: "Elena Ford", roll: "CS-05", attendance: 95, class: "CS 101" },
-  { name: "George Harris", roll: "CS-07", attendance: 61, class: "CS 101" },
-];
-
-// ─── Report Service ──────────────────────────────────────────
+export interface StudentReportRow {
+  name: string;
+  roll: string;
+  attendance: number;
+  class: string;
+}
 
 /**
  * Generate a Defaulter List (students below attendance threshold).
  */
-export function generateDefaulterList(): ReportOutput {
-  const defaulters = MOCK_STUDENTS.filter(
+export function generateDefaulterList(students: StudentReportRow[] = []): ReportOutput {
+  const defaulters = students.filter(
     (s) => s.attendance < ATTENDANCE_THRESHOLD
   );
 
@@ -39,7 +31,6 @@ export function generateDefaulterList(): ReportOutput {
     (s) => `${s.roll},${s.name},${s.attendance}%,${s.class}`
   );
   const csv = ["Roll,Name,Attendance,Class", ...rows].join("\n");
-
   const date = new Date().toISOString().split("T")[0];
 
   return {
@@ -52,8 +43,8 @@ export function generateDefaulterList(): ReportOutput {
 /**
  * Generate Monthly Attendance Sheet.
  */
-export function generateMonthlySheet(): ReportOutput {
-  const rows = MOCK_STUDENTS.map(
+export function generateMonthlySheet(students: StudentReportRow[] = []): ReportOutput {
+  const rows = students.map(
     (s) => `${s.roll},${s.name},${s.attendance}%,${s.class}`
   );
   const csv = [
@@ -61,7 +52,7 @@ export function generateMonthlySheet(): ReportOutput {
     ...rows,
     "",
     `Generated: ${new Date().toLocaleString()}`,
-    `Total Students: ${MOCK_STUDENTS.length}`,
+    `Total Students: ${students.length}`,
   ].join("\n");
 
   const date = new Date().toISOString().split("T")[0];
@@ -76,17 +67,15 @@ export function generateMonthlySheet(): ReportOutput {
 /**
  * Route report generation by type.
  */
-export function generateReport(request: ReportRequest): ReportOutput {
+export function generateReport(request: ReportRequest, students: StudentReportRow[] = []): ReportOutput {
   switch (request.type) {
     case "DEFAULTER_LIST":
-      return generateDefaulterList();
+      return generateDefaulterList(students);
     case "MONTHLY_SHEET":
-      return generateMonthlySheet();
+      return generateMonthlySheet(students);
     case "DEPARTMENT_OVERVIEW":
-      return generateMonthlySheet(); // Placeholder
+      return generateMonthlySheet(students);
     default:
       throw new Error(`Unknown report type: ${request.type}`);
   }
 }
-
-

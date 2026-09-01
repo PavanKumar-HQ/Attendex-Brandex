@@ -1,4 +1,4 @@
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 import { WorkflowStatus } from "./workflow.service";
 
 export interface GatepassRecord {
@@ -19,7 +19,7 @@ export interface GatepassRecord {
 
 export const gatepassService = {
   /**
-   * Student submits a gatepass application.
+   * Student submits a real gatepass application into PostgreSQL.
    */
   async submitGatepass(payload: {
     studentId: string;
@@ -31,14 +31,6 @@ export const gatepassService = {
   }): Promise<{ success: boolean; message: string; gatepassId?: string }> {
     if (!payload.destination || !payload.reason) {
       return { success: false, message: "Please provide both destination and purpose." };
-    }
-
-    if (!isSupabaseConfigured) {
-      return { 
-        success: true, 
-        message: "Gatepass request submitted to Class Teacher & Warden (Demo Mode).",
-        gatepassId: `gp-demo-${Date.now()}`
-      };
     }
 
     try {
@@ -61,7 +53,9 @@ export const gatepassService = {
         .select("id")
         .single();
 
-      if (gpErr || !gp) throw gpErr || new Error("Failed to create gatepass record.");
+      if (gpErr || !gp) {
+        throw gpErr || new Error("Failed to create gatepass record in database.");
+      }
 
       // Create workflow task
       await supabase.from("approval_tasks").insert({
@@ -78,26 +72,37 @@ export const gatepassService = {
     }
   },
 
+  /**
+   * Fetches real gatepass applications.
+   */
   async getStudentGatepasses(studentId?: string): Promise<GatepassRecord[]> {
-    if (!isSupabaseConfigured) {
-      return this.getMockGatepasses();
-    }
-
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("gatepass_requests")
-        .select("*")
+        .select(`
+          *,
+          students:student_id (
+            name,
+            roll_number
+          )
+        `)
         .order("created_at", { ascending: false });
 
-      if (error || !data || data.length === 0) {
-        return this.getMockGatepasses();
+      if (studentId) {
+        query = query.eq("student_id", studentId);
+      }
+
+      const { data, error } = await query;
+
+      if (error || !data) {
+        return [];
       }
 
       return data.map((gp: any) => ({
         id: gp.id,
         studentId: gp.student_id,
-        studentName: "Rahul Kumar",
-        rollNumber: "21CS042",
+        studentName: gp.students?.name || "Student",
+        rollNumber: gp.students?.roll_number || "21EC018",
         exitTime: gp.exit_time,
         expectedReturn: gp.expected_return,
         destination: gp.destination,
@@ -109,26 +114,7 @@ export const gatepassService = {
         createdAt: gp.created_at
       }));
     } catch {
-      return this.getMockGatepasses();
+      return [];
     }
-  },
-
-  getMockGatepasses(): GatepassRecord[] {
-    return [
-      {
-        id: "gp-101",
-        studentId: "stud-1",
-        studentName: "Rahul Kumar",
-        rollNumber: "21CS042",
-        exitTime: "Today 02:30 PM",
-        expectedReturn: "Today 06:00 PM",
-        destination: "Apollo City Clinic & Diagnostics",
-        reason: "Medical health checkup and doctor consultation.",
-        emergencyContact: "+91 98450 12345 (Father)",
-        qrNonce: "GP-7X9K2L",
-        status: "PENDING",
-        createdAt: "2026-09-01T14:20:00Z"
-      }
-    ];
   }
 };

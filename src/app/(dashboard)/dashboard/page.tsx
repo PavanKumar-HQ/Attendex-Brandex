@@ -16,6 +16,7 @@ import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { useStudents, useClasses, useDashboardStats } from "@/hooks/use-academic";
 import { AtRiskPanel } from "@/components/dashboard/at-risk-panel";
+import { TeacherActionQueue } from "@/components/dashboard/teacher-action-queue";
 
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -262,94 +263,7 @@ export default function DashboardPage() {
           </Card>
 
           {/* Section: Teacher Action Queue for Leaves and Gatepasses */}
-          <Card className="p-6 border-slate-200 shadow-sm rounded-xl bg-white space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div>
-                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-blue-600" />
-                  <span>Assigned Action Items & Approvals</span>
-                </h3>
-                <p className="text-xs text-slate-500 font-medium mt-0.5">Parent medical exemptions & student gatepass requests awaiting your review</p>
-              </div>
-              <span className="text-xs font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
-                2 Pending Review
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200/80 space-y-2.5 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 uppercase">
-                    MEDICAL LEAVE (3 DAYS)
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-medium">10 mins ago</span>
-                </div>
-                <div className="space-y-1">
-                  <h4 className="font-bold text-slate-900 text-sm">Rahul Kumar (21CS042)</h4>
-                  <p className="text-slate-600">Viral fever recovery • Medical certificate submitted.</p>
-                  <p className="text-[11px] font-semibold text-slate-500">Dates: 05 Sep → 07 Sep (Attendance Condonation)</p>
-                </div>
-                <div className="pt-2 border-t border-slate-200 flex items-center justify-end gap-2">
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => {
-                      const reason = window.prompt("Enter mandatory reason for rejection:");
-                      if (reason) {
-                        toast.info("Medical leave rejected and parent notified.");
-                      }
-                    }}
-                    className="h-8 text-rose-600 border-slate-200 hover:bg-rose-50 text-xs font-semibold rounded-lg px-3"
-                  >
-                    Reject
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    onClick={() => toast.success("Medical leave approved. Attendance condonation credit recorded in audit ledger.")}
-                    className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg px-3"
-                  >
-                    Approve
-                  </Button>
-                </div>
-              </div>
-
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200/80 space-y-2.5 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 uppercase">
-                    CAMPUS GATEPASS
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-medium">25 mins ago</span>
-                </div>
-                <div className="space-y-1">
-                  <h4 className="font-bold text-slate-900 text-sm">Priya Patel (21EC018)</h4>
-                  <p className="text-slate-600">Family emergency consultation • Return by 06:00 PM.</p>
-                  <p className="text-[11px] font-semibold text-slate-500">Parent Contact: +91 98450 12345</p>
-                </div>
-                <div className="pt-2 border-t border-slate-200 flex items-center justify-end gap-2">
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => {
-                      const reason = window.prompt("Enter mandatory reason for rejection:");
-                      if (reason) {
-                        toast.info("Gatepass rejected.");
-                      }
-                    }}
-                    className="h-8 text-rose-600 border-slate-200 hover:bg-rose-50 text-xs font-semibold rounded-lg px-3"
-                  >
-                    Reject
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    onClick={() => toast.success("Gatepass approved. Single-use QR nonce generated for gate security.")}
-                    className="h-8 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg px-3"
-                  >
-                    Approve
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </Card>
+          <TeacherActionQueue />
 
           {/* Grid of Action Widgets */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
