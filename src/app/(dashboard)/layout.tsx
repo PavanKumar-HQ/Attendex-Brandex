@@ -1,6 +1,6 @@
 import { UnifiedSidebar } from "@/components/layout/unified-sidebar";
 import { CommandMenu } from "@/components/ui/command-menu";
-import { createClient } from "@/utils/supabase/server";
+import { getSupabaseServer } from "@/lib/auth-guard";
 import { redirect } from "next/navigation";
 import { ShieldAlert, Hourglass } from "lucide-react";
 import { LogoutButton } from "@/components/auth/logout-button";

@@ -62,3 +62,27 @@ test("SGPA Calculation: Accurate credit-weighted sum", () => {
   assert.equal(result.totalCredits, 12);
   assert.equal(result.passedCredits, 12);
 });
+
+test("Continuous Assessment: Scale marks from 40 raw to 20 normalized scale", () => {
+  const result = calculateSubjectGrade({
+    cia1: 20,
+    cia2: 20,
+    test1: 30,
+    test2: 30,
+    assignment: 10,
+    credits: 3
+  });
+  // raw score = cia(40) + tests_normalized(30) + assignment(10) = 80 out of 100 => 80.0% => A+
+  assert.equal(result.grade, "A+");
+  assert.equal(result.gradePoints, 9);
+  assert.equal(result.passed, true);
+});
+
+test("Attendance Metrics: Shortage Alert boundary between 74.9% and 75.0%", () => {
+  const shortage = calculateAttendanceMetrics(74, 100, 75.0);
+  assert.equal(shortage.percentage, 74.0);
+  assert.equal(shortage.status, "Shortage Alert");
+  assert.equal(shortage.safeSkips, 0);
+  assert.ok(shortage.recoveryClasses > 0);
+});
+

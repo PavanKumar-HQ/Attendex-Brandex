@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/db/prisma';
+import { supabase } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,26 +16,24 @@ export async function GET(request: Request) {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     // Delete audit logs older than 30 days
-    const deletedLogs = await prisma.pointsAuditLog.deleteMany({
-      where: {
-        timestamp: {
-          lt: thirtyDaysAgo,
-        },
-      },
-    });
+    const { error, count } = await supabase
+      .from('audit_logs')
+      .delete({ count: 'exact' })
+      .lt('created_at', thirtyDaysAgo.toISOString());
+
+    if (error) {
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
 
     return NextResponse.json({
       success: true,
-      message: `Successfully cleared ${deletedLogs.count} old audit logs.`,
-      deletedCount: deletedLogs.count,
+      message: `Successfully cleared ${count || 0} old audit logs.`,
+      deletedCount: count || 0,
     });
-  } catch (error) {
-    console.error('Failed to clear old audit logs:', error);
+  } catch (error: any) {
     return NextResponse.json(
-      { success: false, error: 'Internal Server Error' },
+      { success: false, error: error.message || 'Internal Server Error' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
