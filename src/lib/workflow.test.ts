@@ -4,6 +4,7 @@ import { leaveService } from "@/services/leave.service";
 import { workflowService } from "@/services/workflow.service";
 import { gatepassService } from "@/services/gatepass.service";
 import { universalWorkflow } from "@/lib/workflow-engine";
+import { calculateFinalMarks, calculateAttendanceMarks, calculateCIAMarks, calculateTestMarks } from "@/services/marks.service";
 
 // ─── 1. Leave Domain & State Machine Tests ───────────────────────────────────
 
@@ -116,10 +117,31 @@ test("Workflow Engine: Gatepass submission produces cryptographic QR nonce", asy
   assert.match(gp!.qrNonce!, /^GP-/);
 });
 
-// ─── 3. Concurrency Protection & Idempotency Tests ───────────────────────────
+// ─── 3. Continuous Assessment & Marks Tests ─────────────────────────────────
+
+test("Marks Engine: CIA and attendance marks compute accurate 20-scale aggregate", () => {
+  const attendanceScore = calculateAttendanceMarks(92.5); // > 90% -> 5/5 marks
+  assert.equal(attendanceScore, 5);
+
+  const ciaScore = calculateCIAMarks(2.5, 2.5); // 5/5
+  assert.equal(ciaScore, 5);
+
+  const testScore = calculateTestMarks(40, 40); // 40/40 raw -> 10/10 weighted
+  assert.equal(testScore, 10);
+
+  const totalScore = calculateFinalMarks(attendanceScore, ciaScore, testScore);
+  assert.equal(totalScore, 20);
+});
+
+test("Marks Engine: Low attendance (<75%) yields minimum base band marks", () => {
+  const attendanceScore = calculateAttendanceMarks(72.0);
+  assert.equal(attendanceScore, 2);
+});
+
+// ─── 4. Concurrency Protection & Idempotency Tests ───────────────────────────
 
 test("Workflow Engine: Non-existent leave decision yields safe error", async () => {
-  const res = await universalWorkflow.decideLeave("NON-EXISTENT-ID-9999", "APPROVED");
+  const res = await universalWorkflow.decideLeave("c9999999-0000-4000-a000-000000000099", "APPROVED");
   assert.equal(res.success, false);
   assert.match(res.message, /not found/i);
 });

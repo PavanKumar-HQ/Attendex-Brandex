@@ -5,7 +5,11 @@ import { Toaster } from "@/components/ui/sonner";
 import { IosInstallPrompt } from "@/components/layout/ios-install-prompt";
 import { Providers } from "@/components/providers";
 
-const outfit = Outfit({ subsets: ["latin"] });
+const outfit = Outfit({ 
+  subsets: ["latin"],
+  display: "swap",
+  fallback: ["system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"]
+});
 
 export async function generateMetadata(): Promise<Metadata> {
   const brandName = "Attendex";
