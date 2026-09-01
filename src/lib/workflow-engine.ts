@@ -2,7 +2,7 @@
  * ATTENDEX — Universal Realtime Cross-Portal Workflow Engine
  * 
  * Provides end-to-end synchronization across Parent, Student, Teacher, and Principal portals.
- * Integrates Supabase PostgreSQL persistence with Cross-Tab BroadcastChannel telemetry.
+ * Integrates Supabase PostgreSQL persistence with Cross-Tab BroadcastChannel + Storage + CustomEvent telemetry.
  */
 
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
@@ -47,11 +47,33 @@ export interface UniversalGatepassRequest {
 const STORAGE_KEY_LEAVES = "attendex_universal_leaves_v2";
 const STORAGE_KEY_GATEPASSES = "attendex_universal_gatepasses_v2";
 const CHANNEL_NAME = "attendex_live_cross_portal_sync";
+const LOCAL_EVENT_NAME = "attendex_workflow_event";
 
 // Shared Broadcast Channel across tabs
 let broadcastChannel: BroadcastChannel | null = null;
 if (typeof window !== "undefined" && "BroadcastChannel" in window) {
-  broadcastChannel = new BroadcastChannel(CHANNEL_NAME);
+  try {
+    broadcastChannel = new BroadcastChannel(CHANNEL_NAME);
+  } catch {
+    // ignore
+  }
+}
+
+function dispatchRealtimeEvent(event: any) {
+  if (broadcastChannel) {
+    try {
+      broadcastChannel.postMessage(event);
+    } catch {
+      // ignore
+    }
+  }
+  if (typeof window !== "undefined") {
+    try {
+      window.dispatchEvent(new CustomEvent(LOCAL_EVENT_NAME, { detail: event }));
+    } catch {
+      // ignore
+    }
+  }
 }
 
 // Initial seed records
@@ -154,13 +176,11 @@ export const universalWorkflow = {
       localStorage.setItem(STORAGE_KEY_LEAVES, JSON.stringify(updated));
     }
 
-    // 2. Broadcast realtime event to all other open tabs/portals
-    if (broadcastChannel) {
-      broadcastChannel.postMessage({
-        type: "LEAVE_SUBMITTED",
-        payload: newRecord
-      });
-    }
+    // 2. Dispatch realtime event to all tabs and local window
+    dispatchRealtimeEvent({
+      type: "LEAVE_SUBMITTED",
+      payload: newRecord
+    });
 
     // 3. Sync to Supabase PostgreSQL in background
     try {
@@ -220,14 +240,12 @@ export const universalWorkflow = {
       localStorage.setItem(STORAGE_KEY_LEAVES, JSON.stringify(updated));
     }
 
-    if (broadcastChannel) {
-      broadcastChannel.postMessage({
-        type: "LEAVE_DECIDED",
-        leaveId,
-        decision,
-        notes
-      });
-    }
+    dispatchRealtimeEvent({
+      type: "LEAVE_DECIDED",
+      leaveId,
+      decision,
+      notes
+    });
 
     try {
       if (isSupabaseConfigured) {
@@ -268,9 +286,7 @@ export const universalWorkflow = {
       localStorage.setItem(STORAGE_KEY_LEAVES, JSON.stringify(updated));
     }
 
-    if (broadcastChannel) {
-      broadcastChannel.postMessage({ type: "LEAVE_CANCELLED", leaveId });
-    }
+    dispatchRealtimeEvent({ type: "LEAVE_CANCELLED", leaveId });
 
     return { success: true, message: "Leave request cancelled." };
   },
@@ -332,9 +348,7 @@ export const universalWorkflow = {
       localStorage.setItem(STORAGE_KEY_GATEPASSES, JSON.stringify(updated));
     }
 
-    if (broadcastChannel) {
-      broadcastChannel.postMessage({ type: "GATEPASS_SUBMITTED", payload: newRecord });
-    }
+    dispatchRealtimeEvent({ type: "GATEPASS_SUBMITTED", payload: newRecord });
 
     return {
       success: true,
@@ -364,9 +378,7 @@ export const universalWorkflow = {
       localStorage.setItem(STORAGE_KEY_GATEPASSES, JSON.stringify(updated));
     }
 
-    if (broadcastChannel) {
-      broadcastChannel.postMessage({ type: "GATEPASS_DECIDED", gpId, decision });
-    }
+    dispatchRealtimeEvent({ type: "GATEPASS_DECIDED", gpId, decision });
 
     return {
       success: true,
@@ -376,19 +388,42 @@ export const universalWorkflow = {
 
   /**
    * Realtime Event Listener Hook for components.
+   * Listens across BroadcastChannel, window CustomEvents, and Storage events.
    */
   subscribe(callback: (event: any) => void): () => void {
-    if (!broadcastChannel) {
-      return () => {};
-    }
-
-    const handler = (msg: MessageEvent) => {
+    const channelHandler = (msg: MessageEvent) => {
       callback(msg.data);
     };
 
-    broadcastChannel.addEventListener("message", handler);
+    const localHandler = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        callback(customEvent.detail);
+      }
+    };
+
+    const storageHandler = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY_LEAVES || e.key === STORAGE_KEY_GATEPASSES) {
+        callback({ type: "STORAGE_UPDATED", key: e.key });
+      }
+    };
+
+    if (broadcastChannel) {
+      broadcastChannel.addEventListener("message", channelHandler);
+    }
+    if (typeof window !== "undefined") {
+      window.addEventListener(LOCAL_EVENT_NAME, localHandler);
+      window.addEventListener("storage", storageHandler);
+    }
+
     return () => {
-      broadcastChannel?.removeEventListener("message", handler);
+      if (broadcastChannel) {
+        broadcastChannel.removeEventListener("message", channelHandler);
+      }
+      if (typeof window !== "undefined") {
+        window.removeEventListener(LOCAL_EVENT_NAME, localHandler);
+        window.removeEventListener("storage", storageHandler);
+      }
     };
   }
 };
