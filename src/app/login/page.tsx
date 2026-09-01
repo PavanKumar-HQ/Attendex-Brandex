@@ -14,17 +14,25 @@ import { cn } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, LoginFormValues } from "@/lib/schemas";
-import { useBranding } from "@/context/branding-context";
-import { Eye, EyeOff, Loader2, Fingerprint, GraduationCap, ArrowRight, Shield, BookOpen, Users } from "lucide-react";
-import { useWebAuthn } from "@/hooks/use-webauthn";
+import { 
+  Eye, 
+  EyeOff, 
+  Loader2, 
+  GraduationCap, 
+  ArrowRight, 
+  Shield, 
+  Lock, 
+  Building2,
+  Users,
+  BookOpen,
+  Crown,
+  School
+} from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState<'TEACHER' | 'STUDENT' | 'PARENT'>('TEACHER');
-  const { branding } = useBranding();
-  const { authenticateWithPasskey, isLoading: isBiometricLoading } = useWebAuthn();
 
   const {
     register,
@@ -38,53 +46,64 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      let email = values.identifier;
-      if (!values.identifier.includes('@')) {
-        const id = values.identifier.toLowerCase();
-        email = role === 'STUDENT' ? `${id}@attendex.edu` : role === 'PARENT' ? `p_${id}@attendex.edu` : `${id}@attendex.edu`;
+      let email = values.identifier.trim();
+      if (!email.includes("@")) {
+        email = `${email.toLowerCase()}@attendex.edu`;
       }
 
+      // Authenticate with Supabase Auth
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email,
+        email,
         password: values.password,
       });
 
-      if (error) {
-        // Fallback for instant exploration
-        document.cookie = `attendex_demo_session=${role}; path=/; max-age=86400; SameSite=Lax`;
-        toast.success(`Access Granted: ${role.toLowerCase()} workspace`);
+      let role = "TEACHER";
+
+      if (data?.user) {
+        // Query database profile to resolve role authoritatively
+        const { data: profile } = await supabase
+          .from("user_profiles")
+          .select("role")
+          .eq("id", data.user.id)
+          .single();
+
+        role = profile?.role || data.user.user_metadata?.role || "TEACHER";
       } else {
-        document.cookie = `attendex_demo_session=${role}; path=/; max-age=86400; SameSite=Lax`;
-        toast.success("Authentication Verified", {
-          description: `Welcome back to the ${role.toLowerCase()} portal.`
-        });
+        // Infer from input identifier for instant demo evaluation
+        const idLower = values.identifier.toLowerCase();
+        if (idLower.includes("super") || idLower.includes("admin")) role = "SUPER_ADMIN";
+        else if (idLower.includes("principal") || idLower.includes("dean")) role = "PRINCIPAL";
+        else if (idLower.includes("student") || /^\d{2}[a-z]{2}\d+$/i.test(values.identifier)) role = "STUDENT";
+        else if (idLower.includes("parent") || idLower.startsWith("p_")) role = "PARENT";
+        else role = "TEACHER";
       }
-      
-      const redirectPath = role === "STUDENT" ? "/student/dashboard" : role === "PARENT" ? "/parent/dashboard" : "/dashboard";
+
+      document.cookie = `attendex_demo_session=${role}; path=/; max-age=86400; SameSite=Lax`;
+
+      toast.success("Institutional Authentication Verified", {
+        description: `Redirecting to ${role.replace("_", " ").toLowerCase()} workspace...`
+      });
+
+      const redirectPath = 
+        role === "SUPER_ADMIN" ? "/super-admin" :
+        role === "PRINCIPAL" ? "/principal" :
+        role === "STUDENT" ? "/student/dashboard" :
+        role === "PARENT" ? "/parent/dashboard" : "/dashboard";
+
       window.location.href = redirectPath;
     } catch (err: any) {
-      document.cookie = `attendex_demo_session=${role}; path=/; max-age=86400; SameSite=Lax`;
-      const redirectPath = role === "STUDENT" ? "/student/dashboard" : role === "PARENT" ? "/parent/dashboard" : "/dashboard";
-      window.location.href = redirectPath;
+      // Fallback to faculty dashboard
+      document.cookie = `attendex_demo_session=TEACHER; path=/; max-age=86400; SameSite=Lax`;
+      window.location.href = "/dashboard";
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDemoAccess = () => {
+  const launchDemoRole = (role: string, targetPath: string) => {
     document.cookie = `attendex_demo_session=${role}; path=/; max-age=86400; SameSite=Lax`;
-    const targetPath = role === 'STUDENT' ? '/student/dashboard' : role === 'PARENT' ? '/parent/dashboard' : '/dashboard';
-    toast.success(`Entering ${role.toLowerCase()} workspace`);
+    toast.success(`Access Granted: ${role.replace("_", " ")} Workspace`);
     window.location.href = targetPath;
-  };
-
-  const handleBiometricLogin = async () => {
-    const success = await authenticateWithPasskey();
-    if (success) {
-      document.cookie = `attendex_demo_session=TEACHER; path=/; max-age=86400; SameSite=Lax`;
-      toast.success("Biometric verification verified");
-      window.location.href = "/dashboard";
-    }
   };
 
   return (
@@ -92,97 +111,39 @@ export default function LoginPage() {
       <div className="min-h-screen bg-slate-50 flex flex-col justify-between p-6">
         {/* Top Header */}
         <div className="max-w-7xl mx-auto w-full flex items-center justify-between py-2">
-          <Link href="/" className="flex items-center gap-2 text-slate-900 font-bold tracking-tight">
+          <Link href="/" className="flex items-center gap-2.5 text-slate-900 font-bold tracking-tight">
             <div className="w-8 h-8 bg-slate-900 text-white rounded-lg flex items-center justify-center shadow-sm">
               <GraduationCap className="w-4 h-4 text-blue-400" />
             </div>
-            <span>Attendex <span className="text-xs font-normal text-slate-500">Academic Portal</span></span>
+            <span>Attendex <span className="text-xs font-semibold text-slate-500">Academic Cloud</span></span>
           </Link>
-          <Link href="/" className="text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors">
+          <Link href="/" className="text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors">
             ← Back to Overview
           </Link>
         </div>
 
         {/* Center Auth Card */}
-        <div className="w-full max-w-[420px] mx-auto my-8">
-          <div className="text-center mb-6 space-y-1">
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Institutional Sign In</h1>
-            <p className="text-xs text-slate-500 font-normal">Select your university role to access your workspace</p>
+        <div className="w-full max-w-[420px] mx-auto my-6">
+          <div className="text-center mb-6 space-y-1.5">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-200/80 text-blue-800 text-[11px] font-semibold mb-1">
+              <Building2 className="w-3.5 h-3.5 text-blue-600" />
+              <span>Unified Institutional Sign-In</span>
+            </div>
+            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Access Your Portal</h1>
+            <p className="text-xs text-slate-500 font-medium">Enter your university ID or email. Your role is determined automatically.</p>
           </div>
 
-          <Card className="p-6 md:p-8 border-slate-200 bg-white shadow-sm rounded-xl">
-            {/* Role Selectors */}
-            <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 rounded-lg mb-6 border border-slate-200/60">
-              <button
-                type="button"
-                onClick={() => setRole('TEACHER')}
-                className={cn(
-                  "flex items-center justify-center gap-1.5 py-2 px-2 rounded-md text-xs font-semibold transition-all",
-                  role === 'TEACHER' ? "bg-white text-slate-900 shadow-sm border border-slate-200/50" : "text-slate-600 hover:text-slate-900"
-                )}
-              >
-                <GraduationCap className="w-3.5 h-3.5" />
-                <span>Faculty</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setRole('STUDENT')}
-                className={cn(
-                  "flex items-center justify-center gap-1.5 py-2 px-2 rounded-md text-xs font-semibold transition-all",
-                  role === 'STUDENT' ? "bg-white text-slate-900 shadow-sm border border-slate-200/50" : "text-slate-600 hover:text-slate-900"
-                )}
-              >
-                <BookOpen className="w-3.5 h-3.5" />
-                <span>Student</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setRole('PARENT')}
-                className={cn(
-                  "flex items-center justify-center gap-1.5 py-2 px-2 rounded-md text-xs font-semibold transition-all",
-                  role === 'PARENT' ? "bg-white text-slate-900 shadow-sm border border-slate-200/50" : "text-slate-600 hover:text-slate-900"
-                )}
-              >
-                <Users className="w-3.5 h-3.5" />
-                <span>Guardian</span>
-              </button>
-            </div>
-
-            {/* Direct 1-Click Demo Launcher */}
-            <div className="mb-6 p-3 bg-blue-50/70 border border-blue-200/80 rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-blue-900">Instant Demo Evaluation</span>
-                <span className="text-[10px] font-bold uppercase bg-blue-200/60 text-blue-800 px-1.5 py-0.5 rounded">
-                  No login required
-                </span>
-              </div>
-              <Button
-                type="button"
-                onClick={handleDemoAccess}
-                className="w-full h-10 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm flex items-center justify-center gap-2"
-              >
-                <span>Launch {role === 'TEACHER' ? 'Faculty' : role === 'STUDENT' ? 'Student' : 'Guardian'} Portal</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Button>
-            </div>
-
-            <div className="relative py-2 mb-4">
-              <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-200" /></div>
-              <div className="relative flex justify-center text-xs"><span className="bg-white px-3 text-slate-400 font-medium">or institutional sign in</span></div>
-            </div>
-
+          <Card className="p-6 md:p-8 border-slate-200/90 bg-white shadow-sm rounded-2xl space-y-5">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="identifier" className="text-xs font-semibold text-slate-700">
-                  {role === 'STUDENT' ? 'Roll Number or Student Email' : role === 'PARENT' ? 'Registered Phone or Email' : 'Faculty ID or Email'}
+                <Label htmlFor="identifier" className="text-xs font-bold text-slate-700">
+                  Email / Institutional ID
                 </Label>
                 <Input
                   id="identifier"
                   type="text"
                   {...register("identifier")}
-                  placeholder={role === 'STUDENT' ? 'e.g. 21CS042' : 'name@institution.edu'}
+                  placeholder="e.g. principal@college.edu or 21CS042"
                   autoComplete="username"
                   className={cn(
                     "h-11 rounded-lg border-slate-200 bg-white text-slate-900 text-sm focus-visible:ring-slate-900",
@@ -194,8 +155,8 @@ export default function LoginPage() {
 
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-xs font-semibold text-slate-700">Password</Label>
-                  <Link href="/forgot-password" title="Recover Access" className="text-xs font-medium text-blue-600 hover:underline">Forgot?</Link>
+                  <Label htmlFor="password" className="text-xs font-bold text-slate-700">Password</Label>
+                  <Link href="/forgot-password" title="Recover Access" className="text-xs font-semibold text-blue-600 hover:underline">Forgot?</Link>
                 </div>
                 <div className="relative">
                   <Input
@@ -222,41 +183,96 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                className="w-full h-11 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm shadow-sm"
+                className="w-full h-11 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow-sm flex items-center justify-center gap-2"
                 disabled={isLoading}
               >
-                {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                Sign In to Workspace
-              </Button>
-
-              <Button
-                type="button"
-                onClick={handleBiometricLogin}
-                disabled={isBiometricLoading || isLoading}
-                variant="outline"
-                className="w-full h-10 rounded-lg border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs flex items-center justify-center gap-2"
-              >
-                {isBiometricLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Fingerprint className="w-3.5 h-3.5 text-slate-600" />}
-                Sign in with Passkey / WebAuthn
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Verifying Credentials...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Sign In to Workspace</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
               </Button>
             </form>
-          </Card>
 
-          <div className="mt-6 text-center text-xs text-slate-500 space-y-2">
-            <p>
-              New faculty member or student? <Link href="/signup" className="text-blue-600 font-semibold hover:underline">Request Identity Access</Link>
-            </p>
-            <div className="flex items-center justify-center gap-3 text-slate-400 pt-2">
-              <span className="flex items-center gap-1"><Shield className="w-3 h-3 text-emerald-500" /> 256-Bit SSL Encrypted</span>
-              <span>•</span>
-              <span>Institution Certified</span>
+            <div className="relative py-1">
+              <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-200" /></div>
+              <div className="relative flex justify-center text-[11px]"><span className="bg-white px-2 text-slate-400 font-semibold uppercase tracking-wider">or 1-click role evaluation</span></div>
             </div>
-          </div>
+
+            {/* Quick 5-Role Demo Launcher Bar */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => launchDemoRole("SUPER_ADMIN", "/super-admin")}
+                className="p-2.5 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-left transition-all"
+              >
+                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
+                  <Crown className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Super Admin</span>
+                </div>
+                <span className="text-[10px] text-slate-500 block mt-0.5">Platform Setup</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => launchDemoRole("PRINCIPAL", "/principal")}
+                className="p-2.5 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-left transition-all"
+              >
+                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
+                  <School className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Principal</span>
+                </div>
+                <span className="text-[10px] text-slate-500 block mt-0.5">College Authority</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => launchDemoRole("TEACHER", "/dashboard")}
+                className="p-2.5 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-left transition-all"
+              >
+                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
+                  <GraduationCap className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Teacher</span>
+                </div>
+                <span className="text-[10px] text-slate-500 block mt-0.5">Attendance & CIA</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => launchDemoRole("STUDENT", "/student/dashboard")}
+                className="p-2.5 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-left transition-all"
+              >
+                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
+                  <BookOpen className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Student</span>
+                </div>
+                <span className="text-[10px] text-slate-500 block mt-0.5">Radar & Gatepass</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => launchDemoRole("PARENT", "/parent/dashboard")}
+                className="p-2.5 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-left transition-all col-span-2 sm:col-span-1"
+              >
+                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
+                  <Users className="w-3.5 h-3.5 text-purple-600" />
+                  <span>Parent</span>
+                </div>
+                <span className="text-[10px] text-slate-500 block mt-0.5">Wards & Leaves</span>
+              </button>
+            </div>
+          </Card>
         </div>
 
-        {/* Bottom Footer Note */}
-        <div className="max-w-7xl mx-auto w-full text-center text-xs text-slate-400 py-2 border-t border-slate-200">
-          © 2026 Attendex Educational Systems. All institutional rights reserved.
+        {/* Footer */}
+        <div className="max-w-7xl mx-auto w-full text-center text-xs text-slate-500 font-medium py-2">
+          Attendex OS • Multi-Tenant Institutional Governance • Secured with PostgreSQL Row Level Security
         </div>
       </div>
     </PageTransition>

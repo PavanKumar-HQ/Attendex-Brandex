@@ -77,9 +77,11 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    const effectiveRole = user ? (user.user_metadata?.role || "TEACHER") : (demoSession || "TEACHER");
+    const effectiveRole = (user ? (user.user_metadata?.role || "TEACHER") : (demoSession || "TEACHER")).toUpperCase();
 
-    if (effectiveRole === "STUDENT") url.pathname = "/student/dashboard";
+    if (effectiveRole === "SUPER_ADMIN" || effectiveRole === "SUPERADMIN") url.pathname = "/super-admin";
+    else if (effectiveRole === "PRINCIPAL") url.pathname = "/principal";
+    else if (effectiveRole === "STUDENT") url.pathname = "/student/dashboard";
     else if (effectiveRole === "PARENT") url.pathname = "/parent/dashboard";
     else url.pathname = "/dashboard";
 

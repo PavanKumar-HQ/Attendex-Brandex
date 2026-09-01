@@ -42,7 +42,8 @@ import {
   CalendarDays,
   FileCheck2,
   Shield,
-  Ticket
+  Ticket,
+  Building2
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -98,11 +99,43 @@ const PARENT_LINKS: SidebarLink[] = [
   { name: "Notifications", href: "/parent/notifications", icon: Bell },
 ];
 
+const PRINCIPAL_LINKS: SidebarLink[] = [
+  { name: "Executive Overview", href: "/principal", icon: LayoutDashboard },
+  { name: "Live Attendance", href: "/pulse", icon: Activity },
+  { name: "Students", href: "/students", icon: Users },
+  { name: "Classes", href: "/classes", icon: GraduationCap },
+  { name: "Subjects", href: "/subjects", icon: Library },
+  { name: "CIA Marks", href: "/results/manage", icon: AwardIcon },
+  { name: "Timetable", href: "/timetable", icon: Calendar },
+  { name: "Promotions", href: "/promotion", icon: RefreshCcw },
+  { name: "Audit Logs", href: "/audit", icon: SearchCode },
+  { name: "Notifications", href: "/notifications", icon: Bell },
+];
+
+const SUPER_ADMIN_LINKS: SidebarLink[] = [
+  { name: "Platform Overview", href: "/super-admin", icon: LayoutDashboard },
+  { name: "Institutions", href: "/super-admin", icon: Building2 },
+  { name: "Audit Ledger", href: "/audit", icon: SearchCode },
+  { name: "Settings", href: "/settings", icon: Settings },
+];
+
 const VARIANT_CONFIG = {
   admin: {
     links: ADMIN_LINKS,
     title: "Attendex",
     subtitle: "Faculty & Admin",
+    showSettings: true,
+  },
+  principal: {
+    links: PRINCIPAL_LINKS,
+    title: "Attendex",
+    subtitle: "Principal Authority",
+    showSettings: true,
+  },
+  super_admin: {
+    links: SUPER_ADMIN_LINKS,
+    title: "Attendex",
+    subtitle: "Super Admin Platform",
     showSettings: true,
   },
   student: {

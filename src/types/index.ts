@@ -4,18 +4,39 @@
  */
 
 // ─── Enums ───────────────────────────────────────────────────
-export type Role = "ADMIN" | "TEACHER" | "STUDENT" | "PARENT";
+export type Role = "SUPER_ADMIN" | "PRINCIPAL" | "TEACHER" | "STUDENT" | "PARENT" | "ADMIN";
+export type ApprovalType = "LEAVE" | "GATEPASS" | "RESULT_PUBLICATION" | "PROMOTION" | "HALL_TICKET" | "ACADEMIC_CHANGE";
+export type ApprovalStatus = "PENDING" | "APPROVED" | "REJECTED";
 export type AttendanceStatus = "PRESENT" | "ABSENT" | "ON_DUTY" | "LATE";
 export type NotificationChannel = "SMS" | "WHATSAPP" | "EMAIL" | "PUSH";
 export type NotificationStatus = "PENDING" | "SENT" | "FAILED" | "QUEUED";
 export type InsightLevel = "good" | "warning" | "risk";
 
-// ─── Organization (Multi-Tenant) ─────────────────────────────
+// ─── Approval Request ─────────────────────────────────────────
+export interface ApprovalRequest {
+  id: string;
+  institutionId: string;
+  type: ApprovalType;
+  title: string;
+  requesterName: string;
+  requesterRole: string;
+  department: string;
+  details?: Record<string, any>;
+  status: ApprovalStatus;
+  createdAt: string;
+  rejectionReason?: string;
+}
+
+// ─── Organization / Institution (Multi-Tenant) ────────────────
 export interface Organization {
   id: string;
   name: string;
-  code: string; // e.g. "GIT" for Global Institute of Technology
+  code: string; // e.g. "GITE"
   logo?: string;
+  principalName?: string;
+  studentCount?: number;
+  facultyCount?: number;
+  status?: "ACTIVE" | "SUSPENDED" | "PROVISIONING";
   createdAt: Date;
 }
 

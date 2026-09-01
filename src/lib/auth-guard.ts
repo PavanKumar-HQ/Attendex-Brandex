@@ -14,6 +14,15 @@ export interface AuthContext {
   parentStudentIds?: string[];
 }
 
+export function getRoleHomePath(role: string): string {
+  const normalized = role?.toUpperCase();
+  if (normalized === "SUPER_ADMIN" || normalized === "SUPERADMIN") return "/super-admin";
+  if (normalized === "PRINCIPAL") return "/principal";
+  if (normalized === "STUDENT") return "/student/dashboard";
+  if (normalized === "PARENT") return "/parent/dashboard";
+  return "/dashboard";
+}
+
 /**
  * Creates an authoritative Supabase Server Client for Server Actions & API routes.
  */
