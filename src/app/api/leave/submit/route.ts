@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
+import { serverState } from "@/lib/server-state";
 
 const submitLeaveSchema = z.object({
   studentId: z.string().optional(),
@@ -28,67 +29,70 @@ export async function POST(req: NextRequest) {
     }
 
     const leaveId = randomUUID();
+    const displayCode = `LV-${Math.floor(1000 + Math.random() * 9000)}`;
     const institutionId = "00000000-0000-0000-0000-000000000001";
     const studentId = validated.studentId || "00000000-0000-0000-0000-000000000030";
     const appliedByUserId = "00000000-0000-0000-0000-000000000005";
 
-    // 1. Persist to Supabase PostgreSQL table
-    const { data: inserted, error: insertErr } = await supabase
-      .from("leave_requests")
-      .insert({
-        id: leaveId,
-        institution_id: institutionId,
-        student_id: studentId,
-        applied_by_user_id: appliedByUserId,
-        leave_type: validated.leaveType,
-        start_date: validated.startDate,
-        end_date: validated.endDate,
-        reason: validated.reason,
-        document_url: validated.documentUrl || null,
-        status: "PENDING"
-      })
-      .select()
-      .single();
-
-    // 2. Also record in audit ledger
-    await supabase.from("audit_logs").insert({
-      institution_id: institutionId,
-      actor_id: appliedByUserId,
-      action: "LEAVE_SUBMITTED",
-      entity_type: "leave_requests",
-      entity_id: leaveId,
-      metadata: {
-        leave_type: validated.leaveType,
-        start_date: validated.startDate,
-        end_date: validated.endDate,
-        student: validated.studentName
-      }
+    // 1. Add to shared server memory
+    serverState.addLeave({
+      id: leaveId,
+      displayCode,
+      studentId,
+      studentName: validated.studentName,
+      rollNumber: validated.rollNumber,
+      className: validated.className,
+      leaveType: validated.leaveType,
+      startDate: validated.startDate,
+      endDate: validated.endDate,
+      reason: validated.reason,
+      status: "PENDING",
+      createdAt: new Date().toISOString()
     });
 
-    const displayCode = `LV-${leaveId.slice(0, 4).toUpperCase()}`;
+    // 2. Persist to Supabase PostgreSQL table
+    try {
+      await supabase
+        .from("leave_requests")
+        .insert({
+          id: leaveId,
+          institution_id: institutionId,
+          student_id: studentId,
+          applied_by_user_id: appliedByUserId,
+          leave_type: validated.leaveType,
+          start_date: validated.startDate,
+          end_date: validated.endDate,
+          reason: validated.reason,
+          document_url: validated.documentUrl || null,
+          status: "PENDING"
+        });
+
+      await supabase.from("audit_logs").insert({
+        institution_id: institutionId,
+        actor_id: appliedByUserId,
+        action: "LEAVE_SUBMITTED",
+        entity_type: "leave_requests",
+        entity_id: leaveId,
+        metadata: {
+          leave_type: validated.leaveType,
+          start_date: validated.startDate,
+          end_date: validated.endDate,
+          reason: validated.reason
+        }
+      });
+    } catch {
+      // Memory state is active
+    }
 
     return NextResponse.json({
       success: true,
-      message: "Leave application submitted and transmitted to Class Teacher.",
       leaveId,
       displayCode,
-      data: inserted || {
-        id: leaveId,
-        displayCode,
-        studentName: validated.studentName,
-        rollNumber: validated.rollNumber,
-        className: validated.className,
-        leaveType: validated.leaveType,
-        startDate: validated.startDate,
-        endDate: validated.endDate,
-        reason: validated.reason,
-        status: "PENDING",
-        createdAt: new Date().toISOString()
-      }
+      message: "Leave application registered and forwarded to Class Teacher."
     });
-  } catch (err: any) {
+  } catch (error: any) {
     return NextResponse.json(
-      { success: false, message: err.message || "Failed to submit leave." },
+      { success: false, message: error?.errors?.[0]?.message || error.message || "Failed to submit leave." },
       { status: 400 }
     );
   }

@@ -31,12 +31,25 @@ export default function ParentLeavePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [leaves, setLeaves] = useState<UniversalLeaveRequest[]>([]);
 
-  const loadLeaves = () => {
-    setLeaves(universalWorkflow.getAllLeaves());
+  const loadLeaves = async () => {
+    try {
+      const res = await fetch("/api/leave");
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        setLeaves(json.data);
+      } else {
+        setLeaves(universalWorkflow.getAllLeaves());
+      }
+    } catch {
+      setLeaves(universalWorkflow.getAllLeaves());
+    }
   };
 
   useEffect(() => {
     loadLeaves();
+
+    // Periodic poll every 5s for cross-port / cross-browser sync
+    const interval = setInterval(loadLeaves, 5000);
 
     // Listen to realtime events across tabs
     const unsubscribe = universalWorkflow.subscribe((event) => {
@@ -51,6 +64,7 @@ export default function ParentLeavePage() {
     });
 
     return () => {
+      clearInterval(interval);
       unsubscribe();
     };
   }, []);

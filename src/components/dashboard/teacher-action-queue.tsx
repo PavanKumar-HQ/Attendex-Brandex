@@ -12,13 +12,40 @@ export function TeacherActionQueue() {
   const [leaves, setLeaves] = useState<UniversalLeaveRequest[]>([]);
   const [gatepasses, setGatepasses] = useState<UniversalGatepassRequest[]>([]);
 
-  const loadData = () => {
-    setLeaves(universalWorkflow.getAllLeaves().filter(l => l.status === "PENDING"));
-    setGatepasses(universalWorkflow.getAllGatepasses().filter(g => g.status === "PENDING"));
+  const loadData = async () => {
+    // 1. Try real server API
+    try {
+      const [leaveRes, gpRes] = await Promise.all([
+        fetch("/api/leave"),
+        fetch("/api/gatepass")
+      ]);
+      const [leaveJson, gpJson] = await Promise.all([
+        leaveRes.json(),
+        gpRes.json()
+      ]);
+
+      if (leaveJson.success && Array.isArray(leaveJson.data)) {
+        setLeaves(leaveJson.data.filter((l: any) => l.status === "PENDING"));
+      } else {
+        setLeaves(universalWorkflow.getAllLeaves().filter(l => l.status === "PENDING"));
+      }
+
+      if (gpJson.success && Array.isArray(gpJson.data)) {
+        setGatepasses(gpJson.data.filter((g: any) => g.status === "PENDING"));
+      } else {
+        setGatepasses(universalWorkflow.getAllGatepasses().filter(g => g.status === "PENDING"));
+      }
+    } catch {
+      setLeaves(universalWorkflow.getAllLeaves().filter(l => l.status === "PENDING"));
+      setGatepasses(universalWorkflow.getAllGatepasses().filter(g => g.status === "PENDING"));
+    }
   };
 
   useEffect(() => {
     loadData();
+
+    // Periodic poll every 5s for cross-port / cross-browser sync
+    const interval = setInterval(loadData, 5000);
 
     // Subscribe to cross-tab & cross-portal realtime events
     const unsubscribe = universalWorkflow.subscribe((event) => {
@@ -38,6 +65,7 @@ export function TeacherActionQueue() {
     });
 
     return () => {
+      clearInterval(interval);
       unsubscribe();
     };
   }, []);
