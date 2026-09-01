@@ -72,14 +72,14 @@ export default function StudentGatepassPage() {
     approvalToken: "AUTH-KLETECH-GP-8994-SEC"
   });
 
-  const handleApplyGatepass = (e: React.FormEvent) => {
+  const handleApplyGatepass = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!destination || !reason) {
       toast.error("Please provide both destination and purpose.");
       return;
     }
     setSubmitting(true);
-    const res = universalWorkflow.submitGatepass({
+    const res = await universalWorkflow.submitGatepass({
       studentName: "Rahul Deshmukh",
       rollNumber: "21CS042",
       exitTime: `${outDate || "Today"} ${outTime || "04:30 PM"}`,

@@ -199,8 +199,8 @@ export default function PrincipalDashboardPage() {
                   <div className="flex items-center gap-2 shrink-0">
                     <Button
                       size="sm"
-                      onClick={() => {
-                        universalWorkflow.decideGatepass(gp.id, "APPROVED");
+                      onClick={async () => {
+                        await universalWorkflow.decideGatepass(gp.id, "APPROVED");
                         toast.success("Gatepass Approved by Principal");
                         loadData();
                       }}

@@ -62,8 +62,8 @@ export function TeacherActionQueue() {
     }
   };
 
-  const handleGatepassDecision = (gpId: string, decision: "APPROVED" | "REJECTED") => {
-    const res = universalWorkflow.decideGatepass(gpId, decision);
+  const handleGatepassDecision = async (gpId: string, decision: "APPROVED" | "REJECTED") => {
+    const res = await universalWorkflow.decideGatepass(gpId, decision);
     if (res.success) {
       toast.success(res.message);
       loadData();

@@ -96,8 +96,8 @@ test("Workflow Engine: Gatepass validation rejects missing destination or reason
   assert.match(result.message, /destination and purpose/i);
 });
 
-test("Workflow Engine: Gatepass submission produces cryptographic QR nonce", () => {
-  const result = universalWorkflow.submitGatepass({
+test("Workflow Engine: Gatepass submission produces cryptographic QR nonce", async () => {
+  const result = await universalWorkflow.submitGatepass({
     studentName: "Rahul Deshmukh",
     rollNumber: "21CS042",
     exitTime: "Today 03:00 PM",

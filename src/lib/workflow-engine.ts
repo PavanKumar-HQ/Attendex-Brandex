@@ -1,11 +1,8 @@
 /**
  * ATTENDEX — Universal Realtime Cross-Portal Workflow Engine
  * 
- * Provides end-to-end synchronization across Parent, Student, Teacher, and Principal portals.
- * Uses RFC-4122 standard UUIDs to guarantee full compatibility with PostgreSQL/Supabase.
+ * Direct Server API integration with PostgreSQL persistence and real-time event telemetry.
  */
-
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 export type WorkflowStatus = "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
 export type LeaveClassification = "MEDICAL" | "ON_DUTY" | "FAMILY_EMERGENCY" | "SPORTS" | "CASUAL";
@@ -46,25 +43,20 @@ export interface UniversalGatepassRequest {
   createdAt: string;
 }
 
-const STORAGE_KEY_LEAVES = "attendex_universal_leaves_v3";
-const STORAGE_KEY_GATEPASSES = "attendex_universal_gatepasses_v3";
-const CHANNEL_NAME = "attendex_live_cross_portal_sync_v3";
+const STORAGE_KEY_LEAVES = "attendex_universal_leaves_v4";
+const STORAGE_KEY_GATEPASSES = "attendex_universal_gatepasses_v4";
+const CHANNEL_NAME = "attendex_live_cross_portal_sync_v4";
 const LOCAL_EVENT_NAME = "attendex_workflow_event";
 
 function generateUUID(): string {
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
     return crypto.randomUUID();
   }
-  // Fallback RFC 4122 v4 UUID generator
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
     const r = (Math.random() * 16) | 0;
     const v = c === "x" ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
-}
-
-function isValidUUID(id: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
 }
 
 // Shared Broadcast Channel across tabs
@@ -155,7 +147,7 @@ export const universalWorkflow = {
   },
 
   /**
-   * Submits a new leave request.
+   * Submits a real leave request to server API and local cache.
    */
   async submitLeave(payload: {
     studentId?: string;
@@ -175,8 +167,26 @@ export const universalWorkflow = {
       return { success: false, message: "Please provide a descriptive reason (minimum 5 characters).", leaveId: "", displayCode: "" };
     }
 
-    const leaveId = generateUUID();
-    const displayCode = `LV-${Math.floor(1000 + Math.random() * 9000)}`;
+    let leaveId = generateUUID();
+    let displayCode = `LV-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    // 1. Call server API endpoint
+    if (typeof window !== "undefined") {
+      try {
+        const res = await fetch("/api/leave/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+          leaveId = data.leaveId;
+          displayCode = data.displayCode;
+        }
+      } catch {
+        // Fall back to client persistence
+      }
+    }
 
     const newRecord: UniversalLeaveRequest = {
       id: leaveId,
@@ -194,7 +204,7 @@ export const universalWorkflow = {
       createdAt: new Date().toISOString()
     };
 
-    // 1. Save to shared local vault
+    // 2. Save to shared local vault
     const current = this.getAllLeaves();
     const updated = [newRecord, ...current.filter(l => l.id !== leaveId)];
     memoryLeaves = updated;
@@ -202,31 +212,11 @@ export const universalWorkflow = {
       localStorage.setItem(STORAGE_KEY_LEAVES, JSON.stringify(updated));
     }
 
-    // 2. Dispatch realtime event to all tabs and local window
+    // 3. Dispatch realtime event
     dispatchRealtimeEvent({
       type: "LEAVE_SUBMITTED",
       payload: newRecord
     });
-
-    // 3. Attempt sync to Supabase PostgreSQL only with valid UUID
-    if (isSupabaseConfigured && isValidUUID(leaveId)) {
-      try {
-        await supabase.from("leave_requests").insert({
-          id: leaveId,
-          institution_id: "00000000-0000-0000-0000-000000000001",
-          student_id: newRecord.studentId,
-          applied_by_user_id: "00000000-0000-0000-0000-000000000005",
-          leave_type: newRecord.leaveType,
-          start_date: newRecord.startDate,
-          end_date: newRecord.endDate,
-          reason: newRecord.reason,
-          document_url: newRecord.documentUrl || null,
-          status: "PENDING"
-        });
-      } catch {
-        // Silently preserve in authoritative local sync layer
-      }
-    }
 
     return {
       success: true,
@@ -248,6 +238,19 @@ export const universalWorkflow = {
     const record = current.find(l => l.id === leaveId);
     if (!record) {
       return { success: false, message: "Leave request not found." };
+    }
+
+    // Call server API endpoint
+    if (typeof window !== "undefined") {
+      try {
+        await fetch("/api/leave/decide", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ leaveId, decision, reviewNotes: notes })
+        });
+      } catch {
+        // Fall back to client persistence
+      }
     }
 
     const updated = current.map(l => {
@@ -274,23 +277,6 @@ export const universalWorkflow = {
       decision,
       notes
     });
-
-    // Attempt Supabase sync if valid UUID
-    if (isSupabaseConfigured && isValidUUID(leaveId)) {
-      try {
-        await supabase
-          .from("leave_requests")
-          .update({
-            status: decision,
-            reviewed_by: "00000000-0000-0000-0000-000000000003",
-            reviewed_at: new Date().toISOString(),
-            review_notes: notes || null
-          })
-          .eq("id", leaveId);
-      } catch {
-        // preserve
-      }
-    }
 
     return {
       success: true,
@@ -343,7 +329,7 @@ export const universalWorkflow = {
   /**
    * Student submits a new gatepass.
    */
-  submitGatepass(payload: {
+  async submitGatepass(payload: {
     studentId?: string;
     studentName?: string;
     rollNumber?: string;
@@ -352,13 +338,32 @@ export const universalWorkflow = {
     destination: string;
     reason: string;
     emergencyContact: string;
-  }): { success: boolean; message: string; gatepassId: string; displayCode: string } {
+  }): Promise<{ success: boolean; message: string; gatepassId: string; displayCode: string }> {
     if (!payload.destination || !payload.reason) {
       return { success: false, message: "Please provide both destination and purpose.", gatepassId: "", displayCode: "" };
     }
 
-    const gpId = generateUUID();
-    const displayCode = `GP-${Math.floor(1000 + Math.random() * 9000)}`;
+    let gpId = generateUUID();
+    let displayCode = `GP-${Math.floor(1000 + Math.random() * 9000)}`;
+    let qrNonce = `GP-${generateUUID().slice(0, 8).toUpperCase()}`;
+
+    if (typeof window !== "undefined") {
+      try {
+        const res = await fetch("/api/gatepass/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+          gpId = data.gatepassId;
+          displayCode = data.displayCode;
+          qrNonce = data.qrNonce;
+        }
+      } catch {
+        // Fall back
+      }
+    }
 
     const newRecord: UniversalGatepassRequest = {
       id: gpId,
@@ -371,7 +376,7 @@ export const universalWorkflow = {
       destination: payload.destination,
       reason: payload.reason,
       emergencyContact: payload.emergencyContact,
-      qrNonce: `GP-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+      qrNonce,
       status: "PENDING",
       createdAt: new Date().toISOString()
     };
@@ -396,7 +401,19 @@ export const universalWorkflow = {
   /**
    * Teacher approves/rejects gatepass.
    */
-  decideGatepass(gpId: string, decision: "APPROVED" | "REJECTED", notes?: string): { success: boolean; message: string } {
+  async decideGatepass(gpId: string, decision: "APPROVED" | "REJECTED", notes?: string): Promise<{ success: boolean; message: string }> {
+    if (typeof window !== "undefined") {
+      try {
+        await fetch("/api/gatepass/decide", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ gatepassId: gpId, decision })
+        });
+      } catch {
+        // Fall back
+      }
+    }
+
     const current = this.getAllGatepasses();
     const updated = current.map(g => {
       if (g.id === gpId) {
