@@ -54,7 +54,7 @@ if (typeof window !== "undefined" && "BroadcastChannel" in window) {
   broadcastChannel = new BroadcastChannel(CHANNEL_NAME);
 }
 
-// Initial seed records so the initial view is never blank
+// Initial seed records
 const INITIAL_LEAVES: UniversalLeaveRequest[] = [
   {
     id: "LV-8091",
@@ -88,12 +88,15 @@ const INITIAL_GATEPASSES: UniversalGatepassRequest[] = [
   }
 ];
 
+let memoryLeaves: UniversalLeaveRequest[] = [...INITIAL_LEAVES];
+let memoryGatepasses: UniversalGatepassRequest[] = [...INITIAL_GATEPASSES];
+
 export const universalWorkflow = {
   /**
    * Reads all leave requests from persistent storage & Supabase.
    */
   getAllLeaves(): UniversalLeaveRequest[] {
-    if (typeof window === "undefined") return INITIAL_LEAVES;
+    if (typeof window === "undefined") return memoryLeaves;
     try {
       const stored = localStorage.getItem(STORAGE_KEY_LEAVES);
       if (stored) {
@@ -102,7 +105,7 @@ export const universalWorkflow = {
       localStorage.setItem(STORAGE_KEY_LEAVES, JSON.stringify(INITIAL_LEAVES));
       return INITIAL_LEAVES;
     } catch {
-      return INITIAL_LEAVES;
+      return memoryLeaves;
     }
   },
 
@@ -146,6 +149,7 @@ export const universalWorkflow = {
     // 1. Save to shared local vault
     const current = this.getAllLeaves();
     const updated = [newRecord, ...current.filter(l => l.id !== leaveId)];
+    memoryLeaves = updated;
     if (typeof window !== "undefined") {
       localStorage.setItem(STORAGE_KEY_LEAVES, JSON.stringify(updated));
     }
@@ -211,12 +215,11 @@ export const universalWorkflow = {
       return l;
     });
 
-    // 1. Update shared local vault
+    memoryLeaves = updated;
     if (typeof window !== "undefined") {
       localStorage.setItem(STORAGE_KEY_LEAVES, JSON.stringify(updated));
     }
 
-    // 2. Broadcast realtime update to Parent & Student tabs
     if (broadcastChannel) {
       broadcastChannel.postMessage({
         type: "LEAVE_DECIDED",
@@ -226,7 +229,6 @@ export const universalWorkflow = {
       });
     }
 
-    // 3. Update Supabase PostgreSQL
     try {
       if (isSupabaseConfigured) {
         await supabase
@@ -261,6 +263,7 @@ export const universalWorkflow = {
       return l;
     });
 
+    memoryLeaves = updated;
     if (typeof window !== "undefined") {
       localStorage.setItem(STORAGE_KEY_LEAVES, JSON.stringify(updated));
     }
@@ -276,7 +279,7 @@ export const universalWorkflow = {
    * Reads all gatepass requests.
    */
   getAllGatepasses(): UniversalGatepassRequest[] {
-    if (typeof window === "undefined") return INITIAL_GATEPASSES;
+    if (typeof window === "undefined") return memoryGatepasses;
     try {
       const stored = localStorage.getItem(STORAGE_KEY_GATEPASSES);
       if (stored) {
@@ -285,7 +288,7 @@ export const universalWorkflow = {
       localStorage.setItem(STORAGE_KEY_GATEPASSES, JSON.stringify(INITIAL_GATEPASSES));
       return INITIAL_GATEPASSES;
     } catch {
-      return INITIAL_GATEPASSES;
+      return memoryGatepasses;
     }
   },
 
@@ -324,6 +327,7 @@ export const universalWorkflow = {
 
     const current = this.getAllGatepasses();
     const updated = [newRecord, ...current.filter(g => g.id !== gpId)];
+    memoryGatepasses = updated;
     if (typeof window !== "undefined") {
       localStorage.setItem(STORAGE_KEY_GATEPASSES, JSON.stringify(updated));
     }
@@ -355,6 +359,7 @@ export const universalWorkflow = {
       return g;
     });
 
+    memoryGatepasses = updated;
     if (typeof window !== "undefined") {
       localStorage.setItem(STORAGE_KEY_GATEPASSES, JSON.stringify(updated));
     }
