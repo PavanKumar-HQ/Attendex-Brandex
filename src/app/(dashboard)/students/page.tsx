@@ -242,92 +242,82 @@ export default function StudentsPage() {
     if (type === 'delete') setIsDeleteOpen(true);
   };
 
-  if (loading) return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-6">
-      <RefreshCcw className="w-10 h-10 text-blue-600 animate-spin" />
-      <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-300">Synchronizing Institutional Roster</p>
-    </div>
-  );
+  // Loading state moved inline to prevent screen blanking
 
   return (
     <PageTransition>
       <div className="flex flex-col min-h-full">
         <Header title="Institutional Roster" />
 
-        <div className="flex-1 space-y-8">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-6 bg-slate-900 p-4 md:p-6 rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
-            <div className="absolute inset-0 bg-blue-600 opacity-5 group-hover:opacity-10 transition-opacity" />
-            <div className="relative z-10 flex flex-col md:flex-row items-stretch md:items-center gap-4 lg:gap-6 flex-1 w-full">
-              <div className="relative w-full md:max-w-sm">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          {/* Clean Action & Search Toolbar */}
+          <Card className="p-3 border-slate-200 bg-white shadow-sm rounded-xl">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
-                  placeholder="Identify student node..."
-                  className="pl-11 w-full border-none bg-white/10 text-white placeholder:text-slate-500 font-bold h-12 md:h-14 rounded-xl md:rounded-2xl focus:ring-4 focus:ring-blue-500/20 transition-all text-sm"
+                  placeholder="Search by student name, roll number, or email..."
+                  className="pl-9 h-10 rounded-lg border-slate-200 bg-slate-50 text-slate-900 text-xs focus-visible:ring-slate-900"
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                 />
               </div>
 
-              <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto">
+              <div className="flex items-center gap-2">
                 <Select value={selectedSection} onValueChange={(v) => v && setSelectedSection(v)}>
-                  <SelectTrigger className="w-[120px] border-none bg-white/10 text-white font-bold h-12 md:h-14 rounded-xl md:rounded-2xl">
+                  <SelectTrigger className="w-[120px] h-10 border-slate-200 bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg">
                     <SelectValue placeholder="Section" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-xl">
-                    <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="A">Sec A</SelectItem>
-                    <SelectItem value="B">Sec B</SelectItem>
-                    <SelectItem value="C">Sec C</SelectItem>
+                  <SelectContent className="rounded-lg border-slate-200">
+                    <SelectItem value="all">All Sections</SelectItem>
+                    <SelectItem value="A">Section A</SelectItem>
+                    <SelectItem value="B">Section B</SelectItem>
+                    <SelectItem value="C">Section C</SelectItem>
                   </SelectContent>
                 </Select>
 
                 <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
                   <DialogTrigger render={
-                    <Button variant="ghost" className="h-12 md:h-14 flex-1 md:flex-none rounded-xl md:rounded-2xl text-slate-400 font-bold text-[9px] md:text-xs gap-2 md:gap-3 hover:text-white hover:bg-white/5 uppercase tracking-widest px-4 md:px-6">
-                      <UploadCloud className="w-4 h-4 md:w-5 md:h-5 text-blue-500" /> <span className="hidden sm:inline">Bulk</span> Import
+                    <Button variant="outline" size="sm" className="h-10 rounded-lg border-slate-200 text-slate-700 font-semibold text-xs gap-1.5 hover:bg-slate-50">
+                      <UploadCloud className="w-4 h-4 text-blue-600" />
+                      <span>Bulk CSV</span>
                     </Button>
                   } />
-                  <DialogContent className="w-[95vw] max-w-[450px] rounded-[2rem] md:rounded-[2.5rem] p-0 overflow-hidden bg-white border border-slate-200 shadow-2xl">
-                    <div className="p-6 md:p-8 space-y-6">
-                      <DialogHeader>
-                        <DialogTitle className="text-xl md:text-2xl font-black uppercase">Ingest Data</DialogTitle>
-                        <DialogDescription className="text-slate-500 font-bold text-xs">
-                          Upload your class registry to instantly sync with the cloud.
-                        </DialogDescription>
-                      </DialogHeader>
+                  <DialogContent className="w-[95vw] max-w-[450px] rounded-xl p-6 bg-white border border-slate-200 shadow-lg">
+                    <DialogHeader className="space-y-1">
+                      <DialogTitle className="text-lg font-bold text-slate-900">Import Student Roster</DialogTitle>
+                      <DialogDescription className="text-slate-500 text-xs">
+                        Upload a CSV file to enroll multiple students at once.
+                      </DialogDescription>
+                    </DialogHeader>
 
-                      <div className="space-y-4">
-                        <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Target Class</Label>
+                    <div className="space-y-4 pt-2">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold text-slate-700">Target Classroom</Label>
                         <Select onValueChange={(v) => v && handleFormChange('class', String(v))}>
-                          <SelectTrigger className="h-12 md:h-14 rounded-xl md:rounded-2xl border-slate-200 bg-slate-50/50 font-bold text-sm">
-                            <SelectValue placeholder="Select Classroom" />
+                          <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-white font-medium text-xs">
+                            <SelectValue placeholder="Select Class" />
                           </SelectTrigger>
-                          <SelectContent className="rounded-xl border-slate-100 p-2">
-                            {classes.map(c => <SelectItem key={c.id} value={c.id} className="rounded-lg">{c.name}</SelectItem>)}
+                          <SelectContent className="rounded-lg border-slate-200">
+                            {classes.map(c => <SelectItem key={c.id} value={c.id}>{c.name} ({c.section || 'A'})</SelectItem>)}
                           </SelectContent>
                         </Select>
                       </div>
 
-                      <div className="bg-slate-50 border border-slate-100 p-4 md:p-6 rounded-2xl md:rounded-3xl space-y-3 mb-2">
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Required CSV Columns</p>
-                        <div className="flex flex-wrap gap-2">
+                      <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-1.5">
+                        <p className="text-[11px] font-semibold text-slate-700 uppercase tracking-wider">Required Columns</p>
+                        <div className="flex gap-2">
                           {['name', 'roll', 'email'].map(col => (
-                            <span key={col} className="px-2 py-1 bg-white border border-slate-100 rounded-lg text-[9px] font-bold text-slate-600 shadow-sm">{col}</span>
+                            <span key={col} className="px-2 py-0.5 bg-white border border-slate-200 rounded text-xs font-medium text-slate-700">{col}</span>
                           ))}
                         </div>
                       </div>
 
-                      <div className="space-y-4">
-                        <Label htmlFor="csv-upload" className="block p-6 md:p-10 border-2 border-dashed border-slate-200 rounded-2xl md:rounded-3xl hover:border-blue-400 hover:bg-blue-50/30 transition-all cursor-pointer group text-center bg-slate-50/30">
-                          <div className="flex flex-col items-center gap-3">
-                            <UploadCloud className="w-8 h-8 md:w-10 md:h-10 text-slate-300 group-hover:text-blue-500 transition-colors" />
-                            <div>
-                              <p className="text-xs md:text-sm font-bold text-slate-600">Click to upload CSV</p>
-                            </div>
-                          </div>
-                          <Input id="csv-upload" type="file" accept=".csv" className="hidden" onChange={handleImport} disabled={isUploading || !formData.class} />
-                        </Label>
-                      </div>
+                      <Label htmlFor="csv-upload" className="block p-6 border-2 border-dashed border-slate-200 rounded-xl hover:border-blue-500 hover:bg-blue-50/20 transition-all cursor-pointer text-center bg-slate-50">
+                        <UploadCloud className="w-7 h-7 text-blue-600 mx-auto mb-2" />
+                        <p className="text-xs font-semibold text-slate-700">Click to choose CSV file</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">Maximum size: 5MB</p>
+                        <Input id="csv-upload" type="file" accept=".csv" className="hidden" onChange={handleImport} disabled={isUploading || !formData.class} />
+                      </Label>
                     </div>
                   </DialogContent>
                 </Dialog>
@@ -336,98 +326,105 @@ export default function StudentsPage() {
                   <DialogTrigger render={
                     <Button
                       onClick={() => setFormData({ name: "", roll: "", email: "", class: "", parent_email: "" })}
-                      className="h-12 md:h-14 flex-[1.5] md:flex-none rounded-xl md:rounded-2xl bg-white text-slate-900 font-black uppercase tracking-widest hover:bg-slate-100 shadow-xl transition-all px-4 md:px-8 gap-2 text-[9px] md:text-xs"
+                      size="sm"
+                      className="h-10 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs gap-1.5 px-4 shadow-sm"
                     >
-                      <Plus className="w-4 h-4 md:w-5 md:h-5 text-blue-600" /> Enroll <span className="hidden sm:inline">Student</span>
+                      <Plus className="w-4 h-4" />
+                      <span>Enroll Student</span>
                     </Button>
                   } />
-                  <DialogContent className="w-[95vw] max-w-[500px] rounded-[2rem] md:rounded-[2.5rem] p-0 overflow-hidden bg-white border border-slate-200">
-                    <div className="p-6 md:p-8">
-                      <DialogHeader className="mb-6 md:mb-8 text-center">
-                        <DialogTitle className="text-xl md:text-2xl font-black uppercase">New Enrollment</DialogTitle>
-                        <DialogDescription className="font-bold text-slate-400 text-xs">Enter personal and academic coordinates.</DialogDescription>
-                      </DialogHeader>
-                      <div className="grid grid-cols-2 gap-4 md:gap-6">
-                        <div className="space-y-2 col-span-2">
-                          <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Identity</Label>
-                          <Input placeholder="John Doe" className="h-12 rounded-xl md:rounded-2xl border-slate-200 font-bold" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Roll Number</Label>
-                          <Input placeholder="U03FS23S0134" className="h-12 rounded-xl md:rounded-2xl border-slate-200 font-bold text-sm" value={formData.roll} onChange={e => setFormData({ ...formData, roll: e.target.value })} />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Classroom</Label>
-                          <Select onValueChange={(v) => v && handleFormChange('class', String(v))}>
-                            <SelectTrigger className="h-12 rounded-xl md:rounded-2xl border-slate-200 font-bold text-sm">
-                              <SelectValue placeholder="Select" />
-                            </SelectTrigger>
-                            <SelectContent className="rounded-xl p-2">
-                              {classes.map(c => <SelectItem key={c.id} value={c.id} className="rounded-lg">{c.name}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2 col-span-2">
-                          <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Official Email</Label>
-                          <Input placeholder="student@edu.com" className="h-12 rounded-xl md:rounded-2xl border-slate-200 font-bold text-sm" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
-                        </div>
+                  <DialogContent className="w-[95vw] max-w-[480px] rounded-xl p-6 bg-white border border-slate-200 shadow-lg">
+                    <DialogHeader className="space-y-1 mb-4">
+                      <DialogTitle className="text-lg font-bold text-slate-900">Enroll New Student</DialogTitle>
+                      <DialogDescription className="text-slate-500 text-xs">Enter student credentials to create a verified record.</DialogDescription>
+                    </DialogHeader>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1.5 col-span-2">
+                        <Label className="text-xs font-semibold text-slate-700">Full Name</Label>
+                        <Input placeholder="e.g. Rahul Deshmukh" className="h-10 rounded-lg border-slate-200 text-xs" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold text-slate-700">Roll Number</Label>
+                        <Input placeholder="21CS042" className="h-10 rounded-lg border-slate-200 text-xs" value={formData.roll} onChange={e => setFormData({ ...formData, roll: e.target.value })} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold text-slate-700">Classroom</Label>
+                        <Select onValueChange={(v) => v && handleFormChange('class', String(v))}>
+                          <SelectTrigger className="h-10 rounded-lg border-slate-200 text-xs">
+                            <SelectValue placeholder="Select Class" />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-lg">
+                            {classes.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5 col-span-2">
+                        <Label className="text-xs font-semibold text-slate-700">Official Student Email</Label>
+                        <Input placeholder="student@institution.edu" className="h-10 rounded-lg border-slate-200 text-xs" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
                       </div>
                     </div>
-                    <div className="p-6 md:p-8 pt-0 flex flex-col gap-3">
-                      <Button className="h-14 rounded-xl md:rounded-2xl bg-slate-900 text-white font-black uppercase tracking-widest shadow-2xl shadow-slate-900/10" onClick={handleCreate}>Finalize Enrollment</Button>
-                      <Button variant="ghost" className="h-10 rounded-xl text-slate-400 font-bold text-xs" onClick={() => setIsAddOpen(false)}>Discard</Button>
+                    <div className="pt-4 flex justify-end gap-2">
+                      <Button variant="ghost" size="sm" className="h-10 rounded-lg text-xs" onClick={() => setIsAddOpen(false)}>Cancel</Button>
+                      <Button size="sm" className="h-10 rounded-lg bg-slate-900 text-white font-semibold text-xs px-5" onClick={handleCreate}>Save Enrollment</Button>
                     </div>
                   </DialogContent>
                 </Dialog>
               </div>
             </div>
-          </div>
+          </Card>
 
-          <Card className="border border-slate-100 shadow-sm rounded-[1.5rem] md:rounded-[2rem] overflow-hidden bg-white">
+          <Card className="border border-slate-200 shadow-sm rounded-xl overflow-hidden bg-white">
             {/* Desktop Table View */}
             <div className="hidden lg:block overflow-x-auto">
               <table className="w-full text-left text-sm text-slate-600">
-                <thead className="text-[10px] uppercase text-slate-400 bg-slate-50/50 border-b border-slate-100 font-black tracking-widest">
+                <thead className="text-[11px] uppercase text-slate-500 bg-slate-50 border-b border-slate-100 font-semibold">
                   <tr>
-                    <th className="px-8 py-5">Full Identity</th>
-                    <th className="px-8 py-5">Roll Unit</th>
-                    <th className="px-8 py-5">Classroom</th>
-                    <th className="px-8 py-5">Department</th>
-                    <th className="px-8 py-5 w-[60px]"></th>
+                    <th className="px-6 py-4">Full Identity</th>
+                    <th className="px-6 py-4">Roll Unit</th>
+                    <th className="px-6 py-4">Classroom</th>
+                    <th className="px-6 py-4">Department</th>
+                    <th className="px-6 py-4 w-[60px]"></th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {filteredStudents.map((st) => (
-                    <tr key={st.id} className="hover:bg-slate-50/50 transition-colors group cursor-pointer" onClick={() => { setSelectedStudent(st); setIsProfileOpen(true); }}>
-                      <td className="px-8 py-6">
-                        <div className="font-black text-slate-900 leading-tight">{st.name}</div>
-                        <div className="text-[10px] text-slate-400 font-bold mt-1 tracking-tighter">{st.email}</div>
+                <tbody className="divide-y divide-slate-100">
+                  {loading && studentList.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-24 text-center">
+                        <RefreshCcw className="w-8 h-8 text-blue-500 animate-spin mx-auto mb-4" />
+                        <p className="text-sm font-semibold text-slate-500">Synchronizing Institutional Roster...</p>
                       </td>
-                      <td className="px-8 py-6 font-black text-slate-700">{st.roll_number}</td>
-                      <td className="px-8 py-6">
-                        <span className="inline-flex items-center px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-white text-slate-700 border border-slate-100 shadow-sm">
+                    </tr>
+                  ) : filteredStudents.map((st) => (
+                    <tr key={st.id} className="hover:bg-slate-50/50 transition-colors group cursor-pointer" onClick={() => { setSelectedStudent(st); setIsProfileOpen(true); }}>
+                      <td className="px-6 py-4">
+                        <div className="font-bold text-slate-900 leading-tight">{st.name}</div>
+                        <div className="text-[11px] text-slate-500 font-medium mt-0.5">{st.email}</div>
+                      </td>
+                      <td className="px-6 py-4 font-semibold text-slate-700">{st.roll_number}</td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200 shadow-sm">
                           {st.classes?.name || 'Unassigned'}
                         </span>
                       </td>
-                      <td className="px-8 py-6 font-bold text-slate-400 text-xs uppercase tracking-widest">
+                      <td className="px-6 py-4 font-medium text-slate-500 text-[11px] uppercase tracking-wider">
                         {st.department || 'General'}
                       </td>
-                      <td className="px-8 py-6 text-right" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger render={
-                            <Button variant="ghost" className="h-10 w-10 rounded-xl hover:bg-slate-100 outline-none">
+                            <Button variant="ghost" className="h-8 w-8 rounded-lg hover:bg-slate-100 outline-none p-0">
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           } />
-                          <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2 bg-white border border-slate-100 shadow-2xl">
-                            <DropdownMenuItem onClick={() => handleAction('edit', st)} className="rounded-xl p-3 flex items-center gap-3 font-bold text-xs">
+                          <DropdownMenuContent align="end" className="w-56 rounded-xl p-2 bg-white border border-slate-200 shadow-lg">
+                            <DropdownMenuItem onClick={() => handleAction('edit', st)} className="rounded-lg p-2.5 flex items-center gap-2 font-medium text-xs">
                               <UserRoundPen className="w-4 h-4 text-blue-600" /> Edit Profile
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleAction('history', st)} className="rounded-xl p-3 flex items-center gap-3 font-bold text-xs">
+                            <DropdownMenuItem onClick={() => handleAction('history', st)} className="rounded-lg p-2.5 flex items-center gap-2 font-medium text-xs">
                               <History className="w-4 h-4 text-emerald-600" /> Attendance Ledger
                             </DropdownMenuItem>
-                            <div className="h-px bg-slate-50 my-2" />
-                            <DropdownMenuItem onClick={() => handleAction('delete', st)} className="rounded-xl p-3 flex items-center gap-3 font-bold text-xs text-rose-600 focus:text-rose-600 focus:bg-rose-50/50">
+                            <div className="h-px bg-slate-100 my-1" />
+                            <DropdownMenuItem onClick={() => handleAction('delete', st)} className="rounded-lg p-2.5 flex items-center gap-2 font-medium text-xs text-rose-600 focus:text-rose-600 focus:bg-rose-50">
                               <Trash2 className="w-4 h-4" /> Purge Record
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -445,8 +442,8 @@ export default function StudentsPage() {
                 <div key={st.id} className="p-5 space-y-4 active:bg-slate-50 transition-colors" onClick={() => { setSelectedStudent(st); setIsProfileOpen(true); }}>
                   <div className="flex justify-between items-start">
                     <div className="flex-1 min-w-0 pr-2">
-                      <div className="font-black text-slate-900 leading-tight text-base truncate uppercase">{st.name}</div>
-                      <div className="text-[9px] text-slate-400 font-bold mt-0.5 truncate lowercase">{st.email}</div>
+                      <div className="font-bold text-slate-900 leading-tight text-sm truncate">{st.name}</div>
+                      <div className="text-[10px] text-slate-500 font-medium mt-0.5 truncate">{st.email}</div>
                     </div>
                     <div onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
@@ -478,7 +475,6 @@ export default function StudentsPage() {
               ))}
             </div>
           </Card>
-        </div>
 
         {/* Delete Confirmation */}
         <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>

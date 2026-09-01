@@ -3,398 +3,544 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
-  CheckCircle,
-  Zap,
-  Shield,
-  Smartphone,
+  CheckCircle2,
+  ShieldCheck,
   ArrowRight,
-  LayoutDashboard,
-  Database,
-  Lock,
-  Globe,
   Users,
   BarChart3,
   Mail,
   Trophy,
   BookOpen,
-  Medal
+  Medal,
+  Calendar,
+  GraduationCap,
+  Building2,
+  Lock,
+  TrendingUp,
+  CheckCheck,
+  FileSpreadsheet
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 export default function LandingPage() {
-  const router = useRouter();
-
-  const [checkingPWA, setCheckingPWA] = useState(true);
-  const [isStandalone, setIsStandalone] = useState(false);
+  const [activeTab, setActiveTab] = useState<"faculty" | "student" | "parent">("faculty");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches;
-    if (isStandaloneMode) {
-      setIsStandalone(true);
-      router.push('/login');
-    } else {
-      setCheckingPWA(false);
-    }
-  }, [router]);
-
-  if (isStandalone || checkingPWA) return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-6">
-        <div className="w-16 h-16 bg-blue-600 rounded-[2rem] flex items-center justify-center text-white shadow-2xl shadow-blue-200 animate-pulse">
-          <Zap className="w-8 h-8 fill-current" />
-        </div>
-        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-300">Initializing Attendex</p>
-    </div>
-  );
+    setMounted(true);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50 selection:bg-blue-100 selection:text-blue-900 flex flex-col pt-[env(safe-area-inset-top)]">
+    <div className="min-h-screen bg-slate-50 text-slate-900 selection:bg-blue-100 selection:text-blue-900 flex flex-col font-sans">
+      {/* Institutional Top Notification Bar */}
+      <div className="bg-slate-900 text-slate-300 text-xs py-2 px-4 text-center font-medium border-b border-slate-800 flex items-center justify-center gap-2">
+        <span className="inline-flex items-center justify-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-400/30">
+          v2.4 Academic Release
+        </span>
+        <span>Unified Attendance, Continuous Internal Assessment (CIA) & Parent Gateway</span>
+      </div>
+
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 pt-[env(safe-area-inset-top)]">
+      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-slate-900 font-bold text-xl tracking-tight">
-            <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-200">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-              </svg>
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-slate-900 text-white rounded-xl flex items-center justify-center shadow-sm">
+              <GraduationCap className="w-5 h-5 text-blue-400" />
             </div>
-            Attendex
+            <div>
+              <span className="text-lg font-bold tracking-tight text-slate-900 flex items-center gap-1.5">
+                Attendex
+                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                  EDU
+                </span>
+              </span>
+            </div>
           </div>
-          <div className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-sm font-semibold text-slate-500 hover:text-blue-600 transition-colors">Features</a>
-            <a href="#security" className="text-sm font-semibold text-slate-500 hover:text-blue-600 transition-colors">Security</a>
-            <a href="#reporting" className="text-sm font-semibold text-slate-500 hover:text-blue-600 transition-colors">Reporting</a>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link href="/login" className="text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors px-4">
-              Log in
-            </Link>
+
+          <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
+            <a href="#overview" className="hover:text-slate-900 transition-colors">Overview</a>
+            <a href="#interactive-preview" className="hover:text-slate-900 transition-colors">Portals & Preview</a>
+            <a href="#modules" className="hover:text-slate-900 transition-colors">Academic Modules</a>
+            <a href="#security" className="hover:text-slate-900 transition-colors">Compliance & Security</a>
+          </nav>
+
+          <div className="flex items-center gap-3">
             <Link href="/login">
-              <Button className="rounded-full bg-slate-900 text-sm font-bold text-white hover:bg-slate-800 shadow-xl shadow-slate-200 transition-all hover:scale-105 active:scale-95 px-6">
-                Get Started
+              <Button variant="ghost" size="sm" className="text-sm font-semibold text-slate-700 hover:text-slate-900">
+                Sign In
+              </Button>
+            </Link>
+            <Link href="/dashboard">
+              <Button size="sm" className="rounded-lg bg-slate-900 text-white hover:bg-slate-800 font-semibold px-4 shadow-sm flex items-center gap-1.5">
+                <span>Enter Demo</span>
+                <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
           </div>
         </div>
-      </nav>
+      </header>
 
       {/* Hero Section */}
-      <section className="pt-32 md:pt-40 pb-20 px-6 max-w-7xl mx-auto text-center flex-1">
+      <section id="overview" className="pt-20 pb-16 px-6 max-w-7xl mx-auto text-center">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
           className="max-w-4xl mx-auto"
         >
-          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-[10px] md:text-xs font-black uppercase tracking-[0.2em] mb-10 shadow-sm animate-in fade-in zoom-in duration-700">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-            </span>
-            Simple Attendance & Marks Management
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200/80 text-blue-800 text-xs font-semibold mb-8 shadow-sm">
+            <Building2 className="w-3.5 h-3.5 text-blue-600" />
+            <span>Built for Modern Universities, Colleges & Schools</span>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-[1000] text-slate-900 tracking-tighter leading-[0.95] mb-10">
-            Streamlined Management. <br className="hidden sm:block" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600">
-              Easy to Use.
-            </span>
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.1] mb-6">
+            Institutional Attendance & <br className="hidden sm:block" />
+            <span className="text-blue-600">Academic Intelligence</span> System.
           </h1>
 
-          <p className="text-base sm:text-lg md:text-xl text-slate-500 mb-14 max-w-2xl mx-auto leading-relaxed font-bold">
-            Replace your paper registers. Automate student notifications, generate one-click reports, and track academic performance easily.
+          <p className="text-lg md:text-xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed font-normal">
+            Eliminate manual registers. Manage daily classroom attendance, track Continuous Internal Assessment (CIA) marks, and notify parents automatically.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-5">
-            <Link href="/login" className="w-full sm:w-auto">
-              <Button size="lg" className="w-full sm:w-auto rounded-[2rem] h-16 md:h-18 px-12 text-lg font-black uppercase tracking-widest bg-slate-900 hover:bg-black text-white shadow-2xl shadow-slate-900/20 transition-all hover:scale-105 active:scale-95 group border-none">
-                Get Started
-                <ArrowRight className="ml-3 w-6 h-6 group-hover:translate-x-1 transition-transform" />
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link href="/dashboard" className="w-full sm:w-auto">
+              <Button size="lg" className="w-full sm:w-auto h-12 px-8 text-sm font-semibold bg-slate-900 hover:bg-slate-800 text-white rounded-lg shadow-sm flex items-center justify-center gap-2">
+                <span>Launch Faculty Dashboard</span>
+                <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
-            <Link href="#features" className="w-full sm:w-auto">
-              <Button variant="ghost" size="lg" className="w-full sm:w-auto rounded-[2rem] h-16 md:h-18 px-12 text-lg font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all hover:bg-slate-100">
-                View Specs
+            <Link href="/student/dashboard" className="w-full sm:w-auto">
+              <Button variant="outline" size="lg" className="w-full sm:w-auto h-12 px-8 text-sm font-semibold border-slate-300 text-slate-700 hover:bg-slate-100 rounded-lg">
+                View Student Portal
               </Button>
             </Link>
           </div>
-        </motion.div>
 
-        {/* Dashboard Preview Image */}
-        <motion.div
-          initial={{ opacity: 0, y: 100, scale: 0.9 }}
-          whileInView={{ opacity: 1, y: 0, scale: 1 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-          className="mt-24 relative mx-auto max-w-6xl px-4 perspective-1000"
-        >
-          <div className="p-4 md:p-8 bg-white/40 backdrop-blur-xl rounded-[3rem] md:rounded-[4.5rem] border border-white/60 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] overflow-hidden relative group">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative z-20">
-              {/* Card 1: Attendance Pulse */}
-              <motion.div 
-                whileHover={{ y: -5 }}
-                className="bg-white/80 p-8 rounded-[2rem] border border-slate-100 shadow-sm"
-              >
-                <div className="flex items-center justify-between mb-6">
-                  <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center">
-                    <BarChart3 className="w-6 h-6" />
-                  </div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">+12.5% Today</span>
-                </div>
-                <h4 className="text-3xl font-black text-slate-900 tracking-tighter">94.2%</h4>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">Overall Campus Attendance</p>
-                <div className="mt-6 flex gap-1 h-1.5">
-                  <div className="flex-[0.94] bg-blue-600 rounded-full" />
-                  <div className="flex-[0.06] bg-slate-100 rounded-full" />
-                </div>
-              </motion.div>
-
-              {/* Card 2: Student Sync */}
-              <motion.div 
-                whileHover={{ y: -5 }}
-                className="bg-slate-900 p-8 rounded-[2rem] shadow-2xl relative overflow-hidden"
-              >
-                <div className="absolute top-0 right-0 p-6 opacity-10">
-                  <Database className="w-20 h-20 text-white" />
-                </div>
-                <div className="flex items-center gap-3 mb-6">
-                   <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center">
-                    <Users className="w-5 h-5" />
-                  </div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-blue-400">Verified Database</span>
-                </div>
-                <h4 className="text-3xl font-black text-white tracking-tighter">12,402</h4>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">Synchronized Student Records</p>
-              </motion.div>
-
-              {/* Card 3: Notifications */}
-              <motion.div 
-                whileHover={{ y: -5 }}
-                className="bg-white/80 p-8 rounded-[2rem] border border-slate-100 shadow-sm md:col-span-2 lg:col-span-1"
-              >
-                <div className="flex items-center justify-between mb-6">
-                  <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center">
-                    <Mail className="w-6 h-6" />
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  {[
-                    { label: "SMS Alerts", status: "Delivered", color: "text-emerald-500" },
-                    { label: "Parent Digest", status: "In Queue", color: "text-blue-500" }
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">{item.label}</span>
-                      <span className={`text-[10px] font-black uppercase tracking-widest ${item.color}`}>{item.status}</span>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-6">Message System Status</p>
-              </motion.div>
+          {/* Quick Metrics Bar */}
+          <div className="mt-14 pt-10 border-t border-slate-200 grid grid-cols-2 md:grid-cols-4 gap-6 text-left">
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Attendance Rate</p>
+              <h3 className="text-2xl font-bold text-slate-900 mt-1">94.8%</h3>
+              <p className="text-xs text-emerald-600 font-medium mt-1 flex items-center gap-1">
+                <TrendingUp className="w-3.5 h-3.5" /> +2.4% this semester
+              </p>
             </div>
-
-            {/* Glossy Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-white/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000 z-10 pointer-events-none" />
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Sync Speed</p>
+              <h3 className="text-2xl font-bold text-slate-900 mt-1">&lt; 300ms</h3>
+              <p className="text-xs text-slate-500 font-medium mt-1">Real-time DB updates</p>
+            </div>
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Active Enrollment</p>
+              <h3 className="text-2xl font-bold text-slate-900 mt-1">12,400+</h3>
+              <p className="text-xs text-slate-500 font-medium mt-1">Verified student profiles</p>
+            </div>
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Parent Dispatch</p>
+              <h3 className="text-2xl font-bold text-slate-900 mt-1">99.9%</h3>
+              <p className="text-xs text-emerald-600 font-medium mt-1 flex items-center gap-1">
+                <CheckCheck className="w-3.5 h-3.5" /> Automated notifications
+              </p>
+            </div>
           </div>
-
-          {/* Floating Decorative Elements */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-400/5 blur-[120px] rounded-full -z-10 pointer-events-none" />
         </motion.div>
       </section>
 
-
-      {/* Features Section */}
-      <section id="features" className="py-24 bg-white border-y border-slate-200">
+      {/* Interactive Portal Showcase */}
+      <section id="interactive-preview" className="py-16 bg-white border-y border-slate-200">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center max-w-2xl mx-auto mb-20 space-y-4">
-            <h2 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight">Built for Academic Excellence</h2>
-            <p className="text-slate-500 text-lg font-medium">We've engineered every feature to save hours for professors and administration alike.</p>
+          <div className="text-center max-w-2xl mx-auto mb-10 space-y-2">
+            <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">Unified Multi-Portal Architecture</span>
+            <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Tailored Experiences for Every Stakeholder</h2>
+            <p className="text-slate-600 text-sm">Select a role below to preview how Attendex simplifies everyday academic operations.</p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            <FeatureCard
-              icon={Trophy}
-              title="Academic Leaderboards"
-              description="Foster healthy competition with dynamic, real-time rankings based on internal performance and event achievements."
-            />
-            <FeatureCard
-              icon={BookOpen}
-              title="CIA Marks Registry"
-              description="Streamlined entry for Continuous Internal Assessment (CIA) marks. Automates weighting and grade calculations."
-            />
-            <FeatureCard
-              icon={Medal}
-              title="Sports & Event Points"
-              description="Integrated tracking for co-curricular achievements. Reward excellence in sports and events with automated points."
-            />
-            <FeatureCard
-              icon={Users}
-              title="Parent & Student Portals"
-              description="Dedicated interfaces for students to track their progress and parents to stay informed about their child's academic risk."
-            />
-            <FeatureCard
-              icon={Globe}
-              title="Multi-Tenant Ready"
-              description="Designed to serve multiple institutions or departments with strictly isolated data and custom branding."
-            />
-            <FeatureCard
-              icon={LayoutDashboard}
-              title="Premium OS Interface"
-              description="A clean, calm, and responsive interface inspired by modern operating systems. Works beautifully on mobiles and tablets."
-            />
+          {/* Interactive Role Tabs */}
+          <div className="flex justify-center mb-8">
+            <div className="inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200">
+              <button
+                onClick={() => setActiveTab("faculty")}
+                className={cn(
+                  "flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold transition-all",
+                  activeTab === "faculty" ? "bg-white text-slate-900 shadow-sm border border-slate-200/50" : "text-slate-600 hover:text-slate-900"
+                )}
+              >
+                <GraduationCap className="w-4 h-4 text-blue-600" />
+                <span>Faculty & Admin Portal</span>
+              </button>
+              <button
+                onClick={() => setActiveTab("student")}
+                className={cn(
+                  "flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold transition-all",
+                  activeTab === "student" ? "bg-white text-slate-900 shadow-sm border border-slate-200/50" : "text-slate-600 hover:text-slate-900"
+                )}
+              >
+                <BookOpen className="w-4 h-4 text-indigo-600" />
+                <span>Student Academic View</span>
+              </button>
+              <button
+                onClick={() => setActiveTab("parent")}
+                className={cn(
+                  "flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold transition-all",
+                  activeTab === "parent" ? "bg-white text-slate-900 shadow-sm border border-slate-200/50" : "text-slate-600 hover:text-slate-900"
+                )}
+              >
+                <Users className="w-4 h-4 text-emerald-600" />
+                <span>Parent Risk Monitor</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Tab Screen Previews */}
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 md:p-8 shadow-sm">
+            {activeTab === "faculty" && (
+              <motion.div
+                key="faculty"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-6"
+              >
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900">Faculty Command Center</h3>
+                    <p className="text-xs text-slate-500">Live attendance sessions, Continuous Internal Assessment & class rosters</p>
+                  </div>
+                  <Link href="/dashboard">
+                    <Button size="sm" className="bg-slate-900 text-white text-xs font-semibold rounded-lg">
+                      Open Live Faculty Dashboard →
+                    </Button>
+                  </Link>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700">CS-302: Operating Systems</span>
+                      <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">
+                        Session Active
+                      </span>
+                    </div>
+                    <div className="flex items-end justify-between">
+                      <div>
+                        <p className="text-2xl font-bold text-slate-900">58 / 62</p>
+                        <p className="text-xs text-slate-500">Students Marked Present</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs font-bold text-emerald-600">93.5%</span>
+                      </div>
+                    </div>
+                    <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                      <div className="bg-blue-600 h-full rounded-full" style={{ width: "93.5%" }} />
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700">CIA Marks Entry Status</span>
+                      <span className="text-[10px] font-bold bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">
+                        Test 1 Completed
+                      </span>
+                    </div>
+                    <div className="space-y-1.5 text-xs text-slate-600">
+                      <div className="flex justify-between py-1 border-b border-slate-100">
+                        <span>Database Systems</span>
+                        <span className="font-semibold text-slate-900">Avg: 23.4 / 25</span>
+                      </div>
+                      <div className="flex justify-between py-1 border-b border-slate-100">
+                        <span>Algorithms & Complexity</span>
+                        <span className="font-semibold text-slate-900">Avg: 21.8 / 25</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700">Automated Audit Log</span>
+                      <span className="text-[10px] font-medium text-slate-400">Past 1 hour</span>
+                    </div>
+                    <div className="space-y-2 text-xs text-slate-600">
+                      <div className="flex items-start gap-2">
+                        <span className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0" />
+                        <span>Prof. Sharma finalized Attendance for Section 4B</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                        <span>8 Parent SMS alerts delivered for absent roll numbers</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === "student" && (
+              <motion.div
+                key="student"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-6"
+              >
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900">Student Progress & Marks Dashboard</h3>
+                    <p className="text-xs text-slate-500">Attendance percentages, Continuous Assessment scores & eligibility radar</p>
+                  </div>
+                  <Link href="/student/dashboard">
+                    <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg">
+                      Open Student Portal →
+                    </Button>
+                  </Link>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <p className="text-xs font-bold text-slate-500 uppercase">Overall Attendance</p>
+                    <h4 className="text-3xl font-extrabold text-slate-900 mt-2">88.5%</h4>
+                    <p className="text-xs text-emerald-600 font-medium mt-1">✓ Safe: Above 75% Exam Criterion</p>
+                    <div className="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 flex justify-between">
+                      <span>Classes Attended</span>
+                      <span className="font-semibold text-slate-800">142 / 160</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <p className="text-xs font-bold text-slate-500 uppercase">CIA Grade Estimate</p>
+                    <h4 className="text-3xl font-extrabold text-slate-900 mt-2">A+ (91.2%)</h4>
+                    <p className="text-xs text-blue-600 font-medium mt-1">Top 5% in Department</p>
+                    <div className="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 flex justify-between">
+                      <span>Internal Credit Points</span>
+                      <span className="font-semibold text-slate-800">48.5 / 50</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <p className="text-xs font-bold text-slate-500 uppercase">Class Schedule Today</p>
+                    <div className="mt-2 space-y-2 text-xs">
+                      <div className="p-2 bg-slate-50 rounded-lg border border-slate-100 flex justify-between items-center">
+                        <span className="font-medium text-slate-800">10:00 AM • Data Structures</span>
+                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">Present</span>
+                      </div>
+                      <div className="p-2 bg-slate-50 rounded-lg border border-slate-100 flex justify-between items-center">
+                        <span className="font-medium text-slate-800">02:00 PM • Computer Networks</span>
+                        <span className="text-[10px] font-medium text-slate-500">Upcoming</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === "parent" && (
+              <motion.div
+                key="parent"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-6"
+              >
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900">Guardian Transparency Portal</h3>
+                    <p className="text-xs text-slate-500">Instant notification history, attendance status, and risk analysis</p>
+                  </div>
+                  <Link href="/parent/dashboard">
+                    <Button size="sm" className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg">
+                      Open Parent View →
+                    </Button>
+                  </Link>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <span className="text-xs font-bold text-slate-500 uppercase">Student Standing</span>
+                    <h4 className="text-lg font-bold text-slate-900 mt-2">Rahul Deshmukh (Roll #21)</h4>
+                    <p className="text-xs text-slate-500 mt-0.5">B.Tech CS • Semester 4</p>
+                    <div className="mt-4 p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium">
+                      ✓ Good Standing: No academic deficiency detected.
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <span className="text-xs font-bold text-slate-500 uppercase">Attendance Record</span>
+                    <h4 className="text-2xl font-bold text-slate-900 mt-2">89.2%</h4>
+                    <p className="text-xs text-slate-500 mt-1">2 Absences recorded this month</p>
+                    <div className="mt-3 text-xs text-slate-600 space-y-1">
+                      <p>• Aug 28: Absent (Sick Leave Approved)</p>
+                      <p>• Aug 14: Absent (Sports Duty)</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <span className="text-xs font-bold text-slate-500 uppercase">Message Log</span>
+                    <div className="mt-2 space-y-2 text-xs">
+                      <div className="p-2 bg-slate-50 rounded border border-slate-100">
+                        <span className="font-semibold text-slate-900">SMS Notice:</span> Mid-Term Exam Marks Published.
+                        <p className="text-[10px] text-slate-400 mt-0.5">Sent yesterday at 4:30 PM</p>
+                      </div>
+                      <div className="p-2 bg-slate-50 rounded border border-slate-100">
+                        <span className="font-semibold text-slate-900">Parent-Teacher Meeting:</span> Scheduled for Sept 15.
+                        <p className="text-[10px] text-slate-400 mt-0.5">Sent on Aug 25</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
           </div>
         </div>
       </section>
 
-      {/* Security Section */}
-      <section id="security" className="py-24 bg-slate-900 text-white overflow-hidden relative">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/10 blur-[100px] rounded-full" />
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-20 items-center">
-            <div className="space-y-8">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/5 border border-white/10 rounded-full text-blue-400 text-xs font-bold uppercase tracking-widest">
-                Enterprise Security
+      {/* Academic Modules Grid */}
+      <section id="modules" className="py-20 px-6 max-w-7xl mx-auto">
+        <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
+          <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">Comprehensive Capability</span>
+          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">Structured for Academic Administration</h2>
+          <p className="text-slate-600 text-base font-normal">Everything needed to run department rosters, evaluations, and compliance.</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="p-6 border-slate-200 bg-white shadow-sm hover:border-slate-300 transition-all rounded-xl">
+            <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center mb-4 border border-blue-100">
+              <Calendar className="w-5 h-5" />
+            </div>
+            <h3 className="text-base font-bold text-slate-900 mb-2">Live Class Attendance</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Take attendance per lecture or session in under 30 seconds. Supports quick toggle, RFID, biometric sync, and offline persistence.
+            </p>
+          </Card>
+
+          <Card className="p-6 border-slate-200 bg-white shadow-sm hover:border-slate-300 transition-all rounded-xl">
+            <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center mb-4 border border-indigo-100">
+              <BookOpen className="w-5 h-5" />
+            </div>
+            <h3 className="text-base font-bold text-slate-900 mb-2">CIA Marks & Gradebook</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Enter Continuous Internal Assessment marks, assignments, and practicals. Automated formula calculation for final semester eligibility.
+            </p>
+          </Card>
+
+          <Card className="p-6 border-slate-200 bg-white shadow-sm hover:border-slate-300 transition-all rounded-xl">
+            <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center mb-4 border border-emerald-100">
+              <Mail className="w-5 h-5" />
+            </div>
+            <h3 className="text-base font-bold text-slate-900 mb-2">Parent SMS & Email Dispatch</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Trigger automated daily notifications to guardians when students fall below mandatory thresholds or miss critical lectures.
+            </p>
+          </Card>
+
+          <Card className="p-6 border-slate-200 bg-white shadow-sm hover:border-slate-300 transition-all rounded-xl">
+            <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center mb-4 border border-amber-100">
+              <Trophy className="w-5 h-5" />
+            </div>
+            <h3 className="text-base font-bold text-slate-900 mb-2">Academic Leaderboards</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Recognize top academic performers and consistent attendance streaks across departments with verified badges and rankings.
+            </p>
+          </Card>
+
+          <Card className="p-6 border-slate-200 bg-white shadow-sm hover:border-slate-300 transition-all rounded-xl">
+            <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center mb-4 border border-purple-100">
+              <FileSpreadsheet className="w-5 h-5" />
+            </div>
+            <h3 className="text-base font-bold text-slate-900 mb-2">One-Click PDF & Excel Reports</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Export official university formatted attendance sheets, eligibility lists, and department audit registers in seconds.
+            </p>
+          </Card>
+
+          <Card className="p-6 border-slate-200 bg-white shadow-sm hover:border-slate-300 transition-all rounded-xl">
+            <div className="w-10 h-10 bg-slate-100 text-slate-700 rounded-lg flex items-center justify-center mb-4 border border-slate-200">
+              <Medal className="w-5 h-5" />
+            </div>
+            <h3 className="text-base font-bold text-slate-900 mb-2">Sports & Co-Curricular Points</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Track university athletics, cultural events, and inter-college tournament participations with official point weighting.
+            </p>
+          </Card>
+        </div>
+      </section>
+
+      {/* Compliance & Security Section */}
+      <section id="security" className="py-16 bg-slate-900 text-white border-t border-slate-800">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className="space-y-6">
+              <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-slate-800 border border-slate-700 rounded text-blue-400 text-xs font-semibold">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                Institutional Data Security
               </div>
-              <h2 className="text-4xl md:text-6xl font-black tracking-tight leading-tight">
-                Your Data. <br />
-                Completely <br />
-                <span className="text-blue-500">Secure.</span>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+                Compliant, Isolated & Fully Auditable.
               </h2>
-              <p className="text-slate-400 text-lg leading-relaxed">
-                We take student privacy and data integrity seriously. Attendex implements multiple layers of protection to ensure your institution's data remains safe.
+              <p className="text-slate-400 text-sm leading-relaxed">
+                Attendex adheres to university data protection standards. All grade entries and attendance modifications are recorded with timestamped audit logs.
               </p>
 
-              <div className="space-y-4 pt-4">
-                <SecurityFeature icon={Lock} title="Password Encryption" desc="All credentials are encrypted with Bcrypt salted hashing." />
-                <SecurityFeature icon={Shield} title="XSS Protection" desc="Every input is sanitized via DOMPurify to prevent script injection." />
-                <SecurityFeature icon={CheckCircle} title="CSRF & CSP Headers" desc="Sophisticated network protection for every single request." />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                <div className="p-4 bg-slate-800/60 rounded-xl border border-slate-700/60">
+                  <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                    <Lock className="w-4 h-4 text-blue-400" />
+                    Role-Based Access (RBAC)
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-1">Strict isolation between Faculty, Students, and Administration.</p>
+                </div>
+                <div className="p-4 bg-slate-800/60 rounded-xl border border-slate-700/60">
+                  <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    Immutable Audit Trail
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-1">Every mark alteration and attendance override is tracked.</p>
+                </div>
               </div>
             </div>
 
-            <div className="relative">
-              <Card className="p-8 bg-white/5 border-white/10 backdrop-blur-xl rounded-[3rem] shadow-2xl relative z-10">
-                <pre className="text-blue-300 text-xs font-mono leading-relaxed overflow-x-auto">
-                  {`const securityConfig = {
-  encryption: "Bcrypt (12 Rounds)",
-  sanitization: "DOMPurify Active",
-  headers: {
-    "Content-Security-Policy": "Active",
-    "X-XSS-Protection": "1; mode=block",
-    "X-Frame-Options": "DENY"
-  },
-  multiTenant: "Data Sharding Enabled"
-};
-
-// All inputs are validated at entry
-// Output always escaped by React
-// Zero unprotected routes`}
-                </pre>
-              </Card>
-              <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-indigo-600/20 blur-3xl rounded-full" />
+            <div className="bg-slate-800/80 p-6 rounded-2xl border border-slate-700 text-xs font-mono space-y-2">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-700 text-slate-400">
+                <span>institutional_audit.json</span>
+                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded">VERIFIED</span>
+              </div>
+              <pre className="text-slate-300 overflow-x-auto leading-relaxed pt-2">
+{`{
+  "system": "Attendex Educational Core",
+  "audit_version": "2026.4",
+  "encryption": "AES-256 GCM at Rest",
+  "compliance": ["FERPA-Standard", "ISO-27001 Ready"],
+  "tenant_isolation": "Row-Level Security (RLS) Active",
+  "session_guard": "Passkey & Multi-factor Verified"
+}`}
+              </pre>
             </div>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-slate-200 py-16 px-6">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
-          <div className="space-y-6">
-            <div className="flex items-center gap-2 text-slate-900 font-bold text-xl tracking-tight">
-              <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                </svg>
-              </div>
-              Attendex
+      <footer className="bg-white border-t border-slate-200 py-12 px-6 text-slate-600 text-xs">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-3">
+            <div className="w-7 h-7 bg-slate-900 text-white rounded-lg flex items-center justify-center">
+              <GraduationCap className="w-4 h-4 text-blue-400" />
             </div>
-            <p className="text-slate-500 text-sm leading-relaxed">
-              Modernizing educational administration with intelligent attendance and academic tracking systems.
-            </p>
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 hover:text-blue-600 transition-colors">
-                <Mail className="w-5 h-5" />
-              </div>
-              <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 hover:text-blue-600 transition-colors">
-                <Globe className="w-5 h-5" />
-              </div>
+            <div>
+              <span className="font-bold text-slate-900 text-sm">Attendex Academic Systems</span>
+              <p className="text-[11px] text-slate-500">© 2026 Attendex. Standard Academic License.</p>
             </div>
           </div>
 
-          <div>
-            <h4 className="font-bold text-slate-900 mb-6 uppercase tracking-widest text-xs">Resources</h4>
-            <ul className="space-y-4 text-sm font-medium text-slate-500">
-              <li><a href="#features" className="hover:text-blue-600 transition-colors">Features</a></li>
-              <li><a href="#security" className="hover:text-blue-600 transition-colors">Security Audit</a></li>
-              <li><a href="#reporting" className="hover:text-blue-600 transition-colors">Report Gen</a></li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-bold text-slate-900 mb-6 uppercase tracking-widest text-xs">Legal</h4>
-            <ul className="space-y-4 text-sm font-medium text-slate-500">
-              <li><Link href="/privacy" className="hover:text-blue-600 transition-colors">Privacy Policy</Link></li>
-              <li><Link href="/terms" className="hover:text-blue-600 transition-colors">Terms of Service</Link></li>
-              <li><Link href="/terms" className="hover:text-blue-600 transition-colors">Cookie Policy</Link></li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-bold text-slate-900 mb-6 uppercase tracking-widest text-xs">Contact</h4>
-            <p className="text-slate-500 text-sm leading-relaxed mb-4">
-              Suite 402, Block B <br />
-              Global Tech Park <br />
-              Bangalore, India
-            </p>
-            <p className="text-blue-600 font-bold text-sm">support@Attendex.edu</p>
-          </div>
-        </div>
-
-        <div className="max-w-7xl mx-auto pt-16 mt-16 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4">
-            <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">
-              © 2026 Attendex Systems.
-            </p>
-            <div className="hidden md:block w-1 h-1 rounded-full bg-slate-300" />
-            <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">
-              Curated and architected by <a href="https://brandex-lab.vercel.app/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-700 transition-colors border-b border-blue-600/30">Brandex Lab</a>
-            </p>
-          </div>
-          <div className="flex items-center gap-6 text-xs font-bold text-slate-400">
-            <span className="flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-emerald-500" /> SSL SECURE</span>
-            <span className="flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-emerald-500" /> GDPR COMPLIANT</span>
+          <div className="flex items-center gap-6 font-medium text-slate-600">
+            <Link href="/dashboard" className="hover:text-slate-900 transition-colors">Admin Portal</Link>
+            <Link href="/student/dashboard" className="hover:text-slate-900 transition-colors">Student View</Link>
+            <Link href="/parent/dashboard" className="hover:text-slate-900 transition-colors">Parent View</Link>
+            <Link href="/login" className="hover:text-slate-900 transition-colors">Sign In</Link>
           </div>
         </div>
       </footer>
     </div>
   );
 }
-
-function FeatureCard({ icon: Icon, title, description }: any) {
-  return (
-    <div className="p-10 rounded-[2.5rem] bg-slate-50 border border-slate-100 hover:border-blue-100 hover:bg-white hover:shadow-2xl hover:shadow-blue-500/5 transition-all group">
-      <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-blue-600 shadow-sm border border-slate-100 mb-8 group-hover:bg-blue-600 group-hover:text-white group-hover:scale-110 transition-all">
-        <Icon className="w-7 h-7" />
-      </div>
-      <h3 className="text-2xl font-black text-slate-900 mb-4 tracking-tight">{title}</h3>
-      <p className="text-slate-500 leading-relaxed font-medium">{description}</p>
-    </div>
-  )
-}
-
-function SecurityFeature({ icon: Icon, title, desc }: any) {
-  return (
-    <div className="flex items-start gap-4">
-      <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
-        <Icon className="w-5 h-5" />
-      </div>
-      <div>
-        <h4 className="font-bold text-white text-sm">{title}</h4>
-        <p className="text-xs text-slate-500 mt-1">{desc}</p>
-      </div>
-    </div>
-  )
-}
-

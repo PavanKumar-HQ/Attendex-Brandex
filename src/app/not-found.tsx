@@ -14,25 +14,25 @@ export default function NotFound() {
         className="space-y-8 max-w-md"
       >
         <div className="flex justify-center">
-          <div className="w-24 h-24 rounded-[2.5rem] bg-blue-50 flex items-center justify-center text-blue-600 shadow-inner">
-            <GraduationCap className="w-12 h-12" />
+          <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 border border-blue-100 shadow-sm">
+            <GraduationCap className="w-8 h-8" />
           </div>
         </div>
 
         <div className="space-y-2">
-            <h1 className="text-7xl font-black text-slate-900 tracking-tighter">404</h1>
-            <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Resource Missing</h2>
-            <p className="text-slate-500 font-medium leading-relaxed">
-                The academic record or page you're looking for doesn't exist or has been moved.
+            <h1 className="text-5xl font-bold text-slate-900 tracking-tight">404</h1>
+            <h2 className="text-xl font-bold text-slate-800 tracking-tight">Page Not Found</h2>
+            <p className="text-slate-500 font-medium text-xs leading-relaxed">
+                The academic record or route you're looking for doesn't exist or has been relocated.
             </p>
         </div>
 
-        <div className="flex flex-col gap-3 pt-4">
-            <Link href="/dashboard" className="h-12 rounded-2xl bg-slate-900 text-white font-bold text-sm shadow-xl hover:shadow-slate-200 transition-all flex items-center justify-center">
+        <div className="flex flex-col gap-2 pt-2">
+            <Link href="/dashboard" className="h-11 rounded-xl bg-slate-900 text-white font-semibold text-xs hover:bg-slate-800 transition-all flex items-center justify-center shadow-sm">
                 <Home className="w-4 h-4 mr-2" />
                 Back to Dashboard
             </Link>
-            <Button variant="ghost" onClick={() => window.history.back()} className="h-12 rounded-2xl text-slate-400 font-bold text-sm">
+            <Button variant="ghost" onClick={() => window.history.back()} className="h-10 rounded-xl text-slate-500 font-semibold text-xs hover:text-slate-900">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Go Back
             </Button>

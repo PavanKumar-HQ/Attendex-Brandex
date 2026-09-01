@@ -284,142 +284,149 @@ export default function ClassesPage() {
     reader.readAsText(file);
   };
 
-  if (loading) return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-6">
-        <RefreshCcw className="w-10 h-10 text-blue-600 animate-spin" />
-        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-300">Resolving Global Directories</p>
-    </div>
-  );
+  // Full page loader moved inline
 
   return (
     <PageTransition>
       <div className="flex flex-col min-h-full">
         <Header title="Academic Jurisdictions" />
         
-        <div className="flex-1 space-y-8">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div className="flex-1 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             {view === 'grid' ? (
               <>
                 <div>
-                    <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase">Academic Sections</h2>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Initialize or claim trial session endpoints</p>
+                    <h2 className="text-xl font-bold text-slate-900 tracking-tight">Academic Classes & Sections</h2>
+                    <p className="text-xs text-slate-500 font-medium">Manage departmental batches, courses, and student allocations</p>
                 </div>
                 
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full lg:w-auto">
-                    <div className="relative group flex-1 sm:flex-none">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <div className="flex items-center gap-3">
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                         <Input 
-                            placeholder="Identify registry..." 
-                            className="pl-11 w-full sm:w-[320px] border-slate-200 shadow-sm rounded-2xl h-12 bg-white focus:ring-4 focus:ring-blue-500/5 font-bold transition-all"
+                            placeholder="Filter classes..." 
+                            className="pl-9 w-full sm:w-[260px] border-slate-200 shadow-sm rounded-lg h-10 bg-white text-xs font-medium"
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                         />
                     </div>
-                    <Button onClick={() => setIsAddOpen(true)} className="h-12 px-6 sm:px-8 rounded-2xl bg-blue-600 text-white font-black uppercase tracking-widest hover:bg-blue-700 shadow-xl shadow-blue-500/10 transition-all text-[10px] sm:text-xs">
-                        <Plus className="w-4 h-4 mr-2" /> New Directory
+                    <Button onClick={() => setIsAddOpen(true)} size="sm" className="h-10 px-4 rounded-lg bg-slate-900 text-white font-semibold text-xs shadow-sm">
+                        <Plus className="w-4 h-4 mr-1.5" /> New Class
                     </Button>
                 </div>
               </>
             ) : (
-                <div className="flex flex-col md:flex-row md:items-center justify-between w-full gap-4">
-                    <Button variant="ghost" onClick={() => setView('grid')} className="h-10 md:h-12 px-4 md:px-6 rounded-2xl text-slate-600 font-black text-[9px] md:text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-slate-100 w-fit">
+                <div className="flex items-center justify-between w-full">
+                    <Button variant="ghost" size="sm" onClick={() => setView('grid')} className="h-9 px-3 rounded-lg text-slate-600 font-semibold text-xs flex items-center gap-1.5 hover:bg-slate-100">
                         <ChevronRight className="w-4 h-4 rotate-180" /> Back to Sections
                     </Button>
 
-                    <div className="flex items-center gap-2 md:gap-3">
+                    <div className="flex items-center gap-2">
                         <input type="file" accept=".csv" className="hidden" ref={fileInputRef} onChange={handleImportCSV} />
-                        <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="h-10 md:h-12 px-4 md:px-8 rounded-2xl text-blue-600 border-blue-100 bg-blue-50/50 hover:bg-blue-50 font-black uppercase tracking-widest text-[9px] md:text-[10px] flex items-center gap-2 md:gap-3 shadow-sm flex-1 md:flex-none">
-                            <UploadCloud className="w-4 h-4 md:w-5 md:h-5" /> Import Roster
+                        <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} className="h-9 px-4 rounded-lg text-slate-700 border-slate-200 hover:bg-slate-50 font-semibold text-xs flex items-center gap-2">
+                            <UploadCloud className="w-4 h-4 text-blue-600" /> Import Class CSV
                         </Button>
                     </div>
                 </div>
             )}
           </div>
 
-          <div className="flex p-1 bg-slate-100/50 rounded-2xl w-full sm:w-fit border border-slate-100 shadow-inner">
-              <button onClick={() => setActiveTab('my')} className={cn("flex-1 sm:flex-none px-4 sm:px-8 py-2.5 rounded-xl text-[9px] sm:text-[10px] uppercase font-black tracking-widest transition-all", activeTab === 'my' ? "bg-white text-blue-600 shadow-sm ring-1 ring-slate-100" : "text-slate-400 hover:text-slate-500")}>My Portfolio</button>
-              <button onClick={() => setActiveTab('registry')} className={cn("flex-1 sm:flex-none px-4 sm:px-8 py-2.5 rounded-xl text-[9px] sm:text-[10px] uppercase font-black tracking-widest transition-all", activeTab === 'registry' ? "bg-white text-blue-600 shadow-sm ring-1 ring-slate-100" : "text-slate-400 hover:text-slate-500")}>Global Directory</button>
+          <div className="flex p-1 bg-slate-100 rounded-lg w-fit border border-slate-200 text-xs font-semibold">
+              <button onClick={() => setActiveTab('my')} className={cn("px-4 py-1.5 rounded-md transition-all", activeTab === 'my' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800")}>My Allocated Classes</button>
+              <button onClick={() => setActiveTab('registry')} className={cn("px-4 py-1.5 rounded-md transition-all", activeTab === 'registry' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800")}>All Department Classes</button>
           </div>
 
           <AnimatePresence mode="wait">
             {view === 'grid' ? (
-                <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8">
-                    {activeTab === 'my' ? (
+                <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {loading ? (
+                        <div className="col-span-full py-24 flex flex-col items-center justify-center">
+                            <RefreshCcw className="w-8 h-8 text-blue-500 animate-spin mb-4" />
+                            <p className="text-sm font-semibold text-slate-500">Resolving Global Directories...</p>
+                        </div>
+                    ) : activeTab === 'my' ? (
                         <>
                             {myPortfolio.map((cls) => (
-                                <Card key={cls.claim_id} className="p-6 md:p-8 border-slate-100 shadow-sm rounded-[2rem] md:rounded-[2.5rem] bg-white group hover:shadow-2xl hover:scale-[1.02] transition-all cursor-pointer relative overflow-hidden" onClick={() => handleClassClick(cls)}>
-                                    <div className="absolute top-0 right-0 p-4 md:p-6 opacity-5 group-hover:opacity-10 transition-opacity">
-                                         <GraduationCap className="w-24 h-24 md:w-32 md:h-32 text-slate-900" />
+                                <Card key={cls.claim_id || cls.id} className="p-5 border-slate-200 shadow-sm rounded-xl bg-white hover:border-slate-300 transition-all cursor-pointer flex flex-col justify-between space-y-4" onClick={() => handleClassClick(cls)}>
+                                    <div>
+                                      <div className="flex items-center justify-between mb-3">
+                                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 uppercase">
+                                            Sec {cls.section} • Year {cls.year}
+                                          </span>
+                                          <span className="text-xs font-semibold text-slate-400">Sem {cls.semester || 8}</span>
+                                      </div>
+                                      <h3 className="text-base font-bold text-slate-900 leading-snug truncate">{cls.name}</h3>
+                                      <p className="text-xs text-blue-600 font-semibold mt-1">{cls.subject_name || "Assigned Subject"}</p>
+                                      <p className="text-[11px] text-slate-400 font-medium">{cls.department || 'Computer Science'}</p>
                                     </div>
-                                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 mb-6 md:mb-8 group-hover:rotate-6 transition-transform shadow-inner">
-                                        <GraduationCap className="w-6 h-6 md:w-7 md:h-7" />
-                                    </div>
-                                    <h3 className="text-lg md:text-xl font-black text-slate-900 leading-tight mb-2 pr-10 truncate">{cls.name}</h3>
-                                    <p className="text-[9px] md:text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">{cls.subject_name}</p>
-                                    <p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.1em] mb-6 md:mb-8">{cls.department || 'GENERAL'}</p>
                                     
-                                    <div className="pt-4 md:pt-6 border-t border-slate-50 flex items-center justify-between">
-                                        <div className="flex items-center gap-2 md:gap-3">
-                                            <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center">
-                                                <Users className="w-3.5 h-3.5 md:w-4 md:h-4 text-slate-400" />
-                                            </div>
-                                            <span className="text-[10px] md:text-xs font-black text-slate-900 uppercase tracking-tighter">{cls.students_count || 0} Students</span>
-                                        </div>
-                                        <div className="font-black text-slate-300 text-[9px] md:text-[10px] uppercase tracking-[0.2em]">SEC {cls.section}</div>
+                                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                                        <span className="font-semibold text-slate-700">{cls.student_count || 60} Students</span>
+                                        <span className="text-slate-400">View Details →</span>
                                     </div>
                                 </Card>
                             ))}
-                            <button onClick={() => setActiveTab('registry')} className="p-6 md:p-10 border-2 border-dashed border-slate-200 rounded-[2rem] md:rounded-[2.5rem] group hover:border-blue-300 hover:bg-blue-50/30 transition-all flex flex-col items-center justify-center text-center gap-4">
-                                <div className="w-14 h-14 md:w-16 md:h-16 rounded-xl md:rounded-[1.5rem] bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-600 transition-all shadow-inner">
-                                    <Zap className="w-7 h-7 md:w-8 md:h-8" />
-                                </div>
-                                <p className="font-black text-slate-400 uppercase tracking-[0.3em] text-[9px] md:text-[10px]">Claim New Subject</p>
-                            </button>
+                            {globalRegistry.map((cls) => (
+                                <Card key={cls.id} className="p-5 border-slate-200 shadow-sm rounded-xl bg-white hover:border-slate-300 transition-all cursor-pointer flex flex-col justify-between space-y-4" onClick={() => handleClassClick(cls)}>
+                                    <div>
+                                      <div className="flex items-center justify-between mb-3">
+                                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 uppercase">
+                                            Section {cls.section}
+                                          </span>
+                                          <span className="text-xs font-semibold text-slate-400">Year {cls.year}</span>
+                                      </div>
+                                      <h3 className="text-base font-bold text-slate-900 leading-snug truncate">{cls.name}</h3>
+                                      <p className="text-xs text-slate-500 font-medium mt-1">{cls.department || 'Engineering'}</p>
+                                    </div>
+                                    
+                                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                                        <span className="font-semibold text-slate-700">{cls.student_count || 60} Students</span>
+                                        <span className="text-slate-400">Open Roster →</span>
+                                    </div>
+                                </Card>
+                            ))}
                         </>
                     ) : (
                         globalRegistry.map((cls) => (
-                            <Card key={cls.id} className="p-6 md:p-8 border-slate-100 shadow-sm rounded-[2rem] md:rounded-[2.5rem] bg-white hover:bg-slate-50 group transition-all">
-                                <div className="flex justify-between items-start mb-6 md:mb-8">
-                                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100 shadow-inner">
-                                        <Briefcase className="w-6 h-6 md:w-7 md:h-7" />
+                            <Card key={cls.id} className="p-5 border-slate-200 shadow-sm rounded-xl bg-white hover:border-slate-300 transition-all flex flex-col justify-between space-y-4">
+                                <div>
+                                    <div className="flex items-center justify-between mb-3">
+                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 uppercase">
+                                          Section {cls.section}
+                                        </span>
+                                        <Button size="sm" onClick={() => { setSelectedClass(cls); setIsClaimOpen(true); }} className="h-7 px-3 text-[10px] font-semibold bg-slate-900 text-white rounded-md">
+                                            Assign Subject
+                                        </Button>
                                     </div>
-                                    <Button onClick={() => { setSelectedClass(cls); setIsClaimOpen(true); }} className="h-9 md:h-10 px-4 md:px-6 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest bg-slate-900 text-white hover:bg-slate-800 transition-all shadow-lg active:scale-95">
-                                        Claim Endpoint
-                                    </Button>
+                                    <h3 className="text-base font-bold text-slate-900 leading-snug truncate">{cls.name}</h3>
+                                    <p className="text-xs text-slate-500 font-medium mt-1">Year {cls.year} • {cls.department}</p>
                                 </div>
-                                <h3 className="text-lg md:text-xl font-black text-slate-900 leading-tight mb-2 truncate">{cls.name}</h3>
-                                <p className="text-[9px] md:text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] mb-8 md:mb-10">Section {cls.section} • Year {cls.year}</p>
-                                
-                                <div className="mt-auto flex items-center gap-3 md:gap-4 p-3 md:p-4 bg-white/80 rounded-2xl border border-slate-100 group-hover:shadow-sm transition-all">
-                                    <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px] md:text-xs font-black shadow-xl ring-4 ring-slate-50">
-                                        {(cls.owner_name || 'U').charAt(0)}
-                                    </div>
-                                    <div>
-                                        <p className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-tighter">Current Lead</p>
-                                        <p className="text-[10px] md:text-xs font-black text-slate-900 truncate max-w-[120px]">{cls.class_claims?.length || 0} Subjects Managed</p>
-                                    </div>
+                                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                                    <span>{cls.student_count || 60} Students</span>
+                                    <span>Active</span>
                                 </div>
                             </Card>
                         ))
                     )}
                 </motion.div>
             ) : (
-                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-10">
-                    <div className="flex flex-col md:flex-row items-start md:items-center gap-6 md:gap-8 p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] bg-slate-900 text-white shadow-2xl relative overflow-hidden group">
-                        <div className="absolute inset-0 bg-blue-600 opacity-0 group-hover:opacity-10 transition-opacity" />
-                        <div className="w-16 h-16 md:w-20 md:h-20 rounded-[1.5rem] md:rounded-[2rem] bg-white/10 flex items-center justify-center text-white border border-white/20 shadow-2xl backdrop-blur-md shrink-0">
-                            <GraduationCap className="w-8 h-8 md:w-10 md:h-10" />
-                        </div>
-                        <div>
-                            <div className="flex flex-wrap items-center gap-3 md:gap-4 mb-2">
-                                <h2 className="text-xl md:text-3xl font-black tracking-tighter uppercase">{selectedClass?.name} <span className="text-blue-500">Sec {selectedClass?.section}</span></h2>
-                                <span className="px-3 md:px-4 py-0.5 md:py-1 bg-white text-slate-900 text-[8px] md:text-[10px] font-black uppercase rounded-full shadow-lg">
-                                    Year {selectedClass?.year}
-                                </span>
+                <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+                    <Card className="p-6 border-slate-200 rounded-xl bg-white shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+                                <GraduationCap className="w-5 h-5" />
                             </div>
-                            <p className="text-[9px] md:text-xs text-slate-400 font-black uppercase tracking-widest">Master Roster Registry • Trial ID: {selectedClass?.id.slice(0, 8)}</p>
+                            <div>
+                                <h2 className="text-lg font-bold text-slate-900">{selectedClass?.name} - Section {selectedClass?.section}</h2>
+                                <p className="text-xs text-slate-500 font-medium">Department of {selectedClass?.department || 'Computer Science'} • Year {selectedClass?.year}</p>
+                            </div>
                         </div>
-                    </div>
+                        <div className="flex items-center gap-2">
+                            <Button variant="outline" size="sm" onClick={handleDeleteAllStudents} className="h-8 text-xs font-semibold text-rose-600 border-rose-200 hover:bg-rose-50 rounded-lg">
+                                Clear Class Roster
+                            </Button>
+                        </div>
+                    </Card>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
                         <StatusStat label="Students" value={students.length} icon={Users} color="blue" />
@@ -432,28 +439,27 @@ export default function ClassesPage() {
                         } icon={Trash2} color="rose" />
                     </div>
 
-                    <Card className="border-none rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl bg-white border border-slate-100">
+                    <Card className="rounded-xl overflow-hidden shadow-sm bg-white border border-slate-200">
                         <div className="hidden lg:block overflow-x-auto">
-                            <table className="w-full text-left">
-                                <thead className="bg-slate-50/50 border-b border-slate-100">
+                            <table className="w-full text-left text-sm text-slate-600">
+                                <thead className="bg-slate-50 border-b border-slate-100 text-[11px] font-semibold text-slate-500 uppercase">
                                     <tr>
-                                        <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Student ID</th>
-                                        <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Identity Details</th>
-                                        <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Institutional Email</th>
-                                        <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] text-right">Actions</th>
+                                        <th className="px-6 py-4">Student ID</th>
+                                        <th className="px-6 py-4">Identity Details</th>
+                                        <th className="px-6 py-4">Institutional Email</th>
+                                        <th className="px-6 py-4 text-right">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-50">
-                                    {students.map((student) => (
-                                        <tr key={student.id} className="hover:bg-slate-50/80 transition-all group cursor-pointer border-l-4 border-transparent hover:border-blue-600">
-                                            <td className="px-10 py-6 text-sm font-black text-slate-900 uppercase tracking-tighter">{student.roll_number}</td>
-                                            <td className="px-10 py-6">
-                                                <div className="text-sm font-black text-slate-900 tracking-tight">{student.name}</div>
-                                                <p className="text-[10px] font-bold text-slate-400 uppercase mt-0.5">{student.department}</p>
+                                <tbody className="divide-y divide-slate-100">
+                                    {students.map((st) => (
+                                        <tr key={st.id} className="hover:bg-slate-50/50 transition-colors">
+                                            <td className="px-6 py-4 font-semibold text-slate-700">{st.roll_number}</td>
+                                            <td className="px-6 py-4">
+                                                <div className="font-bold text-slate-900">{st.name}</div>
                                             </td>
-                                            <td className="px-10 py-6 text-xs font-bold text-slate-500/60 lowercase">{student.email}</td>
-                                            <td className="px-10 py-6 text-right">
-                                                <Button variant="ghost" size="sm" onClick={() => handleDeleteStudent(student.id)} className="h-10 w-10 p-0 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100">
+                                            <td className="px-6 py-4 text-[11px] font-medium text-slate-500">{st.email}</td>
+                                            <td className="px-6 py-4 text-right">
+                                                <Button variant="ghost" size="sm" onClick={() => handleDeleteStudent(st.id)} className="h-8 w-8 p-0 rounded-lg text-rose-500 hover:bg-rose-50 hover:text-rose-600">
                                                     <Trash2 className="w-4 h-4" />
                                                 </Button>
                                             </td>

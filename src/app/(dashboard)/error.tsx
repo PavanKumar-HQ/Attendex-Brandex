@@ -28,49 +28,47 @@ export default function Error({
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="max-w-xl w-full bg-slate-900 border border-slate-800 rounded-[3rem] p-10 shadow-2xl relative z-10"
+        className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-xl relative z-10"
       >
-        <div className="flex flex-col items-center text-center space-y-8">
+        <div className="flex flex-col items-center text-center space-y-6">
           {/* Hardware-Grade Security Icon */}
           <div className="relative">
-            <div className="w-24 h-24 rounded-[2rem] bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-500 shadow-2xl shadow-blue-500/10">
-              <ShieldAlert className="w-12 h-12" />
+            <div className="w-16 h-16 rounded-2xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-500 shadow-md">
+              <ShieldAlert className="w-8 h-8" />
             </div>
-            <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-amber-500 shadow-lg">
-              <WifiOff className="w-5 h-5" />
+            <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-amber-500 shadow-sm">
+              <WifiOff className="w-4 h-4" />
             </div>
           </div>
 
-          <div className="space-y-4">
-            <h1 className="text-3xl font-[1000] text-white tracking-tighter uppercase leading-none">
-              Session Paused
+          <div className="space-y-2">
+            <h1 className="text-xl font-bold text-white tracking-tight">
+              Session Temporarily Offline
             </h1>
-            <p className="text-slate-400 font-bold leading-relaxed">
-              We're having trouble connecting to the institutional network. Don't worry, your progress has been 
-              <span className="text-blue-400"> automatically saved </span> on this device and will sync when you're back online.
+            <p className="text-slate-400 font-medium text-xs leading-relaxed">
+              We're having trouble connecting to the network. Your progress has been 
+              <span className="text-blue-400 font-semibold"> cached locally </span> and will synchronize automatically.
             </p>
           </div>
 
-          <div className="w-full space-y-3 pt-4">
+          <div className="w-full space-y-2 pt-2">
             <Button
               onClick={() => {
                 haptics.light();
                 reset();
               }}
-              size="lg"
-              className="w-full h-16 rounded-2xl bg-white text-slate-900 hover:bg-slate-100 font-black uppercase tracking-widest text-sm transition-all active:scale-95 group"
+              className="w-full h-11 rounded-xl bg-white text-slate-950 font-semibold text-xs hover:bg-slate-100 transition-all shadow-sm flex items-center justify-center gap-2"
             >
-              <RefreshCcw className="mr-3 w-5 h-5 group-hover:rotate-180 transition-transform duration-700" />
+              <RefreshCcw className="w-4 h-4" />
               Try Reconnecting
             </Button>
             
             <Link href="/dashboard" className="block w-full">
               <Button
                 variant="outline"
-                size="lg"
-                className="w-full h-16 rounded-2xl border-slate-800 bg-transparent text-slate-400 hover:text-white hover:bg-slate-800 font-black uppercase tracking-widest text-xs transition-all"
+                className="w-full h-10 rounded-xl border-slate-800 bg-transparent text-slate-400 hover:text-white hover:bg-slate-800 font-semibold text-xs transition-all flex items-center justify-center gap-2"
               >
-                <ArrowLeft className="mr-3 w-4 h-4" />
+                <ArrowLeft className="w-4 h-4" />
                 Back to Dashboard
               </Button>
             </Link>

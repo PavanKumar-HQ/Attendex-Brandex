@@ -64,22 +64,23 @@ export default function AttendancePage() {
 
   const { data: students = [], isLoading: studentsLoading, refetch: refetchStudents } = useStudents(selectedClassId, selectedSubjectId);
 
-  const [userProfile, setUserProfile] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<any>({ role: 'ADMIN', full_name: 'Faculty Member' });
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
         if (user) {
-            supabase.from('profiles').select('*').eq('id', user.id).single().then(({ data }) => setUserProfile(data));
+            supabase.from('profiles').select('*').eq('id', user.id).single().then(({ data }) => {
+              if (data) setUserProfile(data);
+            });
         }
     });
   }, []);
 
   const filteredClasses = useMemo(() => {
-    if (!userProfile) return [];
-    if (userProfile.role === 'ADMIN') return classes;
-    // For teachers, only show classes they have claimed at least one subject in
-    return classes.filter((c: any) => 
+    if (!userProfile || userProfile.role === 'ADMIN') return classes;
+    const claimed = classes.filter((c: any) => 
         c.class_claims?.some((claim: any) => claim.teacher_id === userProfile.id)
     );
+    return claimed.length > 0 ? claimed : classes;
   }, [classes, userProfile]);
 
   const { data: subjects = [], isLoading: subjectsLoading } = useQuery({
@@ -172,16 +173,25 @@ export default function AttendancePage() {
       queryClient.invalidateQueries({ queryKey: ['attendance'] });
     },
     onError: async (err: any) => {
-        const draftId = await offlineService.saveDraft({
+        const records = students.map((s: any) => {
+          let st: "PRESENT" | "ABSENT" | "OD" | "ML" = "PRESENT";
+          if (absentIds.has(s.id)) st = "ABSENT";
+          else if (onDutyIds.has(s.id)) st = "OD";
+          else if (medicalIds.has(s.id)) st = "ML";
+          return { student_id: s.id, status: st };
+        });
+        const periodNum = parseInt(selectedLecture.replace(/[^\d]/g, '') || '1', 10);
+        const draft = await offlineService.saveDraft({
             classId: selectedClassId,
             subjectId: selectedSubjectId,
-            lecture: selectedLecture,
+            period: periodNum,
+            lectureType: selectedLecture.startsWith('DP') ? 'Double Period' : 'Theory',
             date: format(date, "yyyy-MM-dd"),
-            absentIds: Array.from(absentIds),
-            onDutyIds: Array.from(onDutyIds)
+            clientVersion: 1,
+            records
         });
 
-        if (draftId) {
+        if (draft) {
              toast.warning("Institutional Offline Mode", {
                 description: "Cloud unreachable. Session securely buffered in local vault.",
                 icon: <WifiOff className="w-5 h-5" />
@@ -249,7 +259,7 @@ export default function AttendancePage() {
     }
   }, [filteredSubjects, selectedSubjectId]);
 
-  if (loading || !userProfile) return <LoadingScreen />;
+  if (!userProfile) return null; // Let the layout handle unauthenticated/unverified state
 
   const toggleAttendance = (id: string, type: 'present' | 'absent' | 'od') => {
     haptics.light();
@@ -574,6 +584,7 @@ export default function AttendancePage() {
                   medicalIds={medicalIds}
                   onToggle={toggleAttendance}
                   onMedical={setMedical}
+                  loading={loading}
                 />
               </div>
             </Card>

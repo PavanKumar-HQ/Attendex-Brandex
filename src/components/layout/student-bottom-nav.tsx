@@ -48,8 +48,8 @@ export function StudentBottomNav() {
                                 />
                                 <span
                                     className={cn(
-                                        "text-[8px] font-black uppercase tracking-widest transition-colors",
-                                        isActive ? "text-white" : "text-slate-400 group-hover:text-slate-600"
+                                        "text-[9px] font-bold uppercase tracking-wider transition-colors",
+                                        isActive ? "text-white" : "text-slate-500 group-hover:text-slate-700"
                                     )}
                                 >
                                     {label}

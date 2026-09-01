@@ -11,6 +11,7 @@ interface StudentListProps {
   medicalIds: Set<string>;
   onToggle: (id: string, type: 'present' | 'absent' | 'od') => void;
   onMedical: (id: string) => void;
+  loading?: boolean;
 }
 
 export function StudentList({ 
@@ -19,16 +20,31 @@ export function StudentList({
   onDutyIds, 
   medicalIds, 
   onToggle, 
-  onMedical 
+  onMedical,
+  loading 
 }: StudentListProps) {
+  if (loading) {
+    return (
+      <div className="py-24 flex flex-col items-center justify-center">
+        <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center text-blue-500 mx-auto mb-4">
+          <svg className="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </div>
+        <p className="text-sm font-semibold text-slate-500">Loading Student Records...</p>
+      </div>
+    );
+  }
+
   if (students.length === 0) {
     return (
-      <div className="py-24 text-center">
-        <div className="w-20 h-20 bg-slate-50 rounded-[2.5rem] flex items-center justify-center text-slate-200 mx-auto mb-6">
-          <Search className="w-10 h-10" />
+      <div className="py-20 text-center">
+        <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 mx-auto mb-3">
+          <Search className="w-6 h-6" />
         </div>
-        <p className="text-lg font-black text-slate-900 uppercase tracking-tight">No match found</p>
-        <p className="text-sm font-bold text-slate-400 mt-2">Try a different roll number or name</p>
+        <p className="text-base font-bold text-slate-900">No match found</p>
+        <p className="text-sm font-medium text-slate-500 mt-1">Try a different roll number or name</p>
       </div>
     );
   }

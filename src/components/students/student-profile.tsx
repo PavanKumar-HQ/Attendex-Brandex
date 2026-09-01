@@ -126,70 +126,70 @@ export function StudentProfile({ student, onClose }: StudentProfileProps) {
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.9, opacity: 0, y: 20 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="relative w-[95vw] md:w-full max-w-4xl max-h-[92vh] md:max-h-[90vh] bg-white rounded-[2rem] md:rounded-[3rem] shadow-2xl flex flex-col md:flex-row overflow-hidden border border-white/20"
+          className="relative w-[95vw] md:w-full max-w-4xl max-h-[92vh] md:max-h-[90vh] bg-white rounded-2xl shadow-xl flex flex-col md:flex-row overflow-hidden border border-slate-200"
         >
           <button 
               onClick={(e) => { e.stopPropagation(); onClose(); }}
-              className="absolute top-4 right-4 md:top-6 md:right-6 w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-xl hover:scale-110 active:scale-95 transition-all z-20"
+              className="absolute top-4 right-4 md:top-6 md:right-6 w-9 h-9 md:w-10 md:h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-all z-20"
           >
-              <X className="w-5 h-5 md:w-6 md:h-6" />
+              <X className="w-4 h-4 md:w-5 md:h-5" />
           </button>
 
           {/* Left Sidebar / Top Header on Mobile */}
-          <div className="w-full md:w-[320px] bg-slate-50 p-6 md:p-10 flex flex-col items-center justify-center space-y-4 md:space-y-6 border-b md:border-b-0 md:border-r border-slate-100 shrink-0">
+          <div className="w-full md:w-[320px] bg-slate-50 p-6 md:p-8 flex flex-col items-center justify-center space-y-4 md:space-y-6 border-b md:border-b-0 md:border-r border-slate-200 shrink-0">
              <div className="relative">
-                 <div className="w-20 h-20 md:w-40 md:h-40 rounded-[1.5rem] md:rounded-[3rem] bg-white flex items-center justify-center overflow-hidden ring-4 md:ring-8 ring-white shadow-2xl">
+                 <div className="w-20 h-20 md:w-32 md:h-32 rounded-2xl bg-white flex items-center justify-center overflow-hidden ring-4 ring-white shadow-md border border-slate-200">
                     <div className="w-full h-full bg-slate-100 flex items-center justify-center">
-                        <UserRound className="w-10 h-10 md:w-20 md:h-20 text-slate-300" />
+                        <UserRound className="w-10 h-10 md:w-16 md:h-16 text-slate-400" />
                     </div>
                  </div>
                 <div className={cn(
-                  "absolute -bottom-1 -right-1 md:-bottom-2 md:-right-2 w-7 h-7 md:w-10 md:h-10 rounded-lg md:rounded-2xl border-4 border-white flex items-center justify-center shadow-lg",
+                  "absolute -bottom-1 -right-1 md:-bottom-2 md:-right-2 w-7 h-7 md:w-8 md:h-8 rounded-lg border-2 border-white flex items-center justify-center shadow-md",
                   isAtRisk ? 'bg-red-500' : 'bg-emerald-500'
                 )}>
-                  {isAtRisk ? <AlertCircle className="w-3.5 h-3.5 md:w-5 md:h-5 text-white" /> : <CheckCircle2 className="w-3.5 h-3.5 md:w-5 md:h-5 text-white" />}
+                  {isAtRisk ? <AlertCircle className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" /> : <CheckCircle2 className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />}
                 </div>
              </div>
 
-             <div className="text-center space-y-1 md:space-y-2">
-                 <h2 className="text-lg md:text-2xl font-black text-slate-900 leading-tight uppercase">{student.name}</h2>
-                <span className="inline-block px-3 py-1 rounded-lg md:rounded-xl bg-blue-100 text-blue-700 text-[9px] md:text-xs font-black uppercase tracking-widest">{student.roll || student.roll_number || student.rollNumber}</span>
+             <div className="text-center space-y-1">
+                 <h2 className="text-base md:text-xl font-bold text-slate-900 leading-tight">{student.name}</h2>
+                <span className="inline-block px-3 py-1 rounded-lg bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200">{student.roll || student.roll_number || student.rollNumber}</span>
              </div>
 
-             <div className="w-full grid grid-cols-2 md:grid-cols-1 gap-2 md:gap-3">
-                <div className="flex justify-between items-center px-3 py-2 md:py-3 bg-white rounded-xl md:rounded-2xl border border-slate-100 shadow-sm">
-                   <span className="text-[7px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Attendance</span>
-                   <span className={cn("text-xs md:text-lg font-black", isAtRisk ? 'text-red-600' : 'text-slate-900')}>
+             <div className="w-full grid grid-cols-2 md:grid-cols-1 gap-2">
+                <div className="flex justify-between items-center px-3 py-2 bg-white rounded-xl border border-slate-200 shadow-sm">
+                   <span className="text-xs font-semibold text-slate-500">Attendance</span>
+                   <span className={cn("text-xs md:text-sm font-bold", isAtRisk ? 'text-red-600' : 'text-slate-900')}>
                      {loading ? "..." : `${attendanceValue}%`}
                    </span>
                 </div>
-                <div className="flex justify-between items-center px-3 py-2 md:py-3 bg-white rounded-xl md:rounded-2xl border border-slate-100 shadow-sm">
-                   <span className="text-[7px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Risk Score</span>
-                   <span className={cn("text-[8px] md:text-[10px] font-black uppercase tracking-widest", isAtRisk ? 'text-red-500' : 'text-emerald-500')}>{isAtRisk ? "HIGH" : "LOW"}</span>
+                <div className="flex justify-between items-center px-3 py-2 bg-white rounded-xl border border-slate-200 shadow-sm">
+                   <span className="text-xs font-semibold text-slate-500">Risk Score</span>
+                   <span className={cn("text-xs font-bold uppercase", isAtRisk ? 'text-red-600' : 'text-emerald-600')}>{isAtRisk ? "High Risk" : "Normal"}</span>
                 </div>
              </div>
           </div>
 
           {/* Scrollable Content Area */}
-          <div className="flex-1 overflow-y-auto p-5 md:p-10 space-y-6 md:space-y-10 custom-scrollbar bg-white">
+          <div className="flex-1 overflow-y-auto p-5 md:p-8 space-y-6 custom-scrollbar bg-white">
             {/* Subject-wise Grid */}
-            <div className="space-y-4">
-                <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Academic Blueprint Coverage</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-3">
+                <h3 className="text-xs font-bold uppercase text-slate-500 tracking-wider">Academic Course Coverage</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {loading ? (
                         Array(4).fill(0).map((_, i) => (
-                            <div key={i} className="h-20 bg-slate-50 rounded-2xl animate-pulse" />
+                            <div key={i} className="h-16 bg-slate-50 rounded-xl animate-pulse" />
                         ))
                     ) : (
                         summary?.subjectWise?.map((sw: any) => (
-                            <div key={sw.name} className="p-5 bg-white rounded-[1.5rem] border border-slate-100 shadow-sm flex items-center justify-between group hover:border-blue-200 transition-all">
-                                <div className="space-y-1">
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">{sw.name}</p>
-                                    <p className="text-sm font-black text-slate-900">{sw.present} / {sw.total} Sessions</p>
+                            <div key={sw.name} className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm flex items-center justify-between group hover:border-blue-200 transition-all">
+                                <div className="space-y-0.5">
+                                    <p className="text-xs font-bold text-slate-800">{sw.name}</p>
+                                    <p className="text-[11px] text-slate-500 font-medium">{sw.present} / {sw.total} Sessions</p>
                                 </div>
                                 <div className={cn(
-                                    "w-12 h-12 rounded-xl flex items-center justify-center text-xs font-black shadow-sm",
-                                    sw.pct < 75 ? "bg-red-50 text-red-600 border border-red-100" : "bg-emerald-50 text-emerald-600 border border-emerald-100"
+                                    "w-10 h-10 rounded-lg flex items-center justify-center text-xs font-bold shadow-sm",
+                                    sw.pct < 75 ? "bg-red-50 text-red-600 border border-red-200" : "bg-emerald-50 text-emerald-600 border border-emerald-200"
                                 )}>
                                     {sw.pct}%
                                 </div>
@@ -199,26 +199,22 @@ export function StudentProfile({ student, onClose }: StudentProfileProps) {
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 md:gap-4 pt-4">
-              <Button className="h-12 md:h-14 rounded-xl md:rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-100 text-xs md:text-sm">
-                <Mail className="w-4 h-4 mr-2" /> Email
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <Button className="h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm">
+                <Mail className="w-4 h-4 mr-2" /> Email Notice
               </Button>
-              <Button className="h-12 md:h-14 rounded-xl md:rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-100 text-xs md:text-sm">
-                <MessageSquare className="w-4 h-4 mr-2" /> WhatsApp
+              <Button className="h-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-sm">
+                <MessageSquare className="w-4 h-4 mr-2" /> WhatsApp SMS
               </Button>
             </div>
 
-
-
-
-
-            <div className="pt-4 md:pt-6">
+            <div className="pt-2">
                <Button 
                 onClick={handleExportPDF}
                 variant="outline" 
-                className="w-full h-12 md:h-14 rounded-xl md:rounded-2xl border-slate-200 text-slate-600 font-black uppercase tracking-widest text-[10px] md:text-xs hover:bg-slate-50 transition-all shadow-sm"
+                className="w-full h-10 rounded-xl border-slate-200 text-slate-700 font-semibold text-xs hover:bg-slate-50 transition-all shadow-sm"
               >
-                  Generate Full Audit Report (PDF)
+                  Generate Official Transcript (PDF)
                </Button>
             </div>
           </div>

@@ -1,13 +1,6 @@
 /**
  * Attendex — Unified Sidebar Component
- * 
- * Replaces 3 near-identical sidebar files (sidebar.tsx, student-sidebar.tsx,
- * parent-sidebar.tsx) with a single configurable component.
- * 
- * Usage:
- *   <UnifiedSidebar variant="admin" />
- *   <UnifiedSidebar variant="student" />
- *   <UnifiedSidebar variant="parent" />
+ * Configurable, institutional sidebar with responsive mobile support.
  */
 
 "use client";
@@ -38,15 +31,23 @@ import {
   Library,
   Trophy,
   Medal,
-  Award as AwardIcon
+  Award as AwardIcon,
+  Calendar,
+  CheckSquare,
+  Receipt,
+  QrCode,
+  Phone,
+  Briefcase,
+  Calculator,
+  CalendarDays,
+  FileCheck2,
+  Shield,
+  Ticket
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { useBranding } from "@/context/branding-context";
-
-// ─── Route Configurations ────────────────────────────────────
 
 interface SidebarLink {
   name: string;
@@ -60,18 +61,27 @@ const ADMIN_LINKS: SidebarLink[] = [
   { name: "Students", href: "/students", icon: Users },
   { name: "Classes", href: "/classes", icon: GraduationCap },
   { name: "Subjects", href: "/subjects", icon: Library },
+  { name: "CIA Marks", href: "/results/manage", icon: AwardIcon },
+  { name: "Results & Exams", href: "/results", icon: BookOpen },
+  { name: "Timetable", href: "/timetable", icon: Calendar },
   { name: "Promotions", href: "/promotion", icon: RefreshCcw },
   { name: "Audit Logs", href: "/audit", icon: SearchCode },
-  { name: "Notifications", href: "/notifications", icon: Bell },
   { name: "Leaderboard", href: "/leaderboard", icon: Trophy },
   { name: "Sports & Events", href: "/sports", icon: Medal },
+  { name: "Notifications", href: "/notifications", icon: Bell },
 ];
 
 const STUDENT_LINKS: SidebarLink[] = [
   { name: "Dashboard", href: "/student/dashboard", icon: LayoutDashboard },
   { name: "Marks & Grades", href: "/student/marks", icon: BookOpen },
   { name: "Attendance Log", href: "/student/history", icon: History },
-  { name: "Leaderboard", href: "/leaderboard", icon: Trophy },
+  { name: "Class Timetable", href: "/student/timetable", icon: Calendar },
+  { name: "Course Curriculum", href: "/student/curriculum", icon: Library },
+  { name: "Assignments & Labs", href: "/student/assignments", icon: CheckSquare },
+  { name: "Safe Margin Calculator", href: "/student/calculator", icon: Calculator },
+  { name: "Career & Placements", href: "/student/placement", icon: Briefcase },
+  { name: "Digital Gatepass", href: "/student/gatepass", icon: Ticket },
+  { name: "Exam Hall Ticket", href: "/student/hall-ticket", icon: QrCode },
   { name: "My Profile", href: "/student/profile", icon: UserRound },
 ];
 
@@ -79,67 +89,43 @@ const PARENT_LINKS: SidebarLink[] = [
   { name: "Overview", href: "/parent/dashboard", icon: Home },
   { name: "Academic Standing", href: "/parent/marks", icon: BookOpen },
   { name: "Attendance History", href: "/parent/history", icon: History },
-  { name: "Leaderboard", href: "/leaderboard", icon: Trophy },
+  { name: "Class Timetable", href: "/parent/timetable", icon: Calendar },
+  { name: "Leave & Exemption", href: "/parent/leave", icon: FileCheck2 },
+  { name: "Academic Calendar", href: "/parent/calendar", icon: CalendarDays },
+  { name: "Fee & Dues Ledger", href: "/parent/fees", icon: Receipt },
+  { name: "Proctor Advisory", href: "/parent/proctor", icon: Phone },
+  { name: "Conduct & Discipline", href: "/parent/conduct", icon: Shield },
   { name: "Notifications", href: "/parent/notifications", icon: Bell },
 ];
 
 const VARIANT_CONFIG = {
   admin: {
-    links: [
-      ...ADMIN_LINKS,
-      { name: "Timetable", href: "/timetable", icon: History },
-      { name: "Results & Exams", href: "/results", icon: BookOpen },
-      { name: "Manage Marks", href: "/results/manage", icon: AwardIcon },
-    ],
+    links: ADMIN_LINKS,
     title: "Attendex",
-    subtitle: "Administration",
+    subtitle: "Faculty & Admin",
     showSettings: true,
-    accentColor: "blue",
   },
   student: {
-    links: [
-      ...STUDENT_LINKS,
-      { name: "My Timetable", href: "/student/timetable", icon: History },
-      { name: "Exams & Results", href: "/student/marks", icon: BookOpen },
-    ],
+    links: STUDENT_LINKS,
     title: "Attendex",
     subtitle: "Student Portal",
     showSettings: false,
-    accentColor: "indigo",
   },
   parent: {
-    links: [
-      ...PARENT_LINKS,
-      { name: "Child's Timetable", href: "/parent/timetable", icon: History },
-      { name: "Results Portal", href: "/parent/marks", icon: BookOpen },
-    ],
+    links: PARENT_LINKS,
     title: "Attendex",
-    subtitle: "Family Portal",
+    subtitle: "Guardian Portal",
     showSettings: false,
-    accentColor: "rose",
   },
   teacher: {
-    links: [
-      { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-      { name: "Attendance", href: "/attendance", icon: CheckCircle },
-      { name: "Students", href: "/students", icon: Users },
-      { name: "Classes", href: "/classes", icon: GraduationCap },
-      { name: "Schedule", href: "/timetable", icon: History },
-      { name: "Manage Marks", href: "/results/manage", icon: BookOpen },
-      { name: "Leaderboard", href: "/leaderboard", icon: Trophy },
-      { name: "Sports Entry", href: "/sports", icon: Medal },
-      { name: "Alerts", href: "/notifications", icon: Bell },
-    ],
+    links: ADMIN_LINKS,
     title: "Attendex",
     subtitle: "Faculty Portal",
     showSettings: true,
-    accentColor: "blue",
   },
 } as const;
 
 type SidebarVariant = keyof typeof VARIANT_CONFIG;
-
-// ─── Component ───────────────────────────────────────────────
 
 interface UnifiedSidebarProps {
   variant: SidebarVariant;
@@ -150,14 +136,7 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const { branding } = useBranding();
-  const config = VARIANT_CONFIG[variant];
-
-  const accentBg = `bg-${config.accentColor}-600`;
-  const activeClasses = {
-    blue: { bg: "bg-blue-50", border: "border-blue-100/50", text: "text-blue-700", icon: "text-blue-600" },
-    indigo: { bg: "bg-indigo-50", border: "border-indigo-100/50", text: "text-indigo-700", icon: "text-indigo-600" },
-    rose: { bg: "bg-rose-50", border: "border-rose-100/50", text: "text-rose-700", icon: "text-rose-600" },
-  }[config.accentColor as "blue" | "indigo" | "rose"];
+  const config = VARIANT_CONFIG[variant] || VARIANT_CONFIG.admin;
 
   useEffect(() => {
     const handleResize = () => {
@@ -170,93 +149,94 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
   }, []);
 
   const SidebarContent = (
-    <div className="flex flex-col h-full">
-      {/* Brand */}
+    <div className="flex flex-col h-full bg-white text-slate-800">
+      {/* Brand Header */}
       <div className={cn(
-        "flex items-center h-16 border-b border-slate-100 transition-all duration-300",
-        isCollapsed ? "px-3 justify-center" : "px-6"
+        "flex items-center h-16 border-b border-slate-200/80 transition-all",
+        isCollapsed ? "px-3 justify-center" : "px-5"
       )}>
-        <div className="flex items-center gap-3 text-slate-900 font-bold text-lg tracking-tight overflow-hidden">
-          <div className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center p-1 bg-white border border-slate-100 shadow-md md:ml-0 ml-12">
-            <img src={branding.logoUrl} alt={branding.shortName} className="w-full h-auto rounded-lg" />
+        <Link href="/" className="flex items-center gap-3 overflow-hidden">
+          <div className="shrink-0 w-9 h-9 rounded-lg bg-slate-900 text-white flex items-center justify-center shadow-sm">
+            <GraduationCap className="w-5 h-5 text-blue-400" />
           </div>
           {!isCollapsed && (
-            <div className="flex flex-col leading-tight animate-in fade-in slide-in-from-left-2">
-              <span className="truncate max-w-[140px]">{branding.name}</span>
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em]">{config.subtitle}</span>
+            <div className="flex flex-col leading-tight">
+              <span className="font-bold text-base text-slate-900 tracking-tight">{branding.name || "Attendex"}</span>
+              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{config.subtitle}</span>
             </div>
           )}
-        </div>
+        </Link>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-6 space-y-2 overflow-y-auto custom-scrollbar no-scrollbar">
+      {/* Navigation Links */}
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto custom-scrollbar">
         {!isCollapsed && (
-          <div className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 px-3">
-            Main Menu
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 px-3 pt-1">
+            Navigation
           </div>
         )}
 
         {config.links.map((link) => {
-          const isActive = pathname.startsWith(link.href);
+          const isActive = pathname === link.href || (link.href !== "/dashboard" && link.href !== "/student/dashboard" && link.href !== "/parent/dashboard" && pathname?.startsWith(link.href));
           return (
             <Link
               key={link.name}
               href={link.href}
               onClick={() => setIsMobileOpen(false)}
               className={cn(
-                "group relative flex items-center gap-3 h-12 rounded-2xl text-sm font-bold transition-all outline-none",
-                isActive ? `${activeClasses.text} ${activeClasses.bg} shadow-sm px-4` : "text-slate-500 hover:text-slate-900 hover:bg-slate-50 px-4",
-                isCollapsed && "px-0 justify-center w-12 mx-auto"
+                "group flex items-center gap-3 h-10 rounded-xl text-xs font-semibold transition-all",
+                isActive 
+                  ? "bg-slate-900 text-white shadow-sm px-3 font-semibold" 
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 px-3 font-medium",
+                isCollapsed && "px-0 justify-center w-10 mx-auto"
               )}
             >
-              <link.icon className={cn("w-5 h-5 shrink-0 z-10", isActive ? activeClasses.icon : "text-slate-400 group-hover:text-slate-900 transition-colors")} />
-              {!isCollapsed && <span className="z-10">{link.name}</span>}
+              <link.icon className={cn(
+                "w-4 h-4 shrink-0 transition-colors",
+                isActive ? "text-blue-400" : "text-slate-400 group-hover:text-slate-700"
+              )} />
+              {!isCollapsed && <span className="truncate">{link.name}</span>}
             </Link>
           );
         })}
       </nav>
 
-      {/* Footer Actions */}
-      <div className="p-3 border-t border-slate-100 space-y-2">
+      {/* Footer Controls */}
+      <div className="p-3 border-t border-slate-200/80 space-y-1">
         {config.showSettings && (
           <Link
             href="/settings"
             onClick={() => setIsMobileOpen(false)}
             className={cn(
-              "flex items-center gap-3 h-12 rounded-2xl text-sm font-bold text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-all",
-              isCollapsed ? "px-0 justify-center w-12 mx-auto" : "px-4"
+              "flex items-center gap-3 h-9 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all",
+              isCollapsed ? "px-0 justify-center w-9 mx-auto" : "px-3"
             )}
           >
-            <Settings className="w-5 h-5 text-slate-400" />
+            <Settings className="w-4 h-4 text-slate-400" />
             {!isCollapsed && <span>Settings</span>}
           </Link>
         )}
 
         <button
           onClick={async () => {
-             const { error } = await supabase.auth.signOut();
-             if (error) {
-                toast.error("Logout failed", { description: error.message });
-             } else {
-                toast.success("Signed out successfully");
-                window.location.href = "/login";
-             }
+             await supabase.auth.signOut();
+             toast.success("Signed out successfully");
+             window.location.href = "/login";
           }}
           className={cn(
-            "flex items-center gap-3 h-12 rounded-2xl text-sm font-bold text-red-500 hover:text-red-600 hover:bg-red-50 transition-all",
-            isCollapsed ? "px-0 justify-center w-12 mx-auto" : "px-4"
+            "flex items-center gap-3 h-9 rounded-lg text-xs font-semibold text-slate-600 hover:text-red-600 hover:bg-red-50 transition-all w-full text-left",
+            isCollapsed ? "px-0 justify-center w-9 mx-auto" : "px-3"
           )}
         >
-          <LogOut className="w-5 h-5" />
-          {!isCollapsed && <span>Log Out</span>}
+          <LogOut className="w-4 h-4 text-slate-400" />
+          {!isCollapsed && <span>Sign Out</span>}
         </button>
 
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="w-full h-10 rounded-xl bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-400 transition-colors hidden xl:flex"
+          className="w-full h-8 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors hidden xl:flex text-xs font-medium"
         >
-          {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+          {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
         </button>
       </div>
     </div>
@@ -265,64 +245,36 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
   return (
     <>
       {/* Mobile Top Bar */}
-      <div className="fixed top-0 left-0 right-0 h-[calc(4rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] bg-white/80 backdrop-blur-md border-b border-slate-100 z-[60] md:hidden flex items-center px-4 justify-between">
-         <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg overflow-hidden border border-slate-100 shadow-sm">
-               <img src={branding.logoUrl} alt={branding.shortName} className="w-full h-auto" />
-            </div>
-            <span className="text-sm font-black text-slate-900 tracking-tight">{branding.name}</span>
-         </div>
+      <div className="fixed top-0 left-0 right-0 h-14 bg-white/95 backdrop-blur-md border-b border-slate-200 z-50 md:hidden flex items-center px-4 justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 bg-slate-900 text-white rounded-md flex items-center justify-center">
+            <GraduationCap className="w-4 h-4 text-blue-400" />
+          </div>
+          <span className="text-sm font-bold text-slate-900">{branding.name || "Attendex"}</span>
+        </div>
          
-         {!isMobileOpen && (
-           <button
-             onClick={() => setIsMobileOpen(true)}
-             className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-100 active:scale-95 transition-all"
-           >
-             <Menu className="w-5 h-5" />
-           </button>
-         )}
+        <button
+          onClick={() => setIsMobileOpen(!isMobileOpen)}
+          className="p-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
+        >
+          {isMobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
       </div>
 
-      {/* Mobile Sidebar Overlay */}
-      <AnimatePresence>
-        {isMobileOpen && (
-          <div className="fixed inset-0 z-[70] md:hidden">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsMobileOpen(false)}
-              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
-            />
-            <motion.aside
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="absolute left-0 top-0 bottom-0 w-[280px] bg-white shadow-2xl flex flex-col pt-[env(safe-area-inset-top)]"
-            >
-              <div className="flex justify-end p-4">
-                <button onClick={() => setIsMobileOpen(false)} className="p-2 text-slate-400">
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-              <div className="flex-1 overflow-hidden">
-                {SidebarContent}
-              </div>
-            </motion.aside>
-          </div>
-        )}
-      </AnimatePresence>
+      {/* Mobile Dropdown Menu */}
+      {isMobileOpen && (
+        <div className="fixed inset-0 top-14 z-40 bg-white md:hidden overflow-y-auto p-4 border-b border-slate-200">
+          {SidebarContent}
+        </div>
+      )}
 
-      {/* Desktop Sidebar */}
+      {/* Desktop Persistent Sidebar */}
       <aside className={cn(
-        "hidden md:flex fixed left-0 top-0 bottom-0 z-40 bg-white border-r border-slate-100 flex-col transition-all duration-300 ease-in-out shadow-sm",
-        isCollapsed ? "w-20" : "w-64"
+        "hidden md:block fixed left-0 top-0 bottom-0 z-40 border-r border-slate-200/80 transition-all duration-200",
+        isCollapsed ? "w-16" : "w-60"
       )}>
         {SidebarContent}
       </aside>
     </>
   );
 }
-
-

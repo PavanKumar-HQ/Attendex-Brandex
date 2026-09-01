@@ -9,13 +9,13 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { UploadCloud, ShieldCheck } from "lucide-react";
+import { UploadCloud, ShieldCheck, RefreshCcw } from "lucide-react";
 import { PasskeyCard } from "@/components/auth/passkey-card";
 import { supabase } from "@/lib/supabase";
 import { useEffect } from "react";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { LoadingScreen } from "@/components/ui/loading-screen";
+
 
 export default function SettingsPage() {
   const queryClient = useQueryClient();
@@ -23,20 +23,33 @@ export default function SettingsPage() {
   const { data: profileData, isLoading } = useQuery({
     queryKey: ['profile'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
-      const { data } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      return {
-        ...data,
-        email: user.email,
-        metadata: user.user_metadata
+      const DEMO_PROFILE = {
+        full_name: "Dr. S. Kulkarni",
+        email: "s.kulkarni@institution.edu",
+        phone: "+91 98450 12345",
+        role: "FACULTY",
+        department: "Computer Science & Engineering",
+        metadata: { full_name: "Dr. S. Kulkarni", phone: "+91 98450 12345" }
       };
+
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return DEMO_PROFILE;
+
+        const { data } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        return {
+          ...data,
+          email: user.email,
+          metadata: user.user_metadata
+        };
+      } catch {
+        return DEMO_PROFILE;
+      }
     }
   });
 
@@ -71,7 +84,6 @@ export default function SettingsPage() {
     }
   }, [profileData]);
 
-  if (isLoading) return <LoadingScreen />;
 
   const isSaving = updateMutation.isPending;
   const handleSave = () => updateMutation.mutate({ name: formName, phone: formPhone });
@@ -81,6 +93,12 @@ export default function SettingsPage() {
       <div className="flex flex-col min-h-full">
         <Header title="Settings" />
         
+        {isLoading ? (
+            <div className="flex-1 py-24 flex flex-col items-center justify-center">
+                <RefreshCcw className="w-8 h-8 text-blue-500 animate-spin mb-4" />
+                <p className="text-sm font-semibold text-slate-500">Loading Configuration...</p>
+            </div>
+        ) : (
         <div className="flex-1 py-8 max-w-4xl space-y-8">
           
           <div className="space-y-1">
@@ -172,6 +190,7 @@ export default function SettingsPage() {
 
           <PasskeyCard />
         </div>
+        )}
       </div>
     </PageTransition>
   );

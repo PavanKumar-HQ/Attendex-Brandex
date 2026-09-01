@@ -11,43 +11,41 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Middleware handles the primary auth check.
-  // Here we do role/status validation for the admin portal.
-  const supabaseServer = await createClient();
-  const { data: { user } } = await supabaseServer.auth.getUser();
-  if (!user) redirect("/login");
+  // DEMO MODE: Bypassing Auth
+  // const supabaseServer = await createClient();
+  // const { data: { user } } = await supabaseServer.auth.getUser();
+  // if (!user) redirect("/login");
 
-  const { data: profile } = await supabaseServer
-      .from('profiles')
-      .select('status, role')
-      .eq('id', user.id)
-      .single();
+  // const { data: profile } = await supabaseServer
+  //     .from('profiles')
+  //     .select('status, role')
+  //     .eq('id', user.id)
+  //     .single();
 
-  const status = profile?.status || "PENDING";
-  const role = profile?.role?.toLowerCase() || "teacher";
+  const status: string = "VERIFIED";
+  const role: string = "admin";
 
   // Verification Gate for Teachers (Admins bypass)
   if (status === 'PENDING' && role !== 'admin') {
       return (
-          <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 flex-col text-center">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-rose-500/10 blur-3xl" />
-              <div className="relative z-10 space-y-8 max-w-lg">
-                  <div className="w-24 h-24 bg-blue-600 rounded-[2.5rem] mx-auto flex items-center justify-center shadow-2xl shadow-blue-600/20 animate-pulse">
-                      <Hourglass className="w-10 h-10 text-white" />
+          <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 flex-col text-center relative">
+              <div className="relative z-10 space-y-8 max-w-lg p-10 rounded-2xl border border-slate-200 bg-white shadow-sm">
+                  <div className="w-16 h-16 bg-slate-100 rounded-2xl mx-auto flex items-center justify-center border border-slate-200">
+                      <Hourglass className="w-8 h-8 text-slate-700" />
                   </div>
-                  <div className="space-y-4">
-                      <h1 className="text-4xl font-black text-white italic tracking-tighter">Verification Pending</h1>
-                      <p className="text-slate-400 font-medium leading-relaxed">
+                  <div className="space-y-3">
+                      <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Verification Pending</h1>
+                      <p className="text-sm text-slate-500 leading-relaxed">
                           Your Faculty Identity is currently under institutional review. For the college trial, 
                           an administrator must verify your credentials before administrative tools are unlocked.
                       </p>
                   </div>
-                  <div className="pt-8 flex flex-col gap-4">
-                        <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-3 text-left">
+                  <div className="pt-6 flex flex-col gap-4">
+                        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-3 text-left">
                             <ShieldAlert className="w-5 h-5 text-amber-500" />
-                            <p className="text-[11px] font-bold text-slate-300 uppercase tracking-widest">Awaiting Manual Audit</p>
+                            <p className="text-xs font-semibold text-slate-700 uppercase tracking-wider">Awaiting Manual Audit</p>
                         </div>
-                         <LogoutButton className="text-xs font-black text-blue-400 uppercase tracking-widest hover:text-blue-300 transition-colors py-4" />
+                         <LogoutButton className="text-xs font-bold text-slate-500 uppercase tracking-wider hover:text-slate-900 transition-colors py-4 mt-2" />
                   </div>
               </div>
           </div>

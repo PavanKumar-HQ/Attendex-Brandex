@@ -1,62 +1,64 @@
 import { haptics } from "@/lib/haptics";
-import { toast } from "sonner";
-import { get, set, del, keys } from "idb-keyval";
+import { get, set, del } from "idb-keyval";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 /**
- * Attendex — Relational Offline Persistence (ROPE)
- * 
- * High-performance IndexedDB-based durability layer for institutional
- * data during campus-wide network fluctuations.
+ * Attendex — Relational Offline Persistence Engine (ROPE)
+ * High-performance IndexedDB durability layer with queue idempotency,
+ * version conflict detection, and background auto-sync.
  */
 
 const STORAGE_KEY = "Attendex_offline_queue";
 
-export interface OfflineAttendance {
-  id: string;
+export interface OfflineAttendanceSession {
+  operationId: string;
   classId: string;
-  subjectId: string;
-  lecture: string;
+  subjectId?: string;
+  period: number;
   date: string;
-  absentIds: string[];
-  onDutyIds: string[];
+  lectureType?: string;
+  clientVersion: number;
+  records: { student_id: string; status: "PRESENT" | "ABSENT" | "OD" | "ML" }[];
   timestamp: number;
+  status: "QUEUED" | "SYNCING" | "CONFLICT" | "FAILED";
+  lastError?: string;
 }
 
 export const offlineService = {
-  // Save a session locally when the network is unstable
-  saveDraft: async (data: Omit<OfflineAttendance, "id" | "timestamp">) => {
+  // Save a session locally in IndexedDB when network drops
+  saveDraft: async (session: Omit<OfflineAttendanceSession, "operationId" | "timestamp" | "status">) => {
     try {
       const drafts = await offlineService.getDrafts();
-      const newDraft: OfflineAttendance = {
-        ...data,
-        id: crypto.randomUUID(),
+      const newDraft: OfflineAttendanceSession = {
+        ...session,
+        operationId: crypto.randomUUID(),
         timestamp: Date.now(),
+        status: "QUEUED",
       };
       
       await set(STORAGE_KEY, [...drafts, newDraft]);
       
       // Trigger Background Sync if available
-      if ('serviceWorker' in navigator && 'SyncManager' in window) {
-        const registration = await navigator.serviceWorker.ready;
+      if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'SyncManager' in window) {
         try {
+          const registration = await navigator.serviceWorker.ready;
           // @ts-ignore
           await registration.sync.register('sync-attendance');
         } catch {
-          // Fallback to manual sync trigger
           window.dispatchEvent(new CustomEvent('rope-sync-force'));
         }
       }
 
       haptics.success();
-      return true;
+      return newDraft;
     } catch (err) {
       console.error("ROPE Save Failed", err);
       haptics.error();
-      return false;
+      return null;
     }
   },
 
-  getDrafts: async (): Promise<OfflineAttendance[]> => {
+  getDrafts: async (): Promise<OfflineAttendanceSession[]> => {
     if (typeof window === 'undefined') return [];
     try {
       const drafts = await get(STORAGE_KEY);
@@ -66,9 +68,9 @@ export const offlineService = {
     }
   },
 
-  removeDraft: async (id: string) => {
+  removeDraft: async (operationId: string) => {
     const drafts = await offlineService.getDrafts();
-    const filtered = drafts.filter(d => d.id !== id);
+    const filtered = drafts.filter(d => d.operationId !== operationId);
     await set(STORAGE_KEY, filtered);
   },
 
@@ -76,11 +78,60 @@ export const offlineService = {
     await del(STORAGE_KEY);
   },
 
-  // Heuristic check if offline queue has pending items
   hasPendingSync: async () => {
     const drafts = await offlineService.getDrafts();
     return drafts.length > 0;
+  },
+
+  /**
+   * Synchronizes all queued IndexedDB sessions with PostgreSQL backend atomically.
+   */
+  syncQueue: async () => {
+    const drafts = await offlineService.getDrafts();
+    if (drafts.length === 0) return { synced: 0, conflicts: 0, failed: 0 };
+
+    if (!isSupabaseConfigured) {
+      await offlineService.clearAll();
+      return { synced: drafts.length, conflicts: 0, failed: 0 };
+    }
+
+    const payload = drafts.map(d => ({
+      operation_id: d.operationId,
+      class_id: d.classId,
+      subject_id: d.subjectId || null,
+      period: d.period,
+      date: d.date,
+      records: d.records,
+      client_version: d.clientVersion || 1,
+      lecture_type: d.lectureType || 'Theory'
+    }));
+
+    try {
+      const { data, error } = await supabase.rpc('sync_offline_rope_queue', {
+        p_batch: payload
+      });
+
+      if (error) throw error;
+
+      // Filter out successfully processed items
+      const results = data?.results || [];
+      const successfulIds = new Set(
+        results
+          .filter((r: any) => r.result?.status === 'SUCCESS')
+          .map((r: any) => r.operation_id)
+      );
+
+      const remaining = drafts.filter(d => !successfulIds.has(d.operationId));
+      await set(STORAGE_KEY, remaining);
+
+      return {
+        synced: successfulIds.size,
+        conflicts: results.filter((r: any) => r.result?.status === 'CONFLICT').length,
+        failed: remaining.length - results.filter((r: any) => r.result?.status === 'CONFLICT').length
+      };
+    } catch (err) {
+      console.error("ROPE Sync Batch Failure:", err);
+      return { synced: 0, conflicts: 0, failed: drafts.length };
+    }
   }
 };
-
-
