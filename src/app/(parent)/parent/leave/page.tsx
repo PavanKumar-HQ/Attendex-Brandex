@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { universalWorkflow, UniversalLeaveRequest, LeaveClassification } from "@/lib/workflow-engine";
-import { cn } from "@/lib/utils";
+import { cn, formatDateDDMMYYYY } from "@/lib/utils";
 
 export default function ParentLeavePage() {
   const [leaveType, setLeaveType] = useState<LeaveClassification>("MEDICAL");
@@ -325,7 +325,7 @@ export default function ParentLeavePage() {
                         <div>
                           <p className="font-semibold text-slate-800 text-xs flex items-center gap-1">
                             <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                            <span>{leave.startDate} to {leave.endDate}</span>
+                            <span>{formatDateDDMMYYYY(leave.startDate)} to {formatDateDDMMYYYY(leave.endDate)}</span>
                           </p>
                           <p className="text-slate-600 mt-1 leading-relaxed">
                             {leave.reason}

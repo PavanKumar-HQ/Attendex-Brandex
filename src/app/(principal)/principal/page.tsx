@@ -22,15 +22,38 @@ import { Header } from "@/components/layout/header";
 import { universalWorkflow, UniversalLeaveRequest, UniversalGatepassRequest } from "@/lib/workflow-engine";
 import { toast } from "sonner";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { cn, formatDateDDMMYYYY } from "@/lib/utils";
 
 export default function PrincipalDashboardPage() {
   const [leaves, setLeaves] = useState<UniversalLeaveRequest[]>([]);
   const [gatepasses, setGatepasses] = useState<UniversalGatepassRequest[]>([]);
 
-  const loadData = () => {
-    setLeaves(universalWorkflow.getAllLeaves().filter(l => l.status === "PENDING"));
-    setGatepasses(universalWorkflow.getAllGatepasses().filter(g => g.status === "PENDING"));
+  const loadData = async () => {
+    try {
+      const [leaveRes, gpRes] = await Promise.all([
+        fetch("/api/leave"),
+        fetch("/api/gatepass")
+      ]);
+      const [leaveJson, gpJson] = await Promise.all([
+        leaveRes.json(),
+        gpRes.json()
+      ]);
+
+      if (leaveJson.success && Array.isArray(leaveJson.data)) {
+        setLeaves(leaveJson.data.filter((l: any) => l.status === "PENDING"));
+      } else {
+        setLeaves(universalWorkflow.getAllLeaves().filter(l => l.status === "PENDING"));
+      }
+
+      if (gpJson.success && Array.isArray(gpJson.data)) {
+        setGatepasses(gpJson.data.filter((g: any) => g.status === "PENDING"));
+      } else {
+        setGatepasses(universalWorkflow.getAllGatepasses().filter(g => g.status === "PENDING"));
+      }
+    } catch {
+      setLeaves(universalWorkflow.getAllLeaves().filter(l => l.status === "PENDING"));
+      setGatepasses(universalWorkflow.getAllGatepasses().filter(g => g.status === "PENDING"));
+    }
   };
 
   useEffect(() => {
@@ -150,7 +173,7 @@ export default function PrincipalDashboardPage() {
                     </div>
                     <p className="text-slate-600">{l.reason}</p>
                     <p className="text-[11px] font-semibold text-slate-500">
-                      Dates: {l.startDate} → {l.endDate}
+                      Dates: {formatDateDDMMYYYY(l.startDate)} → {formatDateDDMMYYYY(l.endDate)}
                     </p>
                   </div>
 

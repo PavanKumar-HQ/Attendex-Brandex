@@ -86,44 +86,12 @@ function dispatchRealtimeEvent(event: any) {
   }
 }
 
-// Initial seed records with guaranteed valid UUIDs
-const INITIAL_LEAVES: UniversalLeaveRequest[] = [
-  {
-    id: "c1111111-0000-4000-a000-000000000001",
-    displayCode: "LV-8091",
-    studentId: "00000000-0000-0000-0000-000000000030",
-    studentName: "Rahul Deshmukh",
-    rollNumber: "21CS042",
-    className: "B.Tech CSE - 4A",
-    leaveType: "MEDICAL",
-    startDate: "2026-09-05",
-    endDate: "2026-09-07",
-    reason: "Severe viral fever with clinical doctor prescription.",
-    status: "PENDING",
-    createdAt: new Date(Date.now() - 15 * 60 * 1000).toISOString()
-  }
-];
+// Initial records start empty
+const INITIAL_LEAVES: UniversalLeaveRequest[] = [];
+const INITIAL_GATEPASSES: UniversalGatepassRequest[] = [];
 
-const INITIAL_GATEPASSES: UniversalGatepassRequest[] = [
-  {
-    id: "d1111111-0000-4000-a000-000000000001",
-    displayCode: "GP-9021",
-    studentId: "00000000-0000-0000-0000-000000000032",
-    studentName: "Priya Patel",
-    rollNumber: "21CS002",
-    exitTime: "Today 02:30 PM",
-    expectedReturn: "Today 06:00 PM",
-    destination: "City Diagnostic Center",
-    reason: "Emergency medical consultation with parents.",
-    emergencyContact: "+91 98450 12345",
-    qrNonce: "GP-7X9K2L",
-    status: "PENDING",
-    createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString()
-  }
-];
-
-let memoryLeaves: UniversalLeaveRequest[] = [...INITIAL_LEAVES];
-let memoryGatepasses: UniversalGatepassRequest[] = [...INITIAL_GATEPASSES];
+let memoryLeaves: UniversalLeaveRequest[] = [];
+let memoryGatepasses: UniversalGatepassRequest[] = [];
 
 export const universalWorkflow = {
   /**

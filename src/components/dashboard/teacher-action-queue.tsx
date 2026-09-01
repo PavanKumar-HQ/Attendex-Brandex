@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Shield, CheckCircle2, XCircle, Clock, FileText, Calendar, QrCode } from "lucide-react";
 import { universalWorkflow, UniversalLeaveRequest, UniversalGatepassRequest } from "@/lib/workflow-engine";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, formatDateDDMMYYYY } from "@/lib/utils";
 
 export function TeacherActionQueue() {
   const [leaves, setLeaves] = useState<UniversalLeaveRequest[]>([]);
@@ -44,8 +44,8 @@ export function TeacherActionQueue() {
   useEffect(() => {
     loadData();
 
-    // Periodic poll every 5s for cross-port / cross-browser sync
-    const interval = setInterval(loadData, 5000);
+    // Periodic poll every 3s for real cross-tab & cross-browser synchronization
+    const interval = setInterval(loadData, 3000);
 
     // Subscribe to cross-tab & cross-portal realtime events
     const unsubscribe = universalWorkflow.subscribe((event) => {
@@ -81,20 +81,60 @@ export function TeacherActionQueue() {
       notes = input.trim();
     }
 
-    const res = await universalWorkflow.decideLeave(leaveId, decision, notes);
-    if (res.success) {
-      toast.success(res.message);
-      loadData();
-    } else {
-      toast.error(res.message);
+    try {
+      const res = await fetch("/api/leave/decide", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leaveId, decision, notes, decidedBy: "Dr. S. Kulkarni" })
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(data.message || `Leave ${decision.toLowerCase()} successfully`);
+        await loadData();
+      } else {
+        const fallbackRes = await universalWorkflow.decideLeave(leaveId, decision, notes);
+        if (fallbackRes.success) {
+          toast.success(fallbackRes.message);
+          await loadData();
+        } else {
+          toast.error(data.message || fallbackRes.message);
+        }
+      }
+    } catch {
+      const fallbackRes = await universalWorkflow.decideLeave(leaveId, decision, notes);
+      if (fallbackRes.success) {
+        toast.success(fallbackRes.message);
+        await loadData();
+      } else {
+        toast.error(fallbackRes.message);
+      }
     }
   };
 
   const handleGatepassDecision = async (gpId: string, decision: "APPROVED" | "REJECTED") => {
-    const res = await universalWorkflow.decideGatepass(gpId, decision);
-    if (res.success) {
-      toast.success(res.message);
-      loadData();
+    try {
+      const res = await fetch("/api/gatepass/decide", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gatepassId: gpId, decision, decidedBy: "Dr. S. Kulkarni" })
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(data.message || `Gatepass ${decision.toLowerCase()} successfully`);
+        await loadData();
+      } else {
+        const fallbackRes = await universalWorkflow.decideGatepass(gpId, decision);
+        if (fallbackRes.success) {
+          toast.success(fallbackRes.message);
+          await loadData();
+        }
+      }
+    } catch {
+      const fallbackRes = await universalWorkflow.decideGatepass(gpId, decision);
+      if (fallbackRes.success) {
+        toast.success(fallbackRes.message);
+        await loadData();
+      }
     }
   };
 
@@ -148,7 +188,7 @@ export function TeacherActionQueue() {
                   </h4>
                   <p className="text-[11px] font-semibold text-slate-600 flex items-center gap-1">
                     <Calendar className="w-3 h-3 text-slate-400" />
-                    <span>{leave.startDate} → {leave.endDate}</span>
+                    <span>{formatDateDDMMYYYY(leave.startDate)} → {formatDateDDMMYYYY(leave.endDate)}</span>
                   </p>
                   <p className="text-slate-600 text-[11px] leading-relaxed">
                     {leave.reason}
