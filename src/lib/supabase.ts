@@ -5,14 +5,13 @@ export const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
-// Fast-fail fetch wrapper to prevent infinite loading screens when Supabase is sleeping/paused
+// Production fetch wrapper with generous 10s timeout
 const customFetch = (url: string | URL | Request, options?: RequestInit) => {
   const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), 1500); // 1.5s timeout
+  const id = setTimeout(() => controller.abort(), 10000); // 10s timeout
   return fetch(url, { ...options, signal: controller.signal })
     .finally(() => clearTimeout(id))
     .catch(err => {
-      // Return a simulated failing response so Supabase client throws gracefully
       return new Response(JSON.stringify({ error: 'Network timeout' }), {
         status: 504,
         headers: { 'Content-Type': 'application/json' }
