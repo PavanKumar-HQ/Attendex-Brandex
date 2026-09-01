@@ -58,7 +58,8 @@ interface SidebarLink {
 
 const ADMIN_LINKS: SidebarLink[] = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Live Attendance", href: "/pulse", icon: Activity },
+  { name: "Mark Attendance", href: "/attendance", icon: CheckCircle },
+  { name: "Campus Telemetry", href: "/pulse", icon: Activity },
   { name: "Students", href: "/students", icon: Users },
   { name: "Classes", href: "/classes", icon: GraduationCap },
   { name: "Subjects", href: "/subjects", icon: Library },
@@ -101,7 +102,8 @@ const PARENT_LINKS: SidebarLink[] = [
 
 const PRINCIPAL_LINKS: SidebarLink[] = [
   { name: "Executive Overview", href: "/principal", icon: LayoutDashboard },
-  { name: "Live Attendance", href: "/pulse", icon: Activity },
+  { name: "Mark Attendance", href: "/attendance", icon: CheckCircle },
+  { name: "Campus Telemetry", href: "/pulse", icon: Activity },
   { name: "Students", href: "/students", icon: Users },
   { name: "Classes", href: "/classes", icon: GraduationCap },
   { name: "Subjects", href: "/subjects", icon: Library },
@@ -252,16 +254,21 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
 
         <button
           onClick={async () => {
-             await supabase.auth.signOut();
-             toast.success("Signed out successfully");
-             window.location.href = "/login";
+            document.cookie = "attendex_demo_session=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
+            try {
+              await supabase.auth.signOut();
+            } catch {
+              // ignore
+            }
+            toast.success("Signed out successfully");
+            window.location.href = "/login";
           }}
           className={cn(
             "flex items-center gap-3 h-9 rounded-lg text-xs font-semibold text-slate-600 hover:text-red-600 hover:bg-red-50 transition-all w-full text-left",
             isCollapsed ? "px-0 justify-center w-9 mx-auto" : "px-3"
           )}
         >
-          <LogOut className="w-4 h-4 text-slate-400" />
+          <LogOut className="w-4 h-4 text-slate-400 group-hover:text-red-600" />
           {!isCollapsed && <span>Sign Out</span>}
         </button>
 
