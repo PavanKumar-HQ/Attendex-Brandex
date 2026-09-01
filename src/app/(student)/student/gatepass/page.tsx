@@ -22,6 +22,7 @@ import {
   UserCheck
 } from "lucide-react";
 import { toast } from "sonner";
+import { universalWorkflow } from "@/lib/workflow-engine";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -73,16 +74,31 @@ export default function StudentGatepassPage() {
 
   const handleApplyGatepass = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!destination || !reason) {
+      toast.error("Please provide both destination and purpose.");
+      return;
+    }
     setSubmitting(true);
-    toast.loading("Submitting digital gatepass to Chief Warden & Guardian...");
+    const res = universalWorkflow.submitGatepass({
+      studentName: "Rahul Deshmukh",
+      rollNumber: "21CS042",
+      exitTime: `${outDate || "Today"} ${outTime || "04:30 PM"}`,
+      expectedReturn: `${inDate || "Tomorrow"} ${inTime || "08:00 PM"}`,
+      destination,
+      reason,
+      emergencyContact: guardianContact
+    });
+    setSubmitting(false);
 
-    setTimeout(() => {
-      setSubmitting(false);
-      toast.dismiss();
+    if (res.success) {
       toast.success("Gatepass Application Transmitted", {
-        description: "SMS authorization request sent to registered guardian phone."
+        description: "Application dispatched to Class Teacher & Campus Security."
       });
-    }, 1000);
+      setReason("");
+      setDestination("");
+    } else {
+      toast.error(res.message);
+    }
   };
 
   const handleDownloadPDF = () => {

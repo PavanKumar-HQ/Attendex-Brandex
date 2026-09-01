@@ -1,77 +1,76 @@
 "use client";
 
-import { useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Shield, CheckCircle2, XCircle, Clock, FileText, Calendar } from "lucide-react";
-import { workflowService, ApprovalTask } from "@/services/workflow.service";
-import { supabase } from "@/lib/supabase";
+import { Shield, CheckCircle2, XCircle, Clock, FileText, Calendar, QrCode } from "lucide-react";
+import { universalWorkflow, UniversalLeaveRequest, UniversalGatepassRequest } from "@/lib/workflow-engine";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export function TeacherActionQueue() {
-  const queryClient = useQueryClient();
+  const [leaves, setLeaves] = useState<UniversalLeaveRequest[]>([]);
+  const [gatepasses, setGatepasses] = useState<UniversalGatepassRequest[]>([]);
 
-  const { data: tasks = [], isLoading } = useQuery<ApprovalTask[]>({
-    queryKey: ["teacher-approval-tasks"],
-    queryFn: () => workflowService.getAssignedTasks("TEACHER"),
-    refetchInterval: 10000,
-  });
+  const loadData = () => {
+    setLeaves(universalWorkflow.getAllLeaves().filter(l => l.status === "PENDING"));
+    setGatepasses(universalWorkflow.getAllGatepasses().filter(g => g.status === "PENDING"));
+  };
 
-  // Supabase Realtime Subscription on approval_tasks
   useEffect(() => {
-    const channel = supabase
-      .channel("realtime-teacher-approval-tasks")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "approval_tasks" },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["teacher-approval-tasks"] });
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "leave_requests" },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["teacher-approval-tasks"] });
-        }
-      )
-      .subscribe();
+    loadData();
+
+    // Subscribe to cross-tab & cross-portal realtime events
+    const unsubscribe = universalWorkflow.subscribe((event) => {
+      if (event.type === "LEAVE_SUBMITTED") {
+        toast.info("New Leave Request Received", {
+          description: `${event.payload.studentName} (${event.payload.rollNumber}) applied for ${event.payload.leaveType.toLowerCase()} leave.`
+        });
+        loadData();
+      } else if (event.type === "GATEPASS_SUBMITTED") {
+        toast.info("New Gatepass Request Received", {
+          description: `${event.payload.studentName} requested gatepass to ${event.payload.destination}.`
+        });
+        loadData();
+      } else if (event.type === "LEAVE_DECIDED" || event.type === "GATEPASS_DECIDED" || event.type === "LEAVE_CANCELLED") {
+        loadData();
+      }
+    });
 
     return () => {
-      supabase.removeChannel(channel);
+      unsubscribe();
     };
-  }, [queryClient]);
+  }, []);
 
-  const decisionMutation = useMutation({
-    mutationFn: ({ taskId, decision, comment }: { taskId: string; decision: "APPROVED" | "REJECTED"; comment?: string }) =>
-      workflowService.processDecision(taskId, decision, comment),
-    onSuccess: (res) => {
-      if (res.success) {
-        toast.success(res.message);
-        queryClient.invalidateQueries({ queryKey: ["teacher-approval-tasks"] });
-      } else {
-        toast.error(res.message);
-      }
-    },
-    onError: (err: any) => {
-      toast.error(err.message || "Failed to process task.");
-    }
-  });
-
-  const handleDecision = (taskId: string, decision: "APPROVED" | "REJECTED") => {
-    let comment: string | undefined = undefined;
+  const handleLeaveDecision = async (leaveId: string, decision: "APPROVED" | "REJECTED") => {
+    let notes: string | undefined = undefined;
     if (decision === "REJECTED") {
-      const inputReason = window.prompt("Enter mandatory reason for rejection:");
-      if (!inputReason || inputReason.trim().length === 0) {
+      const input = window.prompt("Enter mandatory reason for rejection:");
+      if (!input || input.trim().length === 0) {
         toast.error("Rejection cancelled: Reason is mandatory.");
         return;
       }
-      comment = inputReason.trim();
+      notes = input.trim();
     }
-    decisionMutation.mutate({ taskId, decision, comment });
+
+    const res = await universalWorkflow.decideLeave(leaveId, decision, notes);
+    if (res.success) {
+      toast.success(res.message);
+      loadData();
+    } else {
+      toast.error(res.message);
+    }
   };
+
+  const handleGatepassDecision = (gpId: string, decision: "APPROVED" | "REJECTED") => {
+    const res = universalWorkflow.decideGatepass(gpId, decision);
+    if (res.success) {
+      toast.success(res.message);
+      loadData();
+    }
+  };
+
+  const totalPending = leaves.length + gatepasses.length;
 
   return (
     <Card className="p-6 border-slate-200 shadow-sm rounded-xl bg-white space-y-4">
@@ -87,53 +86,45 @@ export function TeacherActionQueue() {
         </div>
         <span className={cn(
           "text-xs font-bold px-2.5 py-1 rounded-full border",
-          tasks.length > 0 
-            ? "text-amber-700 bg-amber-50 border-amber-200"
+          totalPending > 0 
+            ? "text-amber-700 bg-amber-50 border-amber-200 animate-pulse"
             : "text-emerald-700 bg-emerald-50 border-emerald-200"
         )}>
-          {tasks.length > 0 ? `${tasks.length} Pending Review` : "0 Pending"}
+          {totalPending > 0 ? `${totalPending} Pending Review` : "0 Pending"}
         </span>
       </div>
 
-      {isLoading ? (
-        <div className="py-8 text-center text-xs text-slate-400">Loading assigned tasks...</div>
-      ) : tasks.length === 0 ? (
+      {totalPending === 0 ? (
         <div className="py-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200 text-xs text-slate-500">
           ✓ All student exemption requests and gatepass items processed. Zero pending tasks.
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {tasks.map((task) => (
+          {/* Leaves */}
+          {leaves.map((leave) => (
             <div
-              key={task.id}
+              key={leave.id}
               className="p-4 bg-slate-50 rounded-xl border border-slate-200/80 space-y-2.5 text-xs flex flex-col justify-between"
             >
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className={cn(
-                    "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
-                    task.requestType === "LEAVE" ? "bg-amber-100 text-amber-800" : "bg-blue-100 text-blue-800"
-                  )}>
-                    {task.requestType} REQUEST
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-100 text-amber-800">
+                    {leave.leaveType.replace("_", " ")} LEAVE
                   </span>
-                  <span className="text-[10px] text-slate-400 font-medium">{task.createdAt}</span>
+                  <span className="text-[10px] text-slate-400 font-medium">Just now</span>
                 </div>
 
                 <div className="space-y-1">
                   <h4 className="font-bold text-slate-900 text-sm">
-                    {task.studentName} ({task.rollNumber})
+                    {leave.studentName} ({leave.rollNumber})
                   </h4>
-                  {task.datesOrTime && (
-                    <p className="text-[11px] font-semibold text-slate-600 flex items-center gap-1">
-                      <Calendar className="w-3 h-3 text-slate-400" />
-                      <span>{task.datesOrTime}</span>
-                    </p>
-                  )}
-                  {task.reason && (
-                    <p className="text-slate-600 text-[11px] leading-relaxed">
-                      {task.reason}
-                    </p>
-                  )}
+                  <p className="text-[11px] font-semibold text-slate-600 flex items-center gap-1">
+                    <Calendar className="w-3 h-3 text-slate-400" />
+                    <span>{leave.startDate} → {leave.endDate}</span>
+                  </p>
+                  <p className="text-slate-600 text-[11px] leading-relaxed">
+                    {leave.reason}
+                  </p>
                 </div>
               </div>
 
@@ -141,8 +132,7 @@ export function TeacherActionQueue() {
                 <Button
                   size="sm"
                   variant="outline"
-                  disabled={decisionMutation.isPending}
-                  onClick={() => handleDecision(task.id, "REJECTED")}
+                  onClick={() => handleLeaveDecision(leave.id, "REJECTED")}
                   className="h-8 text-rose-600 border-slate-200 hover:bg-rose-50 text-xs font-semibold rounded-lg px-3"
                 >
                   <XCircle className="w-3.5 h-3.5 mr-1" />
@@ -150,12 +140,63 @@ export function TeacherActionQueue() {
                 </Button>
                 <Button
                   size="sm"
-                  disabled={decisionMutation.isPending}
-                  onClick={() => handleDecision(task.id, "APPROVED")}
+                  onClick={() => handleLeaveDecision(leave.id, "APPROVED")}
                   className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg px-3 flex items-center gap-1"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   Approve
+                </Button>
+              </div>
+            </div>
+          ))}
+
+          {/* Gatepasses */}
+          {gatepasses.map((gp) => (
+            <div
+              key={gp.id}
+              className="p-4 bg-slate-50 rounded-xl border border-slate-200/80 space-y-2.5 text-xs flex flex-col justify-between"
+            >
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-100 text-blue-800">
+                    CAMPUS GATEPASS
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-medium">Pending Gate Exit</span>
+                </div>
+
+                <div className="space-y-1">
+                  <h4 className="font-bold text-slate-900 text-sm">
+                    {gp.studentName} ({gp.rollNumber})
+                  </h4>
+                  <p className="text-[11px] font-semibold text-slate-600">
+                    Exit: {gp.exitTime} • Return: {gp.expectedReturn}
+                  </p>
+                  <p className="text-slate-600 text-[11px] leading-relaxed">
+                    Destination: {gp.destination} • {gp.reason}
+                  </p>
+                  <p className="text-[10px] text-slate-500 font-mono">
+                    Parent Contact: {gp.emergencyContact}
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-slate-200 flex items-center justify-end gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleGatepassDecision(gp.id, "REJECTED")}
+                  className="h-8 text-rose-600 border-slate-200 hover:bg-rose-50 text-xs font-semibold rounded-lg px-3"
+                >
+                  <XCircle className="w-3.5 h-3.5 mr-1" />
+                  Reject
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => handleGatepassDecision(gp.id, "APPROVED")}
+                  className="h-8 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg px-3 flex items-center gap-1"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Approve Gatepass
                 </Button>
               </div>
             </div>
