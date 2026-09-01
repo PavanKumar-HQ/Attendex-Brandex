@@ -1,6 +1,5 @@
 /**
- * Attendex — Unified Sidebar Component
- * Configurable, institutional sidebar with responsive mobile support.
+ * Attendex — Unified Sidebar & Responsive Mobile Navigation Drawer
  */
 
 "use client";
@@ -183,8 +182,13 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Close mobile drawer on route change
+  useEffect(() => {
+    setIsMobileOpen(false);
+  }, [pathname]);
+
   const SidebarContent = (
-    <div className="flex flex-col h-full bg-white text-slate-800">
+    <div className="flex flex-col h-full bg-white text-slate-800 select-none">
       {/* Brand Header */}
       <div className={cn(
         "flex items-center h-16 border-b border-slate-200/80 transition-all",
@@ -207,7 +211,7 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto custom-scrollbar">
         {!isCollapsed && (
           <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 px-3 pt-1">
-            Navigation
+            Menu Navigation
           </div>
         )}
 
@@ -284,33 +288,64 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
 
   return (
     <>
-      {/* Mobile Top Bar */}
-      <div className="fixed top-0 left-0 right-0 h-14 bg-white/95 backdrop-blur-md border-b border-slate-200 z-50 md:hidden flex items-center px-4 justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-slate-900 text-white rounded-md flex items-center justify-center">
+      {/* Mobile Sticky Header with Hamburger Toggle */}
+      <div className="fixed top-0 left-0 right-0 h-14 bg-white/95 backdrop-blur-md border-b border-slate-200/90 z-50 md:hidden flex items-center px-4 justify-between shadow-xs">
+        <Link href="/" className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-slate-900 text-white rounded-lg flex items-center justify-center shadow-xs">
             <GraduationCap className="w-4 h-4 text-blue-400" />
           </div>
-          <span className="text-sm font-bold text-slate-900">{branding.name || "Attendex"}</span>
-        </div>
+          <span className="text-sm font-bold text-slate-900 tracking-tight">{branding.name || "Attendex"}</span>
+        </Link>
          
-        <button
-          onClick={() => setIsMobileOpen(!isMobileOpen)}
-          className="p-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
-        >
-          {isMobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsMobileOpen(!isMobileOpen)}
+            aria-label="Toggle Menu"
+            className="p-2 rounded-lg bg-slate-100 text-slate-800 hover:bg-slate-200 transition-all active:scale-95"
+          >
+            {isMobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
       </div>
 
-      {/* Mobile Dropdown Menu */}
+      {/* Mobile Overlay & Slide Drawer */}
       {isMobileOpen && (
-        <div className="fixed inset-0 top-14 z-40 bg-white md:hidden overflow-y-auto p-4 border-b border-slate-200">
-          {SidebarContent}
+        <div className="fixed inset-0 z-50 md:hidden">
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
+            onClick={() => setIsMobileOpen(false)}
+          />
+          
+          {/* Drawer Panel */}
+          <div className="fixed inset-y-0 left-0 w-72 max-w-[85vw] bg-white shadow-2xl flex flex-col z-50 animate-in slide-in-from-left duration-200">
+            <div className="flex items-center justify-between p-4 border-b border-slate-200">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center">
+                  <GraduationCap className="w-4 h-4 text-blue-400" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold text-slate-900">{branding.name || "Attendex"}</h2>
+                  <p className="text-[10px] font-semibold text-slate-500 uppercase">{config.subtitle}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsMobileOpen(false)}
+                className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              {SidebarContent}
+            </div>
+          </div>
         </div>
       )}
 
       {/* Desktop Persistent Sidebar */}
       <aside className={cn(
-        "hidden md:block fixed left-0 top-0 bottom-0 z-40 border-r border-slate-200/80 transition-all duration-200",
+        "hidden md:block fixed left-0 top-0 bottom-0 z-40 border-r border-slate-200/80 bg-white transition-all duration-200 shadow-xs",
         isCollapsed ? "w-16" : "w-60"
       )}>
         {SidebarContent}

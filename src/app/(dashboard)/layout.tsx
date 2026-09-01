@@ -56,13 +56,7 @@ export default async function DashboardLayout({
     <div className="flex h-screen bg-slate-50 overflow-hidden">
       <CommandMenu />
       <UnifiedSidebar variant={role as any} />
-      <main className={cn(
-        "flex-1 flex flex-col min-h-screen transition-all duration-300",
-        "md:pl-20 xl:pl-64" 
-      )}>
-        {/* Mobile Spacer to prevent overlap with floating menu button and safe area */}
-        <div className="h-[calc(4rem+env(safe-area-inset-top))] md:hidden shrink-0" />
-        
+      <main className="flex-1 md:pl-20 xl:pl-64 flex flex-col pt-14 md:pt-0 transition-all duration-300">
         <div className="flex-1 w-full max-w-7xl mx-auto p-4 md:p-10 overflow-y-auto custom-scrollbar">
           {children}
         </div>

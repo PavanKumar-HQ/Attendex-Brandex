@@ -175,6 +175,26 @@ export default function ParentLeavePage() {
 
                 <div>
                   <label className="font-bold text-slate-600 text-[11px] block mb-1">Detailed Explanation</label>
+                  
+                  {/* Quick-Fill Reason Pills */}
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {[
+                      "Severe viral fever with prescribed clinical bed rest.",
+                      "Out-of-station family emergency travel.",
+                      "Specialist medical consultation and diagnostic checkup.",
+                      "Representing university at inter-collegiate sports event."
+                    ].map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => setReason(preset)}
+                        className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-600 transition-colors border border-slate-200"
+                      >
+                        + {preset.slice(0, 24)}...
+                      </button>
+                    ))}
+                  </div>
+
                   <Textarea
                     placeholder="Provide specific medical diagnosis or event justification..."
                     value={reason}
@@ -182,6 +202,10 @@ export default function ParentLeavePage() {
                     rows={3}
                     className="text-xs"
                   />
+                  <div className="flex justify-between items-center mt-1 text-[10px] text-slate-400">
+                    <span>Minimum 5 characters required</span>
+                    <span>{reason.length} chars</span>
+                  </div>
                 </div>
 
                 <Button

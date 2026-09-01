@@ -87,21 +87,20 @@ export default function ParentProctorPage() {
             </div>
 
             <div className="flex items-center gap-2">
-              <Button
-                onClick={() => toast.success("Calling Proctor Office", { description: proctor.phone })}
-                className="h-10 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm flex items-center gap-1.5"
+              <a
+                href={`tel:${proctor.phone.replace(/\s+/g, '')}`}
+                className="h-10 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm flex items-center gap-1.5 transition-colors"
               >
                 <Phone className="w-3.5 h-3.5" />
                 <span>Call Cabin</span>
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => toast.info("Opening Mail Client", { description: proctor.email })}
-                className="h-10 px-4 rounded-xl border-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-50 flex items-center gap-1.5"
+              </a>
+              <a
+                href={`mailto:${proctor.email}?subject=Proctor Advisory Query - Rahul Deshmukh (21CS042)`}
+                className="h-10 px-4 rounded-xl border border-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-50 flex items-center gap-1.5 transition-colors"
               >
                 <Mail className="w-3.5 h-3.5" />
                 <span>Send Email</span>
-              </Button>
+              </a>
             </div>
           </div>
 
