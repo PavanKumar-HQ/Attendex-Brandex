@@ -106,13 +106,21 @@ export default function LandingPage() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/dashboard" className="w-full sm:w-auto">
+            <Link 
+              href="/dashboard" 
+              onClick={() => { document.cookie = "attendex_demo_session=TEACHER; path=/; max-age=86400; SameSite=Lax"; }}
+              className="w-full sm:w-auto"
+            >
               <Button size="lg" className="w-full sm:w-auto h-12 px-8 text-sm font-semibold bg-slate-900 hover:bg-slate-800 text-white rounded-lg shadow-sm flex items-center justify-center gap-2">
                 <span>Launch Faculty Dashboard</span>
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
-            <Link href="/student/dashboard" className="w-full sm:w-auto">
+            <Link 
+              href="/student/dashboard" 
+              onClick={() => { document.cookie = "attendex_demo_session=STUDENT; path=/; max-age=86400; SameSite=Lax"; }}
+              className="w-full sm:w-auto"
+            >
               <Button variant="outline" size="lg" className="w-full sm:w-auto h-12 px-8 text-sm font-semibold border-slate-300 text-slate-700 hover:bg-slate-100 rounded-lg">
                 View Student Portal
               </Button>
@@ -290,7 +298,10 @@ export default function LandingPage() {
                     <h3 className="text-lg font-bold text-slate-900">Student Progress & Marks Dashboard</h3>
                     <p className="text-xs text-slate-500">Attendance percentages, Continuous Assessment scores & eligibility radar</p>
                   </div>
-                  <Link href="/student/dashboard">
+                  <Link 
+                    href="/student/dashboard"
+                    onClick={() => { document.cookie = "attendex_demo_session=STUDENT; path=/; max-age=86400; SameSite=Lax"; }}
+                  >
                     <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg">
                       Open Student Portal →
                     </Button>
@@ -348,7 +359,10 @@ export default function LandingPage() {
                     <h3 className="text-lg font-bold text-slate-900">Guardian Transparency Portal</h3>
                     <p className="text-xs text-slate-500">Instant notification history, attendance status, and risk analysis</p>
                   </div>
-                  <Link href="/parent/dashboard">
+                  <Link 
+                    href="/parent/dashboard"
+                    onClick={() => { document.cookie = "attendex_demo_session=PARENT; path=/; max-age=86400; SameSite=Lax"; }}
+                  >
                     <Button size="sm" className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg">
                       Open Parent View →
                     </Button>

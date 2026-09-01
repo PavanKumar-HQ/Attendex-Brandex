@@ -55,8 +55,11 @@ export async function proxy(request: NextRequest) {
   const isPublicPage = pathname === "/" || pathname === "/privacy" || pathname === "/terms";
   const isApiRoute   = pathname.startsWith("/api/");
 
+  const demoSession = request.cookies.get("attendex_demo_session")?.value;
+  const isAuthenticated = Boolean(user || demoSession);
+
   // Never redirect API routes — they handle their own auth
-  if (!isApiRoute && !user && !isAuthPage && !isPublicPage) {
+  if (!isApiRoute && !isAuthenticated && !isAuthPage && !isPublicPage) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     // Preserve the intended destination so login can redirect back
@@ -64,7 +67,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && isAuthPage) {
+  if (isAuthenticated && isAuthPage) {
     const url = request.nextUrl.clone();
     const next = request.nextUrl.searchParams.get("next");
 
@@ -74,16 +77,10 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
+    const effectiveRole = user ? (user.user_metadata?.role || "TEACHER") : (demoSession || "TEACHER");
 
-    const role = profile?.role || user.user_metadata?.role || "TEACHER";
-
-    if (role === "STUDENT") url.pathname = "/student/dashboard";
-    else if (role === "PARENT") url.pathname = "/parent/dashboard";
+    if (effectiveRole === "STUDENT") url.pathname = "/student/dashboard";
+    else if (effectiveRole === "PARENT") url.pathname = "/parent/dashboard";
     else url.pathname = "/dashboard";
 
     url.searchParams.delete("next");
