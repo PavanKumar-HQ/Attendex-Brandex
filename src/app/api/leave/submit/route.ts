@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     const studentId = validated.studentId || "00000000-0000-0000-0000-000000000030";
     const appliedByUserId = "00000000-0000-0000-0000-000000000005";
 
-    // 1. Add to shared server memory
+    // 1. Write to persistent file store (guaranteed cross-process)
     serverState.addLeave({
       id: leaveId,
       displayCode,
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
       createdAt: new Date().toISOString()
     });
 
-    // 2. Persist to Supabase PostgreSQL table
+    // 2. Try to persist to Supabase PostgreSQL (requires RLS migration)
     try {
       await supabase
         .from("leave_requests")
@@ -64,24 +64,15 @@ export async function POST(req: NextRequest) {
           end_date: validated.endDate,
           reason: validated.reason,
           document_url: validated.documentUrl || null,
-          status: "PENDING"
+          status: "PENDING",
+          // Extended fields (available after migration 06)
+          display_code: displayCode,
+          student_name: validated.studentName,
+          roll_number: validated.rollNumber,
+          class_name: validated.className
         });
-
-      await supabase.from("audit_logs").insert({
-        institution_id: institutionId,
-        actor_id: appliedByUserId,
-        action: "LEAVE_SUBMITTED",
-        entity_type: "leave_requests",
-        entity_id: leaveId,
-        metadata: {
-          leave_type: validated.leaveType,
-          start_date: validated.startDate,
-          end_date: validated.endDate,
-          reason: validated.reason
-        }
-      });
     } catch {
-      // Memory state is active
+      // File state is the active source of truth until Supabase RLS is resolved
     }
 
     return NextResponse.json({
