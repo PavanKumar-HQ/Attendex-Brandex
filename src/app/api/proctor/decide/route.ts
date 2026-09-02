@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { serverState } from "@/lib/server-state";
 import { supabase } from "@/lib/supabase";
+import { checkSlotCollision } from "@/lib/proctor-slots";
 
 const decideProctorSchema = z.object({
   requestId: z.string().min(1),
@@ -17,11 +18,29 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const validated = decideProctorSchema.parse(body);
 
+    const targetDate = validated.scheduledDate || new Date().toISOString().split("T")[0];
+    const targetTime = validated.scheduledTime || "04:00 PM – 04:30 PM";
+
+    // Collision Detection when scheduling
+    if (validated.action === "SCHEDULED") {
+      const { collides, conflictingMeeting } = checkSlotCollision(targetDate, targetTime, validated.requestId);
+      if (collides && conflictingMeeting) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: `Time slot conflict: "${targetTime}" on ${targetDate} is already reserved for ${conflictingMeeting.studentName} (${conflictingMeeting.rollNumber}). Please pick an open slot.`,
+            conflictingMeetingId: conflictingMeeting.id
+          },
+          { status: 409 }
+        );
+      }
+    }
+
     const updates = {
       status: validated.action,
-      scheduledDate: validated.scheduledDate || new Date().toISOString().split("T")[0],
-      scheduledTime: validated.scheduledTime || "04:00 PM",
-      meetingNotes: validated.meetingNotes || (validated.action === "SCHEDULED" ? "Meeting slot confirmed." : "Consultation completed and guidance provided."),
+      scheduledDate: targetDate,
+      scheduledTime: targetTime,
+      meetingNotes: validated.meetingNotes || (validated.action === "SCHEDULED" ? `Meeting confirmed for ${targetTime}.` : "Consultation completed and guidance provided."),
       actionItems: validated.actionItems || (validated.action === "COMPLETED" ? "Resolved" : "Scheduled")
     };
 
@@ -37,6 +56,8 @@ export async function POST(req: NextRequest) {
         entity_id: validated.requestId,
         metadata: {
           action: validated.action,
+          scheduledDate: targetDate,
+          scheduledTime: targetTime,
           notes: validated.meetingNotes
         }
       });
@@ -46,7 +67,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Proctor consultation marked as ${validated.action.toLowerCase()}.`,
+      message: `Proctor consultation marked as ${validated.action.toLowerCase()} for ${targetTime}.`,
       updates
     });
   } catch (error: any) {

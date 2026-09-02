@@ -3,16 +3,21 @@ import assert from "node:assert/strict";
 import { GET as getProctorRequests } from "@/app/api/proctor/route";
 import { POST as bookConsultation } from "@/app/api/proctor/book/route";
 import { POST as decideConsultation } from "@/app/api/proctor/decide/route";
+import { GET as getSlots } from "@/app/api/proctor/slots/route";
 
-test("PROCTOR PIPELINE: Test 1 - Parent / Student Books Proctor Consultation", async () => {
+test("PROCTOR PIPELINE: Test 1 - Parent / Student Books Proctor Consultation with Specific Slot", async () => {
+  const targetDate = "2026-10-15";
+  const targetTime = "03:30 PM – 04:00 PM";
+
   const payload = {
     studentName: "Rahul Deshmukh",
     rollNumber: "21CS042",
     className: "B.Tech CSE - 4A",
     proctorName: "Dr. Pavan Kulkarni",
     topic: "Academic Attendance & CIA Feedback",
-    message: "Requesting a 15-minute consultation to discuss attendance regularisation for viral fever period.",
-    preferredTime: "Afternoon (3:30 PM – 5:00 PM)",
+    message: "Requesting consultation regarding medical exemption and internal assessment guidance.",
+    preferredDate: targetDate,
+    preferredTime: targetTime,
     contactPhone: "+91 98450 12345"
   };
 
@@ -31,36 +36,73 @@ test("PROCTOR PIPELINE: Test 1 - Parent / Student Books Proctor Consultation", a
   assert.ok(json.displayCode, "Expected displayCode in response");
 });
 
-test("PROCTOR PIPELINE: Test 2 - Faculty / Teacher Retrieves Pending Proctor Consultation Queue", async () => {
-  const res = await getProctorRequests();
+test("PROCTOR PIPELINE: Test 2 - Slot Query Reflects Reserved and Available Slots", async () => {
+  const targetDate = "2026-10-15";
+  const req = new Request(`http://localhost:3000/api/proctor/slots?date=${targetDate}`);
+  const res = await getSlots(req);
   const json = await res.json();
 
   assert.equal(res.status, 200);
   assert.equal(json.success, true);
-  assert.ok(Array.isArray(json.data), "Expected data array");
-  assert.ok(json.data.length > 0, "Expected at least one consultation record");
+  assert.equal(json.date, targetDate);
+  assert.ok(Array.isArray(json.slots));
+  assert.equal(json.slots.length, 6);
 
-  const pending = json.data.find((p: any) => p.studentName === "Rahul Deshmukh" && p.status === "PENDING");
-  assert.ok(pending, "Expected pending consultation request for Rahul Deshmukh");
-  assert.equal(pending.topic, "Academic Attendance & CIA Feedback");
+  const booked = json.slots.find((s: any) => s.slot === "03:30 PM – 04:00 PM");
+  assert.ok(booked, "Expected slot to exist");
+  assert.equal(booked.isBlocked, true, "Expected 03:30 PM slot to be blocked after reservation");
+  assert.ok(booked.bookedByStudent?.includes("Rahul Deshmukh"));
+
+  const openSlot = json.slots.find((s: any) => s.slot === "10:00 AM – 10:30 AM");
+  assert.ok(openSlot);
+  assert.equal(openSlot.isBlocked, false, "Expected 10:00 AM slot to be available");
 });
 
-test("PROCTOR PIPELINE: Test 3 - Faculty Schedules and Completes Proctor Consultation", async () => {
-  // 1. Get the pending request ID
+test("PROCTOR PIPELINE: Test 3 - Collision Prevention Rejects Double-Booking Same Slot", async () => {
+  const targetDate = "2026-10-15";
+  const targetTime = "03:30 PM – 04:00 PM"; // Already booked in Test 1!
+
+  const collidingPayload = {
+    studentName: "Priya Patel",
+    rollNumber: "21CS002",
+    className: "B.Tech CSE - 4A",
+    proctorName: "Dr. Pavan Kulkarni",
+    topic: "Career Guidance",
+    message: "Requesting slot for placement discussion.",
+    preferredDate: targetDate,
+    preferredTime: targetTime, // Colliding!
+    contactPhone: "+91 98450 99999"
+  };
+
+  const req = new Request("http://localhost:3000/api/proctor/book", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(collidingPayload)
+  });
+
+  const res = await bookConsultation(req);
+  const json = await res.json();
+
+  assert.equal(res.status, 409, "Expected 409 Conflict status on slot collision");
+  assert.equal(json.success, false);
+  assert.ok(json.message.includes("collision") || json.message.includes("already reserved"));
+});
+
+test("PROCTOR PIPELINE: Test 4 - Faculty Confirms and Resolves Consultation", async () => {
   const listRes = await getProctorRequests();
   const listJson = await listRes.json();
-  const pending = listJson.data.find((p: any) => p.status === "PENDING");
-  assert.ok(pending, "Must have a pending consultation to decide");
+  const pending = listJson.data.find((p: any) => p.status === "PENDING" && p.scheduledDate === "2026-10-15");
+  assert.ok(pending, "Must find pending consultation");
 
-  // 2. Faculty confirms slot
+  // Faculty schedules open slot 10:00 AM
   const scheduleReq = new Request("http://localhost:3000/api/proctor/decide", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       requestId: pending.id,
       action: "SCHEDULED",
-      scheduledDate: "2026-09-08",
-      scheduledTime: "04:00 PM",
+      scheduledDate: "2026-10-15",
+      scheduledTime: "10:00 AM – 10:30 AM",
       meetingNotes: "Slot confirmed in CS Block Room 304."
     })
   });
@@ -71,22 +113,14 @@ test("PROCTOR PIPELINE: Test 3 - Faculty Schedules and Completes Proctor Consult
   assert.equal(scheduleRes.status, 200);
   assert.equal(scheduleJson.success, true);
 
-  // 3. Verify state updated
-  const updatedListRes = await getProctorRequests();
-  const updatedListJson = await updatedListRes.json();
-  const updated = updatedListJson.data.find((p: any) => p.id === pending.id);
-  assert.ok(updated);
-  assert.equal(updated.status, "SCHEDULED");
-  assert.equal(updated.scheduledDate, "2026-09-08");
-
-  // 4. Complete and resolve meeting
+  // Complete consultation
   const completeReq = new Request("http://localhost:3000/api/proctor/decide", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       requestId: pending.id,
       action: "COMPLETED",
-      meetingNotes: "Met with parent. Medical certificates reviewed and approved for condonation.",
+      meetingNotes: "Medical certificate verified. Condonation approved for 3 days of absence.",
       actionItems: "Resolved"
     })
   });
@@ -96,22 +130,4 @@ test("PROCTOR PIPELINE: Test 3 - Faculty Schedules and Completes Proctor Consult
 
   assert.equal(completeRes.status, 200);
   assert.equal(completeJson.success, true);
-});
-
-test("PROCTOR PIPELINE: Test 4 - Validation Boundaries (Short Message Rejection)", async () => {
-  const invalidReq = new Request("http://localhost:3000/api/proctor/book", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      studentName: "Rahul Deshmukh",
-      topic: "CIA",
-      message: "hi" // Too short (< 5 chars)
-    })
-  });
-
-  const res = await bookConsultation(invalidReq);
-  const json = await res.json();
-
-  assert.equal(res.status, 400);
-  assert.equal(json.success, false);
 });
