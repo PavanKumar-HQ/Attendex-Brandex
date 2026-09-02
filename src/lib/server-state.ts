@@ -45,10 +45,68 @@ export interface ServerGatepass {
   createdAt: string;
 }
 
+export interface ServerProctorRequest {
+  id: string;
+  displayCode: string;
+  studentId: string;
+  studentName: string;
+  rollNumber: string;
+  className: string;
+  proctorName: string;
+  topic: string;
+  message: string;
+  preferredTime?: string;
+  contactPhone?: string;
+  status: "PENDING" | "SCHEDULED" | "COMPLETED" | "CANCELLED";
+  scheduledDate?: string;
+  scheduledTime?: string;
+  meetingNotes?: string;
+  actionItems?: string;
+  createdAt: string;
+}
+
 interface StateStore {
   leaves: ServerLeave[];
   gatepasses: ServerGatepass[];
+  proctorRequests: ServerProctorRequest[];
 }
+
+const INITIAL_PROCTOR_REQUESTS: ServerProctorRequest[] = [
+  {
+    id: "p1111111-0000-4000-a000-000000000001",
+    displayCode: "PR-8012",
+    studentId: "00000000-0000-0000-0000-000000000030",
+    studentName: "Rahul Deshmukh",
+    rollNumber: "21CS042",
+    className: "B.Tech CSE - 4A",
+    proctorName: "Dr. Pavan Kulkarni",
+    topic: "Semester Review & CIA Feedback",
+    message: "Reviewed CIA-1 scores. Rahul is performing consistently in Distributed Systems (94%). Recommended focusing on Applied Physics lab coursework.",
+    status: "COMPLETED",
+    scheduledDate: "2026-09-20",
+    scheduledTime: "04:00 PM",
+    meetingNotes: "Student advised to attend weekly problem-solving tutorials.",
+    actionItems: "Resolved",
+    createdAt: "2026-09-20T10:30:00.000Z"
+  },
+  {
+    id: "p1111111-0000-4000-a000-000000000002",
+    displayCode: "PR-8013",
+    studentId: "00000000-0000-0000-0000-000000000030",
+    studentName: "Rahul Deshmukh",
+    rollNumber: "21CS042",
+    className: "B.Tech CSE - 4A",
+    proctorName: "Dr. Pavan Kulkarni",
+    topic: "Proctor Onboarding & Standing",
+    message: "Confirmed student enrollment in final year electives and capstone project panel allocation.",
+    status: "COMPLETED",
+    scheduledDate: "2026-08-12",
+    scheduledTime: "03:30 PM",
+    meetingNotes: "All prerequisite credit clearances verified.",
+    actionItems: "Completed",
+    createdAt: "2026-08-12T09:00:00.000Z"
+  }
+];
 
 // Use a fixed path in the system temp directory so all worker processes share it
 const STORE_DIR = join(tmpdir(), "attendex-state");
@@ -68,12 +126,19 @@ function readStore(): StateStore {
   try {
     ensureDir();
     if (!existsSync(STORE_FILE)) {
-      return { leaves: [], gatepasses: [] };
+      const initial: StateStore = { leaves: [], gatepasses: [], proctorRequests: INITIAL_PROCTOR_REQUESTS };
+      writeFileSync(STORE_FILE, JSON.stringify(initial, null, 2), "utf8");
+      return initial;
     }
     const content = readFileSync(STORE_FILE, "utf8");
-    return JSON.parse(content) as StateStore;
+    const parsed = JSON.parse(content) as StateStore;
+    if (!parsed.proctorRequests) {
+      parsed.proctorRequests = INITIAL_PROCTOR_REQUESTS;
+      writeFileSync(STORE_FILE, JSON.stringify(parsed, null, 2), "utf8");
+    }
+    return parsed;
   } catch {
-    return { leaves: [], gatepasses: [] };
+    return { leaves: [], gatepasses: [], proctorRequests: INITIAL_PROCTOR_REQUESTS };
   }
 }
 
@@ -111,6 +176,19 @@ export const serverState = {
   updateGatepass(id: string, updates: Partial<ServerGatepass>) {
     const state = readStore();
     state.gatepasses = state.gatepasses.map(g => g.id === id ? { ...g, ...updates } : g);
+    writeStore(state);
+  },
+  getProctorRequests(): ServerProctorRequest[] {
+    return readStore().proctorRequests;
+  },
+  addProctorRequest(req: ServerProctorRequest) {
+    const state = readStore();
+    state.proctorRequests = [req, ...state.proctorRequests.filter(p => p.id !== req.id)];
+    writeStore(state);
+  },
+  updateProctorRequest(id: string, updates: Partial<ServerProctorRequest>) {
+    const state = readStore();
+    state.proctorRequests = state.proctorRequests.map(p => p.id === id ? { ...p, ...updates } : p);
     writeStore(state);
   },
   // Debug utility

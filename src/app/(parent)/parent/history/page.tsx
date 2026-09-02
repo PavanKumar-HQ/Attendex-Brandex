@@ -5,6 +5,7 @@ import { Header } from "@/components/layout/header";
 import { PageTransition } from "@/components/ui/page-transition";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { 
   CalendarDays, 
   Clock, 
@@ -296,12 +297,13 @@ export default function ParentHistoryPage() {
               <h4 className="text-sm font-bold text-white">Have questions about missed sessions?</h4>
               <p className="text-xs text-slate-400 font-medium">Contact Designated Proctor Advisor Dr. Pavan Kulkarni.</p>
             </div>
-            <Button
-              onClick={() => toast.success("Callback Request Registered", { description: "Proctor will contact you within 24 hours." })}
-              className="h-9 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shrink-0"
-            >
-              <Phone className="w-3.5 h-3.5 mr-1.5" /> Request Advisor Callback
-            </Button>
+            <Link href="/parent/proctor">
+              <Button
+                className="h-9 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shrink-0"
+              >
+                <Phone className="w-3.5 h-3.5 mr-1.5" /> Request Advisor Callback
+              </Button>
+            </Link>
           </div>
         </div>
       </div>

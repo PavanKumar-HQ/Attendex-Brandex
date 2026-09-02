@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PageTransition } from "@/components/ui/page-transition";
 import { format } from "date-fns";
+import Link from "next/link";
 
 import { useQuery } from "@tanstack/react-query";
 
@@ -308,19 +309,21 @@ export default function ParentDashboard() {
                         <p><span className="font-semibold text-slate-800">Cabin:</span> CS Block, Room 304</p>
                     </div>
                     <div className="grid grid-cols-2 gap-2 pt-1">
-                        <Button 
-                          onClick={() => toast.success("Callback Requested", { description: "Dr. Pavan Kulkarni will contact you within 24 hours." })}
-                          className="h-9 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm flex items-center justify-center gap-1.5"
-                        >
-                          <Phone className="w-3.5 h-3.5" /> Request Call
-                        </Button>
-                        <Button 
-                          onClick={() => toast.success("Email drafted", { description: "Opening your email client to contact the proctor." })}
-                          variant="outline"
-                          className="h-9 rounded-xl border-slate-200 text-slate-700 font-semibold text-xs hover:bg-slate-50 flex items-center justify-center gap-1.5"
-                        >
-                          <Mail className="w-3.5 h-3.5" /> Send Mail
-                        </Button>
+                        <Link href="/parent/proctor">
+                          <Button 
+                            className="w-full h-9 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm flex items-center justify-center gap-1.5"
+                          >
+                            <Phone className="w-3.5 h-3.5" /> Request Call
+                          </Button>
+                        </Link>
+                        <a href="mailto:pavan.kulkarni@attendex.edu?subject=Proctor Query - Rahul Deshmukh (21CS042)">
+                          <Button 
+                            variant="outline"
+                            className="w-full h-9 rounded-xl border-slate-200 text-slate-700 font-semibold text-xs hover:bg-slate-50 flex items-center justify-center gap-1.5"
+                          >
+                            <Mail className="w-3.5 h-3.5" /> Send Mail
+                          </Button>
+                        </a>
                     </div>
                 </Card>
 
