@@ -4,8 +4,10 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Calendar, FileText, Send, CheckCircle2, ShieldAlert, Clock, AlertCircle } from "lucide-react";
+import { Calendar, FileText, Send, CheckCircle2, ShieldAlert, AlertCircle, ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
+import { universalWorkflow, LeaveClassification } from "@/lib/workflow-engine";
+import Link from "next/link";
 
 interface LeaveRequestModalProps {
   studentName?: string;
@@ -13,39 +15,54 @@ interface LeaveRequestModalProps {
   triggerButton?: React.ReactElement;
 }
 
-export function LeaveRequestModal({ studentName = "Student", studentRoll = "21CS001", triggerButton }: LeaveRequestModalProps) {
+export function LeaveRequestModal({ studentName = "Rahul Deshmukh", studentRoll = "21CS042", triggerButton }: LeaveRequestModalProps) {
   const [open, setOpen] = useState(false);
-  const [leaveType, setLeaveType] = useState<"medical" | "personal" | "on_duty" | "emergency">("medical");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
+  const [leaveType, setLeaveType] = useState<LeaveClassification>("MEDICAL");
+  const [fromDate, setFromDate] = useState("2026-09-08");
+  const [toDate, setToDate] = useState("2026-09-10");
   const [reason, setReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [confirmedCode, setConfirmedCode] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fromDate || !reason.trim()) {
-      toast.error("Please fill in all required fields", {
-        description: "Specify the start date and valid academic reason."
-      });
+    if (!fromDate || !reason.trim() || reason.trim().length < 5) {
+      toast.error("Please enter a valid reason (minimum 5 characters).");
       return;
     }
 
     setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
-      setSubmitted(true);
-      toast.success("Leave Application Dispatched", {
-        description: `Your ${leaveType.toUpperCase()} request has been forwarded to the Class Proctor.`
+    try {
+      const res = await universalWorkflow.submitLeave({
+        studentName,
+        rollNumber: studentRoll,
+        className: "B.Tech CSE - 4A",
+        leaveType,
+        startDate: fromDate,
+        endDate: toDate || fromDate,
+        reason: reason.trim()
       });
-      setTimeout(() => {
-        setOpen(false);
-        setSubmitted(false);
-        setReason("");
-        setFromDate("");
-        setToDate("");
-      }, 1500);
-    }, 800);
+
+      if (res.success) {
+        setConfirmedCode(res.displayCode);
+        setSubmitted(true);
+        toast.success("Leave Application Registered!", {
+          description: `Dispatched to Class Teacher Prof. Rajesh Verma (#${res.displayCode}).`
+        });
+        setTimeout(() => {
+          setOpen(false);
+          setSubmitted(false);
+          setReason("");
+        }, 2000);
+      } else {
+        toast.error(res.message || "Failed to submit leave.");
+      }
+    } catch {
+      toast.error("Network error. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -62,15 +79,25 @@ export function LeaveRequestModal({ studentName = "Student", studentRoll = "21CS
       <DialogContent className="sm:max-w-[480px] rounded-2xl p-0 overflow-hidden bg-white border border-slate-200 text-slate-900 shadow-xl">
         <div className="p-6 md:p-8">
           <DialogHeader className="mb-6">
-            <div className="flex items-center gap-2 px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 text-xs font-semibold w-fit mb-2 border border-blue-100">
-              <ShieldAlert className="w-3.5 h-3.5" />
-              <span>Official Institutional Request</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 text-xs font-semibold w-fit border border-blue-100">
+                <ShieldAlert className="w-3.5 h-3.5" />
+                <span>Official Absence Portal</span>
+              </div>
+              <Link 
+                href="/parent/leave"
+                onClick={() => setOpen(false)}
+                className="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-0.5"
+              >
+                <span>Full Desk</span>
+                <ArrowUpRight className="w-3 h-3" />
+              </Link>
             </div>
-            <DialogTitle className="text-xl font-bold text-slate-900">
-              Absence & Exemption Form
+            <DialogTitle className="text-xl font-bold text-slate-900 mt-2">
+              Absence &amp; Medical Exemption Form
             </DialogTitle>
             <DialogDescription className="text-slate-500 font-medium text-xs mt-1">
-              Submit planned leave or medical exemption for <strong>{studentName}</strong> ({studentRoll}) to prevent attendance shortage penalties.
+              Submit planned leave or medical exemption for <strong>{studentName}</strong> ({studentRoll}) directly to faculty.
             </DialogDescription>
           </DialogHeader>
 
@@ -80,8 +107,8 @@ export function LeaveRequestModal({ studentName = "Student", studentRoll = "21CS
                 <CheckCircle2 className="w-8 h-8" />
               </div>
               <h3 className="text-lg font-bold text-slate-900">Application Submitted!</h3>
-              <p className="text-xs text-slate-500 max-w-xs">
-                Your leave application #LEV-{Date.now().toString().slice(-4)} is now queued for faculty review.
+              <p className="text-xs text-slate-500 max-w-xs font-medium">
+                Your leave application <strong className="text-slate-900">#{confirmedCode}</strong> is now live in the Class Teacher's action queue.
               </p>
             </div>
           ) : (
@@ -90,15 +117,15 @@ export function LeaveRequestModal({ studentName = "Student", studentRoll = "21CS
                 <label className="text-xs font-semibold text-slate-700">Leave Category</label>
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    { id: "medical", label: "Medical Leave (ML)", desc: "Doctor note / sickness" },
-                    { id: "on_duty", label: "On Duty (OD)", desc: "Fest / hackathon / sports" },
-                    { id: "personal", label: "Personal Leave", desc: "Family commitment" },
-                    { id: "emergency", label: "Emergency", desc: "Unplanned absence" },
+                    { id: "MEDICAL", label: "Medical Leave (ML)", desc: "Doctor certificate / fever" },
+                    { id: "ON_DUTY", label: "On Duty (OD)", desc: "Tech fest / hackathon / sports" },
+                    { id: "CASUAL", label: "Personal Leave", desc: "Family emergency / travel" },
+                    { id: "SPORTS", label: "Sports Meet", desc: "Inter-collegiate event" },
                   ].map(t => (
                     <button
                       type="button"
                       key={t.id}
-                      onClick={() => setLeaveType(t.id as any)}
+                      onClick={() => setLeaveType(t.id as LeaveClassification)}
                       className={`p-2.5 rounded-xl border text-left transition-all ${
                         leaveType === t.id
                           ? "border-blue-600 bg-blue-50/50 text-blue-900 ring-1 ring-blue-600"
@@ -124,12 +151,13 @@ export function LeaveRequestModal({ studentName = "Student", studentRoll = "21CS
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700">To Date</label>
+                  <label className="text-xs font-semibold text-slate-700">To Date *</label>
                   <Input
                     type="date"
                     value={toDate}
                     onChange={(e) => setToDate(e.target.value)}
                     className="h-10 rounded-xl border-slate-200 text-xs"
+                    required
                   />
                 </div>
               </div>
@@ -139,16 +167,20 @@ export function LeaveRequestModal({ studentName = "Student", studentRoll = "21CS
                 <textarea
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
-                  placeholder="Explain the reason for absence (e.g. Hospitalized for fever / Attending National Tech Symposium)..."
+                  placeholder="Explain the clinical reason or official event (e.g. Prescribed bed rest for viral fever / Representing college in robotics hackathon)..."
                   className="w-full h-20 p-3 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 resize-none"
                   required
                 />
+                <div className="flex justify-between items-center text-[10px] text-slate-400">
+                  <span>Minimum 5 characters required</span>
+                  <span>{reason.length} chars</span>
+                </div>
               </div>
 
               <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-2.5">
                 <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                 <p className="text-[11px] text-amber-800 leading-snug">
-                  Approved Medical (ML) and On-Duty (OD) leaves will not deduct attendance percentages once verified by the faculty counselor.
+                  Approved Medical (ML) and On-Duty (OD) leaves will regularize attendance percentages once verified by faculty counselor.
                 </p>
               </div>
 
