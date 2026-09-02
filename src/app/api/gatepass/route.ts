@@ -1,30 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { serverState } from "@/lib/server-state";
 
-let serverGatepasses: any[] = [
-  {
-    id: "d1111111-0000-4000-a000-000000000001",
-    displayCode: "GP-9021",
-    studentId: "00000000-0000-0000-0000-000000000032",
-    studentName: "Priya Patel",
-    rollNumber: "21CS002",
-    exitTime: "Today 02:30 PM",
-    expectedReturn: "Today 06:00 PM",
-    destination: "City Diagnostic Center",
-    reason: "Emergency medical consultation with parents.",
-    emergencyContact: "+91 98450 12345",
-    qrNonce: "GP-7X9K2L",
-    status: "PENDING",
-    createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString()
-  }
-];
-
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const { data: dbPasses } = await supabase
       .from("gatepasses")
       .select("*")
       .order("created_at", { ascending: false });
+
+    const memoryPasses = serverState.getGatepasses();
 
     if (dbPasses && dbPasses.length > 0) {
       const mapped = dbPasses.map((g: any) => ({
@@ -44,12 +29,12 @@ export async function GET(req: NextRequest) {
         createdAt: g.created_at || new Date().toISOString()
       }));
 
-      const combined = [...mapped, ...serverGatepasses.filter(s => !mapped.some(m => m.id === s.id))];
+      const combined = [...mapped, ...memoryPasses.filter(s => !mapped.some(m => m.id === s.id))];
       return NextResponse.json({ success: true, data: combined });
     }
 
-    return NextResponse.json({ success: true, data: serverGatepasses });
+    return NextResponse.json({ success: true, data: memoryPasses });
   } catch {
-    return NextResponse.json({ success: true, data: serverGatepasses });
+    return NextResponse.json({ success: true, data: serverState.getGatepasses() });
   }
 }

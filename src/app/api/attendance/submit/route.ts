@@ -12,7 +12,10 @@ const submitAttendanceSchema = z.object({
   records: z.array(
     z.object({
       studentId: z.string().min(1),
-      status: z.enum(["present", "absent", "od", "ml"]),
+      status: z.preprocess(
+        (val) => (typeof val === "string" ? val.toLowerCase() : val),
+        z.enum(["present", "absent", "od", "ml"])
+      ),
       period: z.number().int().optional()
     })
   )
