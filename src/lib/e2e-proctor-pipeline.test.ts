@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { NextRequest } from "next/server";
 import { GET as getProctorRequests } from "@/app/api/proctor/route";
 import { POST as bookConsultation } from "@/app/api/proctor/book/route";
 import { POST as decideConsultation } from "@/app/api/proctor/decide/route";
@@ -21,7 +22,7 @@ test("PROCTOR PIPELINE: Test 1 - Parent / Student Books Proctor Consultation wit
     contactPhone: "+91 98450 12345"
   };
 
-  const req = new Request("http://localhost:3000/api/proctor/book", {
+  const req = new NextRequest("http://localhost:3000/api/proctor/book", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
@@ -38,7 +39,7 @@ test("PROCTOR PIPELINE: Test 1 - Parent / Student Books Proctor Consultation wit
 
 test("PROCTOR PIPELINE: Test 2 - Slot Query Reflects Reserved and Available Slots", async () => {
   const targetDate = "2026-10-15";
-  const req = new Request(`http://localhost:3000/api/proctor/slots?date=${targetDate}`);
+  const req = new NextRequest(`http://localhost:3000/api/proctor/slots?date=${targetDate}`);
   const res = await getSlots(req);
   const json = await res.json();
 
@@ -74,7 +75,7 @@ test("PROCTOR PIPELINE: Test 3 - Collision Prevention Rejects Double-Booking Sam
     contactPhone: "+91 98450 99999"
   };
 
-  const req = new Request("http://localhost:3000/api/proctor/book", {
+  const req = new NextRequest("http://localhost:3000/api/proctor/book", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(collidingPayload)
@@ -95,7 +96,7 @@ test("PROCTOR PIPELINE: Test 4 - Faculty Confirms and Resolves Consultation", as
   assert.ok(pending, "Must find pending consultation");
 
   // Faculty schedules open slot 10:00 AM
-  const scheduleReq = new Request("http://localhost:3000/api/proctor/decide", {
+  const scheduleReq = new NextRequest("http://localhost:3000/api/proctor/decide", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -114,7 +115,7 @@ test("PROCTOR PIPELINE: Test 4 - Faculty Confirms and Resolves Consultation", as
   assert.equal(scheduleJson.success, true);
 
   // Complete consultation
-  const completeReq = new Request("http://localhost:3000/api/proctor/decide", {
+  const completeReq = new NextRequest("http://localhost:3000/api/proctor/decide", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

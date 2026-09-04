@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { NextRequest } from "next/server";
 import { POST as submitAttendance } from "@/app/api/attendance/submit/route";
 import { calculateAttendanceMetrics } from "@/lib/calculations";
 
@@ -16,7 +17,7 @@ test("ATTENDANCE PIPELINE: Test 1 - Teacher Submits Period Roll-Call", async () 
     ]
   };
 
-  const req = new Request("http://localhost:3000/api/attendance/submit", {
+  const req = new NextRequest("http://localhost:3000/api/attendance/submit", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)

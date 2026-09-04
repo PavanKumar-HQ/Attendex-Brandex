@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { NextRequest } from "next/server";
 import { POST as submitMarks } from "@/app/api/marks/submit/route";
 import { calculateSubjectGrade, calculateSGPA } from "@/lib/calculations";
 
@@ -16,7 +17,7 @@ test("MARKS PIPELINE: Test 1 - Teacher Submits Continuous Assessment Marks", asy
     ]
   };
 
-  const req = new Request("http://localhost:3000/api/marks/submit", {
+  const req = new NextRequest("http://localhost:3000/api/marks/submit", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)

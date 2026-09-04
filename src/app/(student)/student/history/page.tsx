@@ -83,8 +83,7 @@ export default function StudentHistoryPage() {
   }, [selectedSubject, selectedDayNum]);
 
   const handleDownloadPDF = () => {
-    toast.loading("Generating Official Attendance Statement...");
-    setTimeout(() => {
+    try {
       const doc = new jsPDF() as any;
       doc.setFontSize(18);
       doc.setTextColor(15, 23, 42);
@@ -114,9 +113,10 @@ export default function StudentHistoryPage() {
       });
 
       doc.save("Attendance_Audit_Statement_21CS042.pdf");
-      toast.dismiss();
       toast.success("Attendance Statement (PDF) Downloaded!");
-    }, 800);
+    } catch {
+      toast.error("Failed to generate Attendance PDF.");
+    }
   };
 
   return (

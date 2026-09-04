@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/layout/header";
 import { PageTransition } from "@/components/ui/page-transition";
 import { Card } from "@/components/ui/card";
@@ -14,13 +14,32 @@ import {
   AlertCircle, 
   Download, 
   BookOpen, 
-  Calendar
+  Calendar,
+  X,
+  Send,
+  Link2,
+  FileCheck
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
-const ASSIGNMENTS_DATA = [
+interface Assignment {
+  id: string;
+  title: string;
+  subject: string;
+  instructor: string;
+  deadline: string;
+  status: "Assigned" | "In Progress" | "Submitted" | "Graded";
+  score: string;
+  maxMarks: number;
+  type: string;
+  description: string;
+  submissionLink?: string;
+  submittedAt?: string;
+}
+
+const INITIAL_ASSIGNMENTS: Assignment[] = [
   {
     id: "asg-1",
     title: "Distributed Consensus Algorithm (Raft Implementation)",
@@ -31,7 +50,9 @@ const ASSIGNMENTS_DATA = [
     score: "9.5 / 10",
     maxMarks: 10,
     type: "Lab Exercise",
-    description: "Implement leader election and log replication module using Python/Go with test suite verification."
+    description: "Implement leader election and log replication module using Python/Go with test suite verification.",
+    submittedAt: "Oct 03, 2026 • 09:30 PM",
+    submissionLink: "https://github.com/rahuldeshmukh/raft-consensus"
   },
   {
     id: "asg-2",
@@ -52,7 +73,7 @@ const ASSIGNMENTS_DATA = [
     instructor: "Dr. P. Patel",
     deadline: "Oct 16, 2026",
     status: "Assigned",
-    score: "Due in 15 days",
+    score: "Due in 14 days",
     maxMarks: 10,
     type: "Theory Assignment",
     description: "Formulate ARIES recovery protocol trace under system crash conditions."
@@ -67,27 +88,79 @@ const ASSIGNMENTS_DATA = [
     score: "10 / 10",
     maxMarks: 10,
     type: "Lab Manual",
-    description: "Complete layout design, timing verification, and FPGA bitstream synthesis."
+    description: "Complete layout design, timing verification, and FPGA bitstream synthesis.",
+    submittedAt: "Sep 27, 2026 • 04:15 PM"
   }
 ];
 
 export default function StudentAssignmentsPage() {
+  const [assignments, setAssignments] = useState<Assignment[]>(INITIAL_ASSIGNMENTS);
   const [filter, setFilter] = useState<"all" | "In Progress" | "Submitted" | "Graded">("all");
-  const [submittingId, setSubmittingId] = useState<string | null>(null);
+  const [activeModalItem, setActiveModalItem] = useState<Assignment | null>(null);
+  const [submissionUrl, setSubmissionUrl] = useState("");
+  const [submissionNotes, setSubmissionNotes] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const filteredAssignments = ASSIGNMENTS_DATA.filter(a => filter === "all" || a.status === filter);
+  // Load from localStorage if present
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("attendex_student_assignments");
+      if (stored) {
+        setAssignments(JSON.parse(stored));
+      }
+    } catch {
+      // Ignore
+    }
+  }, []);
 
-  const handleUploadSubmission = (asg: typeof ASSIGNMENTS_DATA[0]) => {
-    setSubmittingId(asg.id);
-    toast.loading(`Uploading submission for ${asg.title}...`);
-    setTimeout(() => {
-      setSubmittingId(null);
-      toast.dismiss();
-      toast.success("Submission Uploaded Successfully", {
-        description: `Your lab report has been queued for faculty review by ${asg.instructor}.`
-      });
-    }, 1200);
+  const saveAssignments = (items: Assignment[]) => {
+    setAssignments(items);
+    try {
+      localStorage.setItem("attendex_student_assignments", JSON.stringify(items));
+    } catch {
+      // Ignore
+    }
   };
+
+  const filteredAssignments = assignments.filter(a => filter === "all" || a.status === filter);
+
+  const openSubmitDialog = (asg: Assignment) => {
+    setActiveModalItem(asg);
+    setSubmissionUrl(asg.submissionLink || "");
+    setSubmissionNotes("");
+  };
+
+  const handleConfirmSubmission = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeModalItem) return;
+
+    setIsSubmitting(true);
+    const now = new Date();
+    const timestamp = `${now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} • ${now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}`;
+
+    const updated = assignments.map(a => {
+      if (a.id === activeModalItem.id) {
+        return {
+          ...a,
+          status: "Submitted" as const,
+          score: "Pending Faculty Evaluation",
+          submissionLink: submissionUrl || "https://drive.google.com/attendex/submissions/21CS042",
+          submittedAt: timestamp
+        };
+      }
+      return a;
+    });
+
+    saveAssignments(updated);
+    setIsSubmitting(false);
+    setActiveModalItem(null);
+
+    toast.success("Assignment Submitted Successfully!", {
+      description: `Dispatched to ${activeModalItem.instructor} for grading.`
+    });
+  };
+
+  const completedCount = assignments.filter(a => a.status === "Submitted" || a.status === "Graded").length;
 
   return (
     <PageTransition>
@@ -100,120 +173,209 @@ export default function StudentAssignmentsPage() {
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 text-xs font-bold border border-blue-100">
-                  Semester Continuous Evaluation
+                  Continuous Assessment Portal
                 </span>
-                <span className="text-xs font-semibold text-slate-400">Autumn 2026</span>
+                <span className="text-xs font-semibold text-slate-400">Semester 8 (2026-2027)</span>
               </div>
               <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Coursework &amp; Lab Submissions</h1>
               <p className="text-xs text-slate-500 font-medium">
-                Submit laboratory manuals, code assignments, and review grades given by faculty instructors.
+                Submit laboratory manuals, code assignments, and track grades evaluated by your faculty instructors.
               </p>
             </div>
 
             <div className="flex items-center gap-3">
               <div className="text-right">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Completed</p>
-                <p className="text-lg font-bold text-emerald-600">3 / 4 Done</p>
+                <p className="text-lg font-bold text-slate-900">{completedCount} / {assignments.length}</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                <CheckCircle2 className="w-5 h-5" />
               </div>
             </div>
           </div>
 
-          {/* Filter Bar */}
-          <div className="flex items-center gap-1.5 p-1 bg-white rounded-xl border border-slate-200 w-fit overflow-x-auto">
-            {(["all", "In Progress", "Submitted", "Graded"] as const).map((f) => (
+          {/* Filter Pills */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+            {(["all", "In Progress", "Submitted", "Graded"] as const).map(tab => (
               <button
-                key={f}
-                onClick={() => setFilter(f)}
+                key={tab}
+                onClick={() => setFilter(tab)}
                 className={cn(
-                  "h-8 px-3.5 rounded-lg text-xs font-semibold transition-all capitalize whitespace-nowrap",
-                  filter === f
-                    ? "bg-slate-900 text-white shadow-sm font-bold"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                  "px-3.5 py-1.5 rounded-xl font-semibold border transition-all shrink-0 capitalize",
+                  filter === tab
+                    ? "bg-slate-900 text-white border-slate-900 shadow-sm"
+                    : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
                 )}
               >
-                {f === "all" ? "All Coursework" : f}
+                {tab === "all" ? "All Assignments" : tab}
               </button>
             ))}
           </div>
 
-          {/* Assignments List */}
+          {/* Assignments Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <AnimatePresence mode="popLayout">
-              {filteredAssignments.map((asg) => (
-                <motion.div
+            {filteredAssignments.map(asg => {
+              const isGraded = asg.status === "Graded";
+              const isSubmitted = asg.status === "Submitted";
+              const isInProgress = asg.status === "In Progress" || asg.status === "Assigned";
+
+              return (
+                <Card
                   key={asg.id}
-                  layout
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
+                  className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col justify-between space-y-4"
                 >
-                  <Card className="p-5 md:p-6 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-blue-200 transition-all flex flex-col justify-between space-y-4 h-full">
-                    <div className="space-y-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="space-y-1">
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                            {asg.subject}
-                          </span>
-                          <h3 className="text-sm font-bold text-slate-900 leading-snug">
-                            {asg.title}
-                          </h3>
-                        </div>
-                        <span className={cn(
-                          "px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide shrink-0 border",
-                          asg.status === "Graded" || asg.status === "Submitted"
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                            : asg.status === "In Progress"
-                            ? "bg-blue-50 text-blue-700 border-blue-200"
-                            : "bg-amber-50 text-amber-700 border-amber-200"
-                        )}>
-                          {asg.status}
-                        </span>
-                      </div>
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">
+                        {asg.type}
+                      </span>
+                      <span className={cn(
+                        "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase flex items-center gap-1",
+                        isGraded
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                          : isSubmitted
+                          ? "bg-blue-50 text-blue-700 border border-blue-200"
+                          : "bg-amber-50 text-amber-700 border border-amber-200"
+                      )}>
+                        {isGraded && <CheckCircle2 className="w-3 h-3" />}
+                        {isSubmitted && <Clock className="w-3 h-3" />}
+                        {isInProgress && <AlertCircle className="w-3 h-3" />}
+                        <span>{asg.status}</span>
+                      </span>
+                    </div>
 
-                      <p className="text-xs text-slate-600 font-medium leading-relaxed">
-                        {asg.description}
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900 leading-snug">{asg.title}</h3>
+                      <p className="text-xs font-semibold text-blue-600 mt-0.5">{asg.subject}</p>
+                    </div>
+
+                    <p className="text-xs text-slate-500 leading-relaxed font-medium">
+                      {asg.description}
+                    </p>
+
+                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-medium">
+                      <span>Instructor: {asg.instructor}</span>
+                      <span className="font-semibold text-slate-700">Due: {asg.deadline}</span>
+                    </div>
+
+                    {asg.submittedAt && (
+                      <p className="text-[10px] text-emerald-700 font-semibold bg-emerald-50 p-2 rounded-lg border border-emerald-100 flex items-center gap-1">
+                        <FileCheck className="w-3.5 h-3.5" />
+                        <span>Submitted on {asg.submittedAt}</span>
                       </p>
+                    )}
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-semibold uppercase block">Score / Status</span>
+                      <span className="text-xs font-bold text-slate-900">{asg.score}</span>
                     </div>
 
-                    <div className="space-y-3 pt-3 border-t border-slate-100">
-                      <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-                        <span className="flex items-center gap-1.5">
-                          <Clock className="w-3.5 h-3.5 text-slate-400" />
-                          Due: {asg.deadline}
-                        </span>
-                        <span className="font-bold text-slate-900 text-xs">
-                          {asg.score}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-2 pt-1">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => toast.info("Downloading Assignment Brief", { description: "Opening PDF question rubric." })}
-                          className="h-8 flex-1 rounded-lg border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center justify-center gap-1"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                          <span>Brief PDF</span>
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={() => handleUploadSubmission(asg)}
-                          disabled={submittingId === asg.id}
-                          className="h-8 flex-1 rounded-lg bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 flex items-center justify-center gap-1 shadow-sm"
-                        >
-                          <UploadCloud className="w-3.5 h-3.5" />
-                          <span>{asg.status === "Graded" ? "Re-upload" : "Submit Work"}</span>
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
-                </motion.div>
-              ))}
-            </AnimatePresence>
+                    {isInProgress ? (
+                      <Button
+                        size="sm"
+                        onClick={() => openSubmitDialog(asg)}
+                        className="h-8 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm flex items-center gap-1.5"
+                      >
+                        <UploadCloud className="w-3.5 h-3.5" />
+                        <span>Submit Work</span>
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => toast.info(`Viewing Submission for ${asg.title}`, { description: asg.submissionLink || "Attached report is verified." })}
+                        className="h-8 px-3 rounded-lg border-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-50 flex items-center gap-1.5"
+                      >
+                        <FileCode className="w-3.5 h-3.5" />
+                        <span>View Submission</span>
+                      </Button>
+                    )}
+                  </div>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </div>
+
+      {/* Interactive Submission Modal */}
+      {activeModalItem && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <UploadCloud className="w-4 h-4 text-blue-600" />
+                  <span>Submit Assignment</span>
+                </h3>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">
+                  {activeModalItem.title}
+                </p>
+              </div>
+              <button
+                onClick={() => setActiveModalItem(null)}
+                className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleConfirmSubmission} className="space-y-3.5 text-xs">
+              <div className="space-y-1">
+                <label className="font-bold text-slate-700 block">Repository / Google Drive Link *</label>
+                <div className="relative">
+                  <Link2 className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3" />
+                  <input
+                    type="url"
+                    required
+                    value={submissionUrl}
+                    onChange={(e) => setSubmissionUrl(e.target.value)}
+                    placeholder="https://github.com/your-username/lab-assignment"
+                    className="w-full h-9 pl-8 pr-3 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-slate-700 block">Submission Comments / Notes</label>
+                <textarea
+                  rows={3}
+                  value={submissionNotes}
+                  onChange={(e) => setSubmissionNotes(e.target.value)}
+                  placeholder="Optional note for the instructor (e.g. Completed benchmark tests in Section 3)..."
+                  className="w-full p-3 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                />
+              </div>
+
+              <div className="p-3 bg-blue-50/60 rounded-xl border border-blue-100 text-[11px] text-blue-900">
+                <p className="font-semibold">Instructor: {activeModalItem.instructor}</p>
+                <p className="text-blue-700 mt-0.5">Deadline: {activeModalItem.deadline} • Max Marks: {activeModalItem.maxMarks}</p>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setActiveModalItem(null)}
+                  className="h-9 px-4 rounded-xl text-xs font-semibold text-slate-600 border-slate-200"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="h-9 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm flex items-center gap-1.5"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>{isSubmitting ? "Transmitting..." : "Confirm & Submit"}</span>
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </PageTransition>
   );
 }

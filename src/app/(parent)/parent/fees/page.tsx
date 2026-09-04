@@ -34,9 +34,7 @@ export default function ParentFeesPage() {
 
   const handleDownloadCertificate = () => {
     setIsExporting(true);
-    toast.loading("Generating Official Tuition Clearance Certificate...");
-
-    setTimeout(() => {
+    try {
       const doc = new jsPDF() as any;
 
       doc.setFontSize(18);
@@ -89,10 +87,12 @@ export default function ParentFeesPage() {
       doc.text("Finance Officer & Comptroller", 140, finalY + 20);
 
       doc.save(`FeeClearance_${studentRoll}.pdf`);
-      setIsExporting(false);
-      toast.dismiss();
       toast.success("Official Fee Certificate Downloaded!");
-    }, 1000);
+    } catch {
+      toast.error("Failed to export Fee Certificate.");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (

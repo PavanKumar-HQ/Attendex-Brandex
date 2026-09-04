@@ -31,9 +31,7 @@ export function FeeLedgerModal({
 
   const handleDownloadReceipt = () => {
     setDownloading(true);
-    toast.loading("Generating Official Tax Invoice & Clearance...");
-
-    setTimeout(() => {
+    try {
       const doc = new jsPDF() as any;
       
       doc.setFontSize(18);
@@ -72,10 +70,12 @@ export function FeeLedgerModal({
       doc.text("Institutional Finance Division — Authorized Digital Stamp", 14, finalY + 12);
 
       doc.save(`FeeClearance_${studentRoll}.pdf`);
-      setDownloading(false);
-      toast.dismiss();
       toast.success("Fee Clearance Certificate Downloaded!");
-    }, 1000);
+    } catch {
+      toast.error("Failed to generate receipt PDF.");
+    } finally {
+      setDownloading(false);
+    }
   };
 
   return (

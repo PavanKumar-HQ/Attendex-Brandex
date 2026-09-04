@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { NextRequest } from "next/server";
 import { POST as submitGatepass } from "@/app/api/gatepass/submit/route";
 import { GET as getGatepasses } from "@/app/api/gatepass/route";
 import { POST as decideGatepass } from "@/app/api/gatepass/decide/route";
@@ -17,7 +18,7 @@ test("GATEPASS PIPELINE: Test 1 - Student Submits Gatepass Request", async () =>
     emergencyContact: "+91 98450 12345"
   };
 
-  const req = new Request("http://localhost:3000/api/gatepass/submit", {
+  const req = new NextRequest("http://localhost:3000/api/gatepass/submit", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
@@ -34,7 +35,6 @@ test("GATEPASS PIPELINE: Test 1 - Student Submits Gatepass Request", async () =>
 });
 
 test("GATEPASS PIPELINE: Test 2 - Teacher / Warden Retrieves Pending Gatepasses", async () => {
-  const req = new Request("http://localhost:3000/api/gatepass");
   const res = await getGatepasses();
   const json = await res.json();
 
@@ -48,16 +48,28 @@ test("GATEPASS PIPELINE: Test 2 - Teacher / Warden Retrieves Pending Gatepasses"
 });
 
 test("GATEPASS PIPELINE: Test 3 - Teacher Approves Gatepass Request", async () => {
-  const getRes = await getGatepasses();
-  const getJson = await getRes.json();
-  const priyaPass = getJson.data.find((g: any) => g.rollNumber === "21CS002" && g.status === "PENDING");
-  assert.ok(priyaPass, "Pending gatepass must exist before approving");
-
-  const req = new Request("http://localhost:3000/api/gatepass/decide", {
+  const submitReq = new NextRequest("http://localhost:3000/api/gatepass/submit", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      gatepassId: priyaPass.id,
+      studentName: "Priya Patel",
+      rollNumber: "21CS002",
+      exitTime: "16:00",
+      expectedReturn: "19:00",
+      destination: "City Lab",
+      reason: "Lab research experiment.",
+      emergencyContact: "+91 98450 12345"
+    })
+  });
+  const submitRes = await submitGatepass(submitReq);
+  const { gatepassId } = await submitRes.json();
+  assert.ok(gatepassId);
+
+  const req = new NextRequest("http://localhost:3000/api/gatepass/decide", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      gatepassId,
       decision: "APPROVED",
       decidedBy: "Dr. S. Kulkarni (Warden)"
     })
@@ -72,7 +84,7 @@ test("GATEPASS PIPELINE: Test 3 - Teacher Approves Gatepass Request", async () =
   // Verify updated state
   const verifyRes = await getGatepasses();
   const verifyJson = await verifyRes.json();
-  const updatedPass = verifyJson.data.find((g: any) => g.id === priyaPass.id);
+  const updatedPass = verifyJson.data.find((g: any) => g.id === gatepassId);
   assert.ok(updatedPass);
   assert.equal(updatedPass.status, "APPROVED");
   assert.equal(updatedPass.reviewedBy, "Dr. S. Kulkarni (Warden)");

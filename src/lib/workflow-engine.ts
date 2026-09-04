@@ -445,5 +445,12 @@ export const universalWorkflow = {
         window.removeEventListener("storage", storageHandler);
       }
     };
+  },
+
+  /**
+   * Dispatches a realtime cross-portal event (e.g. PROCTOR_REQUEST_SUBMITTED, QUERY_SUBMITTED)
+   */
+  emitEvent(event: any): void {
+    dispatchRealtimeEvent(event);
   }
 };

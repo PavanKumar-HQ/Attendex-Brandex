@@ -102,9 +102,7 @@ export default function StudentGatepassPage() {
   };
 
   const handleDownloadPDF = () => {
-    toast.loading("Compiling Verified Digital Outpass PDF...");
-
-    setTimeout(() => {
+    try {
       const doc = new jsPDF() as any;
       
       doc.setFontSize(18);
@@ -158,9 +156,10 @@ export default function StudentGatepassPage() {
       doc.text("Chief Warden / Security Officer (Signature)", 125, finalY + 22);
 
       doc.save(`Gatepass_${activePass.id}_${activePass.rollNumber}.pdf`);
-      toast.dismiss();
       toast.success("Digital Gatepass PDF Exported!");
-    }, 900);
+    } catch {
+      toast.error("Failed to generate Gatepass PDF.");
+    }
   };
 
   return (

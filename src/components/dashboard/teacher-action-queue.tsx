@@ -19,6 +19,13 @@ import {
 import { universalWorkflow, UniversalLeaveRequest, UniversalGatepassRequest } from "@/lib/workflow-engine";
 import { toast } from "sonner";
 import { cn, formatDateDDMMYYYY } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 interface ProctorQueueItem {
   id: string;
@@ -117,7 +124,7 @@ export function TeacherActionQueue() {
     const unsubscribe = universalWorkflow.subscribe((event) => {
       if (event.type === "LEAVE_SUBMITTED") {
         toast.info("New Leave Request Received", {
-          description: `${event.payload.studentName} (${event.payload.rollNumber}) applied for ${event.payload.leaveType.toLowerCase()} leave.`
+          description: `${event.payload.studentName} (${event.payload.rollNumber}) applied for ${event.payload.leaveType?.toLowerCase?.() || 'absence'} leave.`
         });
         loadData();
       } else if (event.type === "GATEPASS_SUBMITTED") {
@@ -125,7 +132,12 @@ export function TeacherActionQueue() {
           description: `${event.payload.studentName} requested gatepass to ${event.payload.destination}.`
         });
         loadData();
-      } else if (event.type === "LEAVE_DECIDED" || event.type === "GATEPASS_DECIDED" || event.type === "LEAVE_CANCELLED") {
+      } else if (event.type === "PROCTOR_REQUEST_SUBMITTED") {
+        toast.info("New Proctor Consultation Request", {
+          description: `${event.payload.studentName} (${event.payload.rollNumber}) booked slot for ${event.payload.topic}.`
+        });
+        loadData();
+      } else if (event.type === "LEAVE_DECIDED" || event.type === "GATEPASS_DECIDED" || event.type === "LEAVE_CANCELLED" || event.type === "PROCTOR_REQUEST_DECIDED") {
         loadData();
       }
     });
@@ -229,6 +241,14 @@ export function TeacherActionQueue() {
 
       const data = await res.json();
       if (data.success) {
+        universalWorkflow.emitEvent({
+          type: "PROCTOR_REQUEST_DECIDED",
+          requestId: activeSchedulingItem.id,
+          action: "SCHEDULED",
+          scheduledDate: scheduleDate,
+          scheduledTime: scheduleSlot,
+          notes: `Consultation slot confirmed for ${scheduleSlot} in CS Block Room 304.`
+        });
         toast.success(`Slot Confirmed: ${scheduleSlot}`, {
           description: `Meeting confirmed with ${activeSchedulingItem.studentName} on ${formatDateDDMMYYYY(scheduleDate)}.`
         });
@@ -258,6 +278,12 @@ export function TeacherActionQueue() {
       });
       const data = await res.json();
       if (data.success) {
+        universalWorkflow.emitEvent({
+          type: "PROCTOR_REQUEST_DECIDED",
+          requestId,
+          action: "COMPLETED",
+          notes: "Proctor consultation completed and logged in institutional audit registry."
+        });
         toast.success("Consultation Resolved & Logged", {
           description: "Meeting outcome archived in institutional audit registry."
         });
@@ -458,31 +484,32 @@ export function TeacherActionQueue() {
       </Card>
 
       {/* Proctor Slot Scheduling Modal with Collision Shield */}
-      {activeSchedulingItem && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 space-y-4 animate-in fade-in zoom-in duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div>
-                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-purple-600" />
-                  <span>Schedule Consultation Slot</span>
-                </h3>
-                <p className="text-xs text-slate-500 font-medium mt-0.5">
-                  Confirm meeting with {activeSchedulingItem.studentName} ({activeSchedulingItem.rollNumber})
-                </p>
-              </div>
-              <button 
-                onClick={() => setActiveSchedulingItem(null)}
-                className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+      <Dialog open={Boolean(activeSchedulingItem)} onOpenChange={(open) => !open && setActiveSchedulingItem(null)}>
+        {activeSchedulingItem && (
+          <DialogContent className="sm:max-w-lg p-6 rounded-2xl bg-white border border-slate-200 text-slate-900 shadow-2xl space-y-4">
+            <DialogHeader className="space-y-1 pb-3 border-b border-slate-100">
+              <DialogTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-purple-600" />
+                <span>Schedule Consultation Slot</span>
+              </DialogTitle>
+              <DialogDescription className="text-xs text-slate-500 font-medium">
+                Confirm meeting with <strong className="text-slate-900">{activeSchedulingItem.studentName}</strong> ({activeSchedulingItem.rollNumber})
+              </DialogDescription>
+            </DialogHeader>
 
-            <div className="space-y-3 text-xs">
-              <div className="p-3 bg-purple-50/60 rounded-xl border border-purple-100 text-purple-900">
-                <p className="font-bold">Topic: {activeSchedulingItem.topic}</p>
-                <p className="text-[11px] text-purple-700 mt-0.5">"{activeSchedulingItem.message}"</p>
+            <div className="space-y-3.5 text-xs">
+              <div className="p-3.5 bg-purple-50/80 rounded-xl border border-purple-200 text-purple-950 space-y-1">
+                <p className="font-bold flex items-center justify-between">
+                  <span>Topic: {activeSchedulingItem.topic}</span>
+                  <span className="font-mono text-[10px] text-purple-600 font-semibold">#{activeSchedulingItem.displayCode}</span>
+                </p>
+                <p className="text-xs text-purple-800 leading-relaxed font-medium">"{activeSchedulingItem.message}"</p>
+                {activeSchedulingItem.contactPhone && (
+                  <p className="text-[11px] text-purple-700 font-mono pt-1 border-t border-purple-200/60 flex items-center gap-1.5">
+                    <Phone className="w-3 h-3 text-purple-500" />
+                    <span>Callback Contact: <strong>{activeSchedulingItem.contactPhone}</strong></span>
+                  </p>
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -495,15 +522,15 @@ export function TeacherActionQueue() {
                     loadSlotsForDate(e.target.value, activeSchedulingItem.id);
                   }}
                   min={new Date().toISOString().split("T")[0]}
-                  className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white font-semibold text-slate-800"
+                  className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-600"
                 />
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="font-bold text-slate-700">Available Time Slots</label>
-                  <span className="text-[10px] font-semibold text-slate-500">
-                    {slotsLoading ? "Checking collision status..." : "Zero-Collision Engine Active"}
+                  <span className="text-[10px] font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                    {slotsLoading ? "Checking collision..." : "Zero-Collision Protected"}
                   </span>
                 </div>
 
@@ -517,7 +544,7 @@ export function TeacherActionQueue() {
                         disabled={s.isBlocked}
                         onClick={() => setScheduleSlot(s.slot)}
                         className={cn(
-                          "p-2.5 rounded-xl border text-left text-xs transition-all relative flex flex-col justify-between min-h-[56px]",
+                          "p-2.5 rounded-xl border text-left text-xs transition-all relative flex flex-col justify-between min-h-[58px]",
                           s.isBlocked
                             ? "bg-slate-100/90 border-slate-200 text-slate-400 cursor-not-allowed opacity-75"
                             : isSelected
@@ -557,7 +584,7 @@ export function TeacherActionQueue() {
               <Button
                 variant="outline"
                 onClick={() => setActiveSchedulingItem(null)}
-                className="h-9 px-4 rounded-xl text-xs font-semibold text-slate-600 border-slate-200"
+                className="h-9 px-4 rounded-xl text-xs font-semibold text-slate-700 border-slate-200 hover:bg-slate-50"
               >
                 Cancel
               </Button>
@@ -570,9 +597,9 @@ export function TeacherActionQueue() {
                 <span>{isSubmittingSchedule ? "Confirming..." : "Confirm & Reserve Slot"}</span>
               </Button>
             </div>
-          </div>
-        </div>
-      )}
+          </DialogContent>
+        )}
+      </Dialog>
     </>
   );
 }

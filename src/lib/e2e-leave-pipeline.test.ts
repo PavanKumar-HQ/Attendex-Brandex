@@ -1,7 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-
-const BASE_URL = "http://localhost:3001";
+import { NextRequest } from "next/server";
+import { POST as submitLeave } from "@/app/api/leave/submit/route";
+import { GET as getLeaves } from "@/app/api/leave/route";
+import { POST as decideLeave } from "@/app/api/leave/decide/route";
+import { POST as submitGatepass } from "@/app/api/gatepass/submit/route";
 
 test("E2E PIPELINE: Test 1 - Real Parent/Student Submission to Backend Engine", async () => {
   const payload = {
@@ -14,12 +17,13 @@ test("E2E PIPELINE: Test 1 - Real Parent/Student Submission to Backend Engine", 
     reason: "Severe fever and gastroenteritis requiring complete medical bed rest."
   };
 
-  const res = await fetch(`${BASE_URL}/api/leave/submit`, {
+  const req = new NextRequest("http://localhost:3000/api/leave/submit", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
 
+  const res = await submitLeave(req);
   assert.equal(res.status, 200, "API must return HTTP 200");
   const json = await res.json();
   assert.equal(json.success, true, "Response success must be true");
@@ -27,7 +31,7 @@ test("E2E PIPELINE: Test 1 - Real Parent/Student Submission to Backend Engine", 
   assert.ok(json.displayCode, "Display badge (e.g. LV-8091) must be present");
 
   // Verify record exists in authoritative server query
-  const queryRes = await fetch(`${BASE_URL}/api/leave`);
+  const queryRes = await getLeaves();
   const queryJson = await queryRes.json();
   const created = queryJson.data.find((l: any) => l.id === json.leaveId);
 
@@ -39,7 +43,7 @@ test("E2E PIPELINE: Test 1 - Real Parent/Student Submission to Backend Engine", 
 
 test("E2E PIPELINE: Test 2 - Teacher Retrieves Pending Requests from Backend Queue", async () => {
   const uniqueReason = `Clinical cardiology checkup - Ref #${Date.now()}`;
-  const submitRes = await fetch(`${BASE_URL}/api/leave/submit`, {
+  const req = new NextRequest("http://localhost:3000/api/leave/submit", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -52,11 +56,12 @@ test("E2E PIPELINE: Test 2 - Teacher Retrieves Pending Requests from Backend Que
       reason: uniqueReason
     })
   });
+  const submitRes = await submitLeave(req);
   const submitJson = await submitRes.json();
   const createdId = submitJson.leaveId;
 
   // Teacher queries the leave queue
-  const queryRes = await fetch(`${BASE_URL}/api/leave`);
+  const queryRes = await getLeaves();
   assert.equal(queryRes.status, 200);
   const queryJson = await queryRes.json();
   assert.equal(queryJson.success, true);
@@ -70,7 +75,7 @@ test("E2E PIPELINE: Test 2 - Teacher Retrieves Pending Requests from Backend Que
 
 test("E2E PIPELINE: Test 3 - Teacher Approves Request and State Updates to APPROVED", async () => {
   // 1. Submit leave
-  const submitRes = await fetch(`${BASE_URL}/api/leave/submit`, {
+  const submitReq = new NextRequest("http://localhost:3000/api/leave/submit", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -83,10 +88,11 @@ test("E2E PIPELINE: Test 3 - Teacher Approves Request and State Updates to APPRO
       reason: "Urgent family emergency in hometown with parental authorization."
     })
   });
+  const submitRes = await submitLeave(submitReq);
   const { leaveId } = await submitRes.json();
 
   // 2. Teacher approves
-  const decideRes = await fetch(`${BASE_URL}/api/leave/decide`, {
+  const decideReq = new NextRequest("http://localhost:3000/api/leave/decide", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -95,12 +101,13 @@ test("E2E PIPELINE: Test 3 - Teacher Approves Request and State Updates to APPRO
       reviewNotes: "Verified with parent over phone. Attendance condoned."
     })
   });
+  const decideRes = await decideLeave(decideReq);
   assert.equal(decideRes.status, 200);
   const decideJson = await decideRes.json();
   assert.equal(decideJson.success, true);
 
   // 3. Verify status in authoritative query
-  const verifyRes = await fetch(`${BASE_URL}/api/leave`);
+  const verifyRes = await getLeaves();
   const verifyJson = await verifyRes.json();
   const updated = verifyJson.data.find((l: any) => l.id === leaveId);
 
@@ -110,7 +117,7 @@ test("E2E PIPELINE: Test 3 - Teacher Approves Request and State Updates to APPRO
 });
 
 test("E2E PIPELINE: Test 4 - Teacher Rejection with Mandatory Explanation Note", async () => {
-  const submitRes = await fetch(`${BASE_URL}/api/leave/submit`, {
+  const submitReq = new NextRequest("http://localhost:3000/api/leave/submit", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -123,10 +130,11 @@ test("E2E PIPELINE: Test 4 - Teacher Rejection with Mandatory Explanation Note",
       reason: "Casual absence request for festival preparation."
     })
   });
+  const submitRes = await submitLeave(submitReq);
   const { leaveId } = await submitRes.json();
 
   // 1. Reject without note -> Must be rejected with HTTP 400
-  const invalidReject = await fetch(`${BASE_URL}/api/leave/decide`, {
+  const invalidRejectReq = new NextRequest("http://localhost:3000/api/leave/decide", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -135,10 +143,11 @@ test("E2E PIPELINE: Test 4 - Teacher Rejection with Mandatory Explanation Note",
       reviewNotes: ""
     })
   });
+  const invalidReject = await decideLeave(invalidRejectReq);
   assert.equal(invalidReject.status, 400, "Rejection without reason must fail with HTTP 400");
 
   // 2. Reject with valid note -> Must succeed
-  const validReject = await fetch(`${BASE_URL}/api/leave/decide`, {
+  const validRejectReq = new NextRequest("http://localhost:3000/api/leave/decide", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -147,10 +156,11 @@ test("E2E PIPELINE: Test 4 - Teacher Rejection with Mandatory Explanation Note",
       reviewNotes: "Attendance below 75% threshold. Casual leave not permitted during midterms."
     })
   });
+  const validReject = await decideLeave(validRejectReq);
   assert.equal(validReject.status, 200);
 
   // 3. Verify in authoritative query
-  const verifyRes = await fetch(`${BASE_URL}/api/leave`);
+  const verifyRes = await getLeaves();
   const verifyJson = await verifyRes.json();
   const rejected = verifyJson.data.find((l: any) => l.id === leaveId);
 
@@ -160,7 +170,7 @@ test("E2E PIPELINE: Test 4 - Teacher Rejection with Mandatory Explanation Note",
 });
 
 test("E2E PIPELINE: Test 5 - Validation & Error Boundaries (Invalid Date Order)", async () => {
-  const invalidRes = await fetch(`${BASE_URL}/api/leave/submit`, {
+  const invalidReq = new NextRequest("http://localhost:3000/api/leave/submit", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -173,6 +183,7 @@ test("E2E PIPELINE: Test 5 - Validation & Error Boundaries (Invalid Date Order)"
       reason: "Invalid date sequence."
     })
   });
+  const invalidRes = await submitLeave(invalidReq);
 
   assert.equal(invalidRes.status, 400);
   const json = await invalidRes.json();
@@ -180,7 +191,7 @@ test("E2E PIPELINE: Test 5 - Validation & Error Boundaries (Invalid Date Order)"
 });
 
 test("E2E PIPELINE: Test 6 - Gatepass Submission and Cryptographic QR Nonce Generation", async () => {
-  const res = await fetch(`${BASE_URL}/api/gatepass/submit`, {
+  const req = new NextRequest("http://localhost:3000/api/gatepass/submit", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -193,6 +204,7 @@ test("E2E PIPELINE: Test 6 - Gatepass Submission and Cryptographic QR Nonce Gene
       emergencyContact: "+91 98450 12345"
     })
   });
+  const res = await submitGatepass(req);
 
   assert.equal(res.status, 200);
   const json = await res.json();

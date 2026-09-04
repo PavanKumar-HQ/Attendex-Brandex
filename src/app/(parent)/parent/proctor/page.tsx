@@ -17,10 +17,23 @@ import {
   Send,
   AlertCircle,
   Lock,
-  Check
+  Check,
+  PhoneCall,
+  Copy,
+  ExternalLink,
+  PhoneForwarded,
+  ShieldCheck
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateDDMMYYYY, cn } from "@/lib/utils";
+import { universalWorkflow } from "@/lib/workflow-engine";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 interface SlotItem {
   slot: string;
@@ -60,14 +73,39 @@ export default function ParentProctorPage() {
   const [requests, setRequests] = useState<ProctorRequestItem[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Call Cabin Modal state
+  const [callModalOpen, setCallModalOpen] = useState(false);
+  const [copiedNumber, setCopiedNumber] = useState(false);
+
   const proctor = {
     name: "Dr. Pavan Kulkarni",
     designation: "Professor & Designated Proctor Advisor",
     department: "Department of Computer Science & Engineering",
     email: "pavan.kulkarni@attendex.edu",
     phone: "+91 98450 12345",
+    extension: "Ext. 304",
     cabin: "CS Block, Room 304 (3rd Floor)",
     hours: "Monday to Friday (3:30 PM – 5:00 PM)"
+  };
+
+  const handleCopyPhone = async () => {
+    try {
+      await navigator.clipboard.writeText(proctor.phone);
+      setCopiedNumber(true);
+      toast.success("Phone number copied to clipboard!", {
+        description: `${proctor.phone} (${proctor.name})`
+      });
+      setTimeout(() => setCopiedNumber(false), 2500);
+    } catch {
+      toast.info(`Phone: ${proctor.phone}`);
+    }
+  };
+
+  const handleInitiateCall = () => {
+    toast.info(`Opening dialer for ${proctor.name}`, {
+      description: `Calling ${proctor.phone} (${proctor.cabin})`
+    });
+    window.location.href = `tel:${proctor.phone.replace(/\s+/g, '')}`;
   };
 
   const loadSlots = async (date: string) => {
@@ -114,7 +152,21 @@ export default function ParentProctorPage() {
       loadSlots(selectedDate);
       loadRequests();
     }, 4000);
-    return () => clearInterval(interval);
+
+    const unsubscribe = universalWorkflow.subscribe((event) => {
+      if (event.type === "PROCTOR_REQUEST_DECIDED") {
+        toast.info("Proctor Advisory Schedule Confirmed", {
+          description: event.notes || `Your proctor consultation has been confirmed for ${event.scheduledTime || 'the selected date'}.`
+        });
+        loadSlots(selectedDate);
+        loadRequests();
+      }
+    });
+
+    return () => {
+      clearInterval(interval);
+      unsubscribe();
+    };
   }, [selectedDate]);
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -155,6 +207,10 @@ export default function ParentProctorPage() {
 
       const json = await res.json();
       if (json.success) {
+        universalWorkflow.emitEvent({
+          type: "PROCTOR_REQUEST_SUBMITTED",
+          payload: json.data
+        });
         toast.success("Consultation Reserved Successfully!", {
           description: `Reserved for ${formatDateDDMMYYYY(selectedDate)} at ${selectedSlot}.`
         });
@@ -199,14 +255,13 @@ export default function ParentProctorPage() {
             </div>
 
             <div className="flex items-center gap-2">
-              <a
-                href={`tel:${proctor.phone.replace(/\s+/g, '')}`}
-                onClick={() => toast.info(`Initiating direct call to ${proctor.name}'s cabin: ${proctor.phone}`)}
+              <Button
+                onClick={() => setCallModalOpen(true)}
                 className="h-10 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm flex items-center gap-1.5 transition-colors"
               >
                 <Phone className="w-3.5 h-3.5" />
                 <span>Call Cabin</span>
-              </a>
+              </Button>
               <a
                 href={`mailto:${proctor.email}?subject=Proctor Advisory Query - Rahul Deshmukh (21CS042)`}
                 onClick={() => toast.info(`Opening email client to contact ${proctor.email}`)}
@@ -469,14 +524,34 @@ export default function ParentProctorPage() {
                     <p className="font-bold text-slate-900 flex items-center gap-1.5">
                       <Mail className="w-3.5 h-3.5 text-slate-500" /> Official Email
                     </p>
-                    <p className="text-slate-600 font-mono text-[11px]">{proctor.email}</p>
+                    <a
+                      href={`mailto:${proctor.email}?subject=Proctor Query - Rahul Deshmukh (21CS042)`}
+                      className="text-blue-600 hover:underline font-mono text-[11px] block"
+                    >
+                      {proctor.email}
+                    </a>
                   </div>
 
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
-                    <p className="font-bold text-slate-900 flex items-center gap-1.5">
-                      <Phone className="w-3.5 h-3.5 text-slate-500" /> Emergency Hotline
-                    </p>
-                    <p className="text-slate-600 font-mono text-[11px]">{proctor.phone}</p>
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <p className="font-bold text-slate-900 flex items-center gap-1.5">
+                        <Phone className="w-3.5 h-3.5 text-slate-500" /> Emergency Hotline
+                      </p>
+                      <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                        Active Intercom
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-slate-900 font-bold font-mono text-xs">{proctor.phone}</p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setCallModalOpen(true)}
+                        className="h-7 px-2.5 text-[11px] font-semibold rounded-lg text-blue-600 border-blue-200 hover:bg-blue-50 flex items-center gap-1"
+                      >
+                        <PhoneCall className="w-3 h-3" /> Call
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </Card>
@@ -494,6 +569,99 @@ export default function ParentProctorPage() {
             </div>
           </div>
         </div>
+
+        {/* Proctor Call Dialog / Modal */}
+        <Dialog open={callModalOpen} onOpenChange={setCallModalOpen}>
+          <DialogContent className="sm:max-w-md p-6 rounded-2xl bg-white border border-slate-200 shadow-xl space-y-5">
+            <DialogHeader className="space-y-1.5">
+              <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-bold text-lg shadow-md mb-2">
+                <PhoneCall className="w-6 h-6 animate-pulse" />
+              </div>
+              <DialogTitle className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                <span>Faculty Proctor Direct Line</span>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200 flex items-center gap-1">
+                  <ShieldCheck className="w-3 h-3" /> Official Hotline
+                </span>
+              </DialogTitle>
+              <DialogDescription className="text-xs text-slate-500">
+                Direct phone and intercom channel for ward parent-faculty communication.
+              </DialogDescription>
+            </DialogHeader>
+
+            {/* Advisor Profile Summary */}
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900">{proctor.name}</h4>
+                  <p className="text-[11px] text-slate-500">{proctor.designation}</p>
+                </div>
+                <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded-md border border-blue-200">
+                  {proctor.extension}
+                </span>
+              </div>
+
+              <div className="pt-2 border-t border-slate-200/60 grid grid-cols-2 gap-2 text-[11px]">
+                <div>
+                  <span className="text-slate-400 block font-medium">Location</span>
+                  <span className="font-semibold text-slate-700">{proctor.cabin}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block font-medium">Direct Line</span>
+                  <span className="font-bold text-blue-600 font-mono text-xs">{proctor.phone}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Calling & Copy Actions */}
+            <div className="space-y-2.5 pt-1">
+              <Button
+                onClick={handleInitiateCall}
+                className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+              >
+                <PhoneCall className="w-4 h-4" />
+                <span>Dial Cabin Now ({proctor.phone})</span>
+              </Button>
+
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCopyPhone}
+                  className="h-10 rounded-xl border-slate-200 hover:bg-slate-50 text-slate-800 text-xs font-semibold flex items-center justify-center gap-1.5"
+                >
+                  {copiedNumber ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-600 font-bold" />
+                      <span className="text-emerald-600 font-bold">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Copy Number</span>
+                    </>
+                  )}
+                </Button>
+
+                <a
+                  href={`mailto:${proctor.email}?subject=Proctor Query - Rahul Deshmukh (21CS042)`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="h-10 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-800 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  <Mail className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Send Email</span>
+                </a>
+              </div>
+            </div>
+
+            <div className="p-3 bg-amber-50/60 rounded-xl border border-amber-200 text-[11px] text-amber-900 leading-relaxed flex items-start gap-2">
+              <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+              <span>
+                <strong>Operating Timings:</strong> {proctor.hours}. Calls outside these hours will be forwarded to the academic department desk.
+              </span>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </PageTransition>
   );
