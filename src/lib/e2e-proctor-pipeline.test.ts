@@ -6,10 +6,10 @@ import { POST as bookConsultation } from "@/app/api/proctor/book/route";
 import { POST as decideConsultation } from "@/app/api/proctor/decide/route";
 import { GET as getSlots } from "@/app/api/proctor/slots/route";
 
-test("PROCTOR PIPELINE: Test 1 - Parent / Student Books Proctor Consultation with Specific Slot", async () => {
-  const targetDate = "2026-10-15";
-  const targetTime = "03:30 PM – 04:00 PM";
+const targetDate = "2026-12-05";
+const targetTime = "03:30 PM – 04:00 PM";
 
+test("PROCTOR PIPELINE: Test 1 - Parent / Student Books Proctor Consultation with Specific Slot", async () => {
   const payload = {
     studentName: "Rahul Deshmukh",
     rollNumber: "21CS042",
@@ -38,7 +38,6 @@ test("PROCTOR PIPELINE: Test 1 - Parent / Student Books Proctor Consultation wit
 });
 
 test("PROCTOR PIPELINE: Test 2 - Slot Query Reflects Reserved and Available Slots", async () => {
-  const targetDate = "2026-10-15";
   const req = new NextRequest(`http://localhost:3000/api/proctor/slots?date=${targetDate}`);
   const res = await getSlots(req);
   const json = await res.json();
@@ -60,9 +59,6 @@ test("PROCTOR PIPELINE: Test 2 - Slot Query Reflects Reserved and Available Slot
 });
 
 test("PROCTOR PIPELINE: Test 3 - Collision Prevention Rejects Double-Booking Same Slot", async () => {
-  const targetDate = "2026-10-15";
-  const targetTime = "03:30 PM – 04:00 PM"; // Already booked in Test 1!
-
   const collidingPayload = {
     studentName: "Priya Patel",
     rollNumber: "21CS002",
@@ -92,7 +88,7 @@ test("PROCTOR PIPELINE: Test 3 - Collision Prevention Rejects Double-Booking Sam
 test("PROCTOR PIPELINE: Test 4 - Faculty Confirms and Resolves Consultation", async () => {
   const listRes = await getProctorRequests();
   const listJson = await listRes.json();
-  const pending = listJson.data.find((p: any) => p.status === "PENDING" && p.scheduledDate === "2026-10-15");
+  const pending = listJson.data.find((p: any) => p.status === "PENDING" && p.scheduledDate === targetDate);
   assert.ok(pending, "Must find pending consultation");
 
   // Faculty schedules open slot 10:00 AM
@@ -102,7 +98,7 @@ test("PROCTOR PIPELINE: Test 4 - Faculty Confirms and Resolves Consultation", as
     body: JSON.stringify({
       requestId: pending.id,
       action: "SCHEDULED",
-      scheduledDate: "2026-10-15",
+      scheduledDate: targetDate,
       scheduledTime: "10:00 AM – 10:30 AM",
       meetingNotes: "Slot confirmed in CS Block Room 304."
     })
