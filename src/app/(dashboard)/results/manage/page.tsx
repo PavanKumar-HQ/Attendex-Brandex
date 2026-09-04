@@ -17,40 +17,31 @@ import { calculateFinalMarks, calculateAttendanceMarks, calculateCIAMarks, calcu
 export default function MarksManagementPage() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [classes, setClasses] = useState<any[]>([
-    { id: "cls-1", name: "B.Tech Computer Science", section: "4A" },
-    { id: "cls-2", name: "B.Tech AI & Data Science", section: "3B" },
-    { id: "cls-3", name: "B.Tech Electronics", section: "4B" }
-  ]);
-  const [subjects, setSubjects] = useState<any[]>([
-    { id: "sub-1", name: "Distributed Systems (CS801)" },
-    { id: "sub-2", name: "Database Architecture (CS802)" }
-  ]);
-  const [selectedClass, setSelectedClass] = useState<string>("cls-1");
-  const [selectedSubject, setSelectedSubject] = useState<string>("sub-1");
+  const [classes, setClasses] = useState<any[]>([]);
+  const [subjects, setSubjects] = useState<any[]>([]);
+  const [selectedClass, setSelectedClass] = useState<string>("");
+  const [selectedSubject, setSelectedSubject] = useState<string>("");
   const [students, setStudents] = useState<any[]>([]);
   const [search, setSearch] = useState("");
 
-  const fetchClasses = async () => {
-    if (!isSupabaseConfigured) return;
+  const fetchClassesAndSubjects = async () => {
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const [classRes, subjectRes] = await Promise.all([
+        supabase.from('classes').select('*').order('name'),
+        supabase.from('subjects').select('*').order('name')
+      ]);
 
-      const { data: claimsData } = await supabase
-        .from('class_claims')
-        .select('*, classes(*), subjects(*)')
-        .eq('teacher_id', user.id);
-      
-      const teacherClasses = Array.from(new Set((claimsData || []).map(c => JSON.stringify(c.classes)))).map(s => JSON.parse(s)).filter(Boolean);
-      
-      if (teacherClasses.length > 0) {
-        setClasses(teacherClasses);
-        setSelectedClass(teacherClasses[0].id);
+      if (classRes.data && classRes.data.length > 0) {
+        setClasses(classRes.data);
+        setSelectedClass(classRes.data[0].id);
       }
-    } catch {
-      // keep mock
+      if (subjectRes.data && subjectRes.data.length > 0) {
+        setSubjects(subjectRes.data);
+        setSelectedSubject(subjectRes.data[0].id);
+      }
+    } catch (err) {
+      console.error("Error fetching classes/subjects:", err);
     } finally {
       setLoading(false);
     }
@@ -82,7 +73,7 @@ export default function MarksManagementPage() {
   };
 
   useEffect(() => {
-    fetchClasses();
+    fetchClassesAndSubjects();
   }, []);
 
   useEffect(() => {

@@ -122,12 +122,16 @@ function ensureDir(): void {
   }
 }
 
+let memoryCache: StateStore | null = null;
+
 function readStore(): StateStore {
+  if (memoryCache) return memoryCache;
   try {
     ensureDir();
     if (!existsSync(STORE_FILE)) {
       const initial: StateStore = { leaves: [], gatepasses: [], proctorRequests: INITIAL_PROCTOR_REQUESTS };
       writeFileSync(STORE_FILE, JSON.stringify(initial, null, 2), "utf8");
+      memoryCache = initial;
       return initial;
     }
     const content = readFileSync(STORE_FILE, "utf8");
@@ -136,13 +140,16 @@ function readStore(): StateStore {
       parsed.proctorRequests = INITIAL_PROCTOR_REQUESTS;
       writeFileSync(STORE_FILE, JSON.stringify(parsed, null, 2), "utf8");
     }
-    return parsed;
+    memoryCache = parsed;
+    return memoryCache;
   } catch {
-    return { leaves: [], gatepasses: [], proctorRequests: INITIAL_PROCTOR_REQUESTS };
+    memoryCache = { leaves: [], gatepasses: [], proctorRequests: INITIAL_PROCTOR_REQUESTS };
+    return memoryCache;
   }
 }
 
 function writeStore(state: StateStore): void {
+  memoryCache = state;
   try {
     ensureDir();
     writeFileSync(STORE_FILE, JSON.stringify(state, null, 2), "utf8");

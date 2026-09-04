@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Header } from "@/components/layout/header";
 import { PageTransition } from "@/components/ui/page-transition";
 import { Card } from "@/components/ui/card";
@@ -15,89 +15,143 @@ import {
   RotateCcw, 
   FileCheck2,
   Phone,
-  ShieldCheck
+  ShieldCheck,
+  AlertCircle,
+  Loader2
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { LeaveRequestModal } from "@/components/parent/leave-request-modal";
+import { supabase } from "@/lib/supabase";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-const WEEK_DAYS = [
-  { dayNum: 19, dayName: "Mon", status: "all-present" },
-  { dayNum: 20, dayName: "Tue", status: "all-present" },
-  { dayNum: 21, dayName: "Wed", status: "all-present" },
-  { dayNum: 22, dayName: "Thu", status: "has-absent" },
-  { dayNum: 23, dayName: "Fri", status: "all-present" },
-  { dayNum: 24, dayName: "Sat", status: "all-present" },
-  { dayNum: 25, dayName: "Sun", status: "holiday" },
-];
-
-const DAILY_LOGS = [
-  {
-    dayNum: 24,
-    day: "Saturday",
-    date: "Oct 24, 2026",
-    total: "1/1",
-    status: "Perfect",
-    classes: [
-      { name: "Industry Mentorship & Guest Lecture", time: "10:00 AM - 12:00 PM", status: "Present", code: "CS804" }
-    ]
-  },
-  {
-    dayNum: 23,
-    day: "Friday",
-    date: "Oct 23, 2026",
-    total: "2/2",
-    status: "Perfect",
-    classes: [
-      { name: "Applied Cryptography & Web3", time: "09:00 AM - 10:30 AM", status: "Present", code: "CS803" },
-      { name: "Department Colloquium Seminar", time: "02:00 PM - 03:30 PM", status: "Present", code: "CS805" }
-    ]
-  },
-  {
-    dayNum: 22,
-    day: "Thursday",
-    date: "Oct 22, 2026",
-    total: "1/2",
-    status: "Missed 1 Class",
-    classes: [
-      { name: "Algorithms & Computational Complexity", time: "10:00 AM - 11:30 AM", status: "Absent", code: "CS802" },
-      { name: "Engineering Capstone Practicum", time: "02:00 PM - 04:00 PM", status: "Present", code: "PR801" }
-    ]
-  },
-  {
-    dayNum: 21,
-    day: "Wednesday",
-    date: "Oct 21, 2026",
-    total: "2/2",
-    status: "Perfect",
-    classes: [
-      { name: "Distributed Systems & Cloud Computing", time: "09:00 AM - 10:30 AM", status: "Present", code: "CS801" },
-      { name: "VLSI Design & Architecture Lab", time: "11:00 AM - 12:30 PM", status: "Present", code: "EC801" }
-    ]
-  },
-  {
-    dayNum: 20,
-    day: "Tuesday",
-    date: "Oct 20, 2026",
-    total: "2/2",
-    status: "Perfect",
-    classes: [
-      { name: "Artificial Intelligence & Robotics", time: "09:00 AM - 10:30 AM", status: "Present", code: "AI601" },
-      { name: "Deep Learning & Neural Nets Lab", time: "11:00 AM - 01:00 PM", status: "Present", code: "AI602" }
-    ]
-  }
-];
+interface LectureLog {
+  date: string;
+  day: string;
+  dayNum: number;
+  total: string;
+  status: string;
+  classes: {
+    name: string;
+    time: string;
+    status: string;
+    code: string;
+  }[];
+}
 
 export default function ParentHistoryPage() {
   const [selectedDayNum, setSelectedDayNum] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [logs, setLogs] = useState<LectureLog[]>([]);
+  const [studentInfo, setStudentInfo] = useState({
+    name: "Rahul Deshmukh",
+    rollNumber: "21CS042",
+    attendancePercentage: 91.4
+  });
+
+  useEffect(() => {
+    async function loadAttendanceHistory() {
+      try {
+        setLoading(true);
+        // Find ward student
+        const { data: { user } } = await supabase.auth.getUser();
+        let studentId = "";
+        if (user) {
+          const { data: st } = await supabase
+            .from('students')
+            .select('id, name, roll_number, attendance_percentage')
+            .single();
+          if (st) {
+            studentId = st.id;
+            setStudentInfo({
+              name: st.name || "Rahul Deshmukh",
+              rollNumber: st.roll_number || "21CS042",
+              attendancePercentage: Number(st.attendance_percentage || 91.4)
+            });
+          }
+        }
+
+        // Fetch recent attendance records
+        const { data: attRecords, error } = await supabase
+          .from('attendance_records')
+          .select('*, attendance_sessions(session_date, start_time, end_time, subject_id, subjects(name, code))')
+          .order('created_at', { ascending: false })
+          .limit(30);
+
+        if (!error && attRecords && attRecords.length > 0) {
+          // Group by date
+          const groups: { [dateStr: string]: any[] } = {};
+          attRecords.forEach((rec: any) => {
+            const dateStr = rec.attendance_sessions?.session_date || new Date().toISOString().split('T')[0];
+            if (!groups[dateStr]) groups[dateStr] = [];
+            groups[dateStr].push(rec);
+          });
+
+          const formatted: LectureLog[] = Object.entries(groups).map(([dateStr, items]) => {
+            const d = new Date(dateStr);
+            const presents = items.filter(i => i.status === 'PRESENT').length;
+            return {
+              date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+              day: d.toLocaleDateString('en-US', { weekday: 'long' }),
+              dayNum: d.getDate(),
+              total: `${presents}/${items.length}`,
+              status: presents === items.length ? "Perfect" : `Missed ${items.length - presents} Class`,
+              classes: items.map(i => ({
+                name: i.attendance_sessions?.subjects?.name || "Subject Lecture",
+                time: i.attendance_sessions?.start_time || "09:00 AM - 10:30 AM",
+                status: i.status === 'PRESENT' ? 'Present' : 'Absent',
+                code: i.attendance_sessions?.subjects?.code || "CS801"
+              }))
+            };
+          });
+
+          setLogs(formatted);
+        } else {
+          setLogs([]);
+        }
+      } catch (err) {
+        console.error("Error loading parent attendance history:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadAttendanceHistory();
+  }, []);
 
   const filteredLogs = useMemo(() => {
-    if (selectedDayNum === null) return DAILY_LOGS;
-    return DAILY_LOGS.filter(l => l.dayNum === selectedDayNum);
-  }, [selectedDayNum]);
+    if (selectedDayNum === null) return logs;
+    return logs.filter(l => l.dayNum === selectedDayNum);
+  }, [selectedDayNum, logs]);
+
+  const weekDays = useMemo(() => {
+    const days = [];
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() + mondayOffset);
+
+    const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    for (let i = 0; i < 7; i++) {
+      const cur = new Date(monday);
+      cur.setDate(monday.getDate() + i);
+      const dNum = cur.getDate();
+      const logForDay = logs.find(l => l.dayNum === dNum);
+      let status = "all-present";
+      if (i === 6) status = "holiday";
+      else if (logForDay && logForDay.status.includes("Missed")) status = "has-absent";
+
+      days.push({
+        dayNum: dNum,
+        dayName: dayNames[i],
+        status
+      });
+    }
+    return days;
+  }, [logs]);
 
   const handleDownloadPDF = () => {
     toast.loading("Generating Guardian Attendance Statement...");
@@ -195,7 +249,7 @@ export default function ParentHistoryPage() {
             </div>
 
             <div className="grid grid-cols-7 gap-2">
-              {WEEK_DAYS.map((day) => {
+              {weekDays.map((day) => {
                 const isSelected = selectedDayNum === day.dayNum;
                 return (
                   <button 
@@ -238,57 +292,72 @@ export default function ParentHistoryPage() {
 
           {/* Daily Logs Breakdown */}
           <div className="space-y-6">
-            {filteredLogs.map((log) => (
-              <div key={log.date} className="space-y-3">
-                <div className="flex items-center justify-between pb-1 border-b border-slate-200">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold text-slate-900">{log.day}</h3>
-                    <span className="text-xs text-slate-500 font-medium">&bull; {log.date}</span>
+            {loading ? (
+              <div className="py-16 flex flex-col items-center justify-center text-slate-400 gap-2">
+                <Loader2 className="w-6 h-6 animate-spin text-slate-500" />
+                <span className="text-xs font-medium">Fetching lecture telemetry logs from database...</span>
+              </div>
+            ) : filteredLogs.length === 0 ? (
+              <Card className="p-12 text-center border-dashed border-slate-300 bg-white rounded-2xl space-y-2">
+                <AlertCircle className="w-8 h-8 text-slate-400 mx-auto" />
+                <h4 className="text-sm font-bold text-slate-800">No Attendance Records Logged</h4>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                  There are no attendance session logs recorded in the database for this date range yet.
+                </p>
+              </Card>
+            ) : (
+              filteredLogs.map((log) => (
+                <div key={log.date} className="space-y-3">
+                  <div className="flex items-center justify-between pb-1 border-b border-slate-200">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-bold text-slate-900">{log.day}</h3>
+                      <span className="text-xs text-slate-500 font-medium">&bull; {log.date}</span>
+                    </div>
+                    <span className={cn(
+                      "px-2.5 py-0.5 rounded-md text-[10px] font-bold border",
+                      log.status === "Perfect"
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                        : "bg-amber-50 text-amber-700 border-amber-200"
+                    )}>
+                      {log.total} Sessions Attended
+                    </span>
                   </div>
-                  <span className={cn(
-                    "px-2.5 py-0.5 rounded-md text-[10px] font-bold border",
-                    log.status === "Perfect"
-                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                      : "bg-amber-50 text-amber-700 border-amber-200"
-                  )}>
-                    {log.total} Sessions Attended
-                  </span>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {log.classes.map((cls, j) => (
-                    <Card key={j} className="p-4 rounded-xl border border-slate-200 bg-white shadow-sm hover:border-blue-200 transition-all flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <div className={cn(
-                          "w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border",
-                          cls.status === 'Present' 
-                            ? "bg-emerald-50 text-emerald-600 border-emerald-200" 
-                            : "bg-rose-50 text-rose-600 border-rose-200"
-                        )}>
-                          {cls.status === 'Present' ? <CheckCircle2 className="w-4 h-4" /> : <XSquare className="w-4 h-4" />}
-                        </div>
-                        <div className="space-y-0.5">
-                          <h4 className="text-xs font-bold text-slate-900 tracking-tight">{cls.name}</h4>
-                          <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
-                            <Clock className="w-3 h-3 text-slate-400" />
-                            {cls.time}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {log.classes.map((cls, j) => (
+                      <Card key={j} className="p-4 rounded-xl border border-slate-200 bg-white shadow-sm hover:border-blue-200 transition-all flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className={cn(
+                            "w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border",
+                            cls.status === 'Present' 
+                              ? "bg-emerald-50 text-emerald-600 border-emerald-200" 
+                              : "bg-rose-50 text-rose-600 border-rose-200"
+                          )}>
+                            {cls.status === 'Present' ? <CheckCircle2 className="w-4 h-4" /> : <XSquare className="w-4 h-4" />}
+                          </div>
+                          <div className="space-y-0.5">
+                            <h4 className="text-xs font-bold text-slate-900 tracking-tight">{cls.name}</h4>
+                            <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
+                              <Clock className="w-3 h-3 text-slate-400" />
+                              {cls.time}
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      <span className={cn(
-                        "px-2 py-0.5 rounded text-[10px] font-bold border shrink-0",
-                        cls.status === 'Present' 
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-200" 
-                          : "bg-rose-50 text-rose-700 border-rose-200"
-                      )}>
-                        {cls.status}
-                      </span>
-                    </Card>
-                  ))}
+                        <span className={cn(
+                          "px-2 py-0.5 rounded text-[10px] font-bold border shrink-0",
+                          cls.status === 'Present' 
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200" 
+                            : "bg-rose-50 text-rose-700 border-rose-200"
+                        )}>
+                          {cls.status}
+                        </span>
+                      </Card>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
 
           {/* Quick Advisor Callback Card */}

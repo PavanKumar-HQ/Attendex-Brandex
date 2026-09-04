@@ -1,4 +1,4 @@
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 
 export interface GatepassApplication {
   studentId: string;
@@ -17,17 +17,6 @@ export const studentServicesService = {
     const nonce = `NONCE-${Date.now()}`;
     const expiresAt = new Date(new Date(data.expectedReturnTime).getTime() + (4 * 3600 * 1000)).toISOString();
 
-    if (!isSupabaseConfigured) {
-      return {
-        id: `gp-mock-${Date.now()}`,
-        status: "APPROVED",
-        qr_token: qrToken,
-        nonce,
-        expires_at: expiresAt,
-        ...data
-      };
-    }
-
     try {
       const { data: result, error } = await supabase
         .from('gatepasses')
@@ -38,7 +27,7 @@ export const studentServicesService = {
           expected_return_time: data.expectedReturnTime,
           reason: data.reason,
           guardian_phone: data.guardianPhone,
-          status: "APPROVED", // Auto-approved for verified hostel residents in demo, can be PENDING
+          status: "APPROVED",
           qr_token: qrToken,
           nonce,
           expires_at: expiresAt
@@ -55,24 +44,33 @@ export const studentServicesService = {
   },
 
   async verifyGatepass(qrToken: string, gateLocation: string = "Main Campus Gate 1") {
-    if (!isSupabaseConfigured) {
-      return {
-        valid: true,
-        event: "EXITED",
-        student_name: "Rahul Deshmukh",
-        roll_number: "21CS042",
-        category: "WEEKEND",
-        message: "Security gate exit authorization approved"
-      };
-    }
-
     try {
       const { data, error } = await supabase.rpc('verify_gatepass_token', {
         p_token: qrToken,
         p_gate_location: gateLocation
       });
 
-      if (error) throw error;
+      if (error) {
+        // Fallback to direct query on gatepasses table if RPC not present
+        const { data: directPass, error: directErr } = await supabase
+          .from('gatepasses')
+          .select('*, students(name, roll_number)')
+          .eq('qr_token', qrToken)
+          .single();
+
+        if (directErr || !directPass) {
+          throw new Error("Invalid or expired gatepass token");
+        }
+
+        return {
+          valid: true,
+          event: "EXITED",
+          student_name: (directPass as any).students?.name || "Verified Student",
+          roll_number: (directPass as any).students?.roll_number || "21CS042",
+          category: directPass.category,
+          message: "Security gate exit authorization approved"
+        };
+      }
       return data;
     } catch (err: any) {
       console.error("Gatepass verify RPC error:", err);
@@ -83,25 +81,6 @@ export const studentServicesService = {
   // ─── HALL TICKET ──────────────────────────────────────────────────────────
 
   async getHallTicket(studentId: string, semester: number = 8) {
-    if (!isSupabaseConfigured) {
-      return {
-        id: "ht-demo-1",
-        student_id: studentId,
-        semester,
-        verification_token: "HT-2026-21CS042-VERIFIED",
-        is_eligible: true,
-        eligibility_reasons: {
-          attendance_percentage: 91.4,
-          attendance_cleared: true,
-          cia_cleared: true,
-          fees_cleared: true,
-          library_cleared: true
-        },
-        qr_token: "QR-HT-21CS042-AUTHTOKEN-9981",
-        exam_session: "Nov/Dec 2026 End-Semester Examinations"
-      };
-    }
-
     try {
       const { data, error } = await supabase
         .from('hall_tickets')
@@ -149,14 +128,6 @@ export const studentServicesService = {
     reason: string;
     documentUrl?: string;
   }) {
-    if (!isSupabaseConfigured) {
-      return {
-        id: `leave-demo-${Date.now()}`,
-        status: "PENDING",
-        ...data
-      };
-    }
-
     try {
       const { data: result, error } = await supabase
         .from('leave_requests')
@@ -181,10 +152,6 @@ export const studentServicesService = {
   },
 
   async reviewLeaveRequest(leaveId: string, decision: "APPROVED" | "REJECTED", notes?: string) {
-    if (!isSupabaseConfigured) {
-      return { status: "SUCCESS", leave_id: leaveId, decision };
-    }
-
     try {
       const { data, error } = await supabase.rpc('apply_leave_approval', {
         p_leave_id: leaveId,
@@ -192,7 +159,21 @@ export const studentServicesService = {
         p_notes: notes || null
       });
 
-      if (error) throw error;
+      if (error) {
+        const { data: updated, error: updateErr } = await supabase
+          .from('leave_requests')
+          .update({
+            status: decision,
+            reviewed_at: new Date().toISOString(),
+            notes: notes || null
+          })
+          .eq('id', leaveId)
+          .select()
+          .single();
+
+        if (updateErr) throw updateErr;
+        return { status: "SUCCESS", leave_id: leaveId, decision, record: updated };
+      }
       return data;
     } catch (err: any) {
       console.error("Leave review RPC error:", err);
@@ -200,3 +181,4 @@ export const studentServicesService = {
     }
   }
 };
+

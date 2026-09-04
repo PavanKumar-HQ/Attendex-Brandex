@@ -21,6 +21,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const existing = serverState.getLeaves().find(l => l.id === validated.leaveId);
+    if (!existing) {
+      return NextResponse.json(
+        { success: false, message: "Leave request not found." },
+        { status: 404 }
+      );
+    }
+
     const reviewerId = "00000000-0000-0000-0000-000000000003"; // Prof. Rajesh Verma
 
     // 1. Update in-memory server state

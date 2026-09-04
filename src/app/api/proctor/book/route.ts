@@ -15,6 +15,8 @@ const bookConsultationSchema = z.object({
   message: z.string().min(5, "Message must be at least 5 characters"),
   preferredDate: z.string().optional(),
   preferredTime: z.string().optional(),
+  scheduledDate: z.string().optional(),
+  scheduledTime: z.string().optional(),
   contactPhone: z.string().optional().default("+91 98450 12345"),
 });
 
@@ -23,8 +25,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const validated = bookConsultationSchema.parse(body);
 
-    const targetDate = validated.preferredDate || new Date(Date.now() + 86400000).toISOString().split("T")[0];
-    const targetTime = validated.preferredTime || "03:30 PM – 04:00 PM";
+    const targetDate = validated.scheduledDate || validated.preferredDate || new Date(Date.now() + 86400000).toISOString().split("T")[0];
+    const targetTime = validated.scheduledTime || validated.preferredTime || "03:30 PM – 04:00 PM";
 
     // Check collision if explicit slot selected
     const { collides, conflictingMeeting } = checkSlotCollision(targetDate, targetTime);

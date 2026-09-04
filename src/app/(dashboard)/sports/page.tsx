@@ -24,16 +24,8 @@ interface EventEntry {
 export default function SportsEntryPage() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [entries, setEntries] = useState<EventEntry[]>([
-    { category: "100m Sprint", class_id: "cls-1", position: "1st", points: 5 },
-    { category: "Relay Race", class_id: "cls-2", position: "2nd", points: 3 },
-    { category: "Cricket", class_id: "cls-3", position: "1st", points: 5 }
-  ]);
-  const [classes, setClasses] = useState<any[]>([
-    { id: "cls-1", name: "B.Tech Computer Science 4A" },
-    { id: "cls-2", name: "B.Tech AI & Data Science 3B" },
-    { id: "cls-3", name: "B.Tech Electronics 4B" }
-  ]);
+  const [entries, setEntries] = useState<EventEntry[]>([]);
+  const [classes, setClasses] = useState<any[]>([]);
   const [categories, setCategories] = useState([
     "100m Sprint", "200m Sprint", "Relay Race", "Tug of War", 
     "Long Jump", "High Jump", "Cricket", "Football", "Volleyball", "Chess"
@@ -41,13 +33,14 @@ export default function SportsEntryPage() {
   const [newCategory, setNewCategory] = useState("");
 
   const fetchInitialData = async () => {
-    if (!isSupabaseConfigured) return;
     try {
       setLoading(true);
-      const { data: classData } = await supabase.from('classes').select('*');
-      if (classData && classData.length > 0) setClasses(classData);
-    } catch {
-      // keep mock
+      const { data: classData, error } = await supabase.from('classes').select('id, name, section').order('name');
+      if (!error && classData && classData.length > 0) {
+        setClasses(classData);
+      }
+    } catch (err) {
+      console.error("Error loading sports classes:", err);
     } finally {
       setLoading(false);
     }

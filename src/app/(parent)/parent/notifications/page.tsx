@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { PageTransition } from "@/components/ui/page-transition";
 import { Card } from "@/components/ui/card";
 import {
@@ -10,7 +11,8 @@ import {
     Receipt,
     ChevronRight,
     ShieldCheck,
-    CheckCircle2
+    CheckCircle2,
+    Loader2
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -18,55 +20,78 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { LeaveRequestModal } from "@/components/parent/leave-request-modal";
 import { FeeLedgerModal } from "@/components/parent/fee-ledger-modal";
+import { supabase } from "@/lib/supabase";
 
-const notifications = [
-    {
-        id: 1,
-        type: "Attendance Shortage",
-        title: "Attendance Warning Notice",
-        desc: "Rahul's attendance in Distributed Systems has dropped to 72.4%. Minimum 75% required for exam hall ticket clearance.",
-        time: "2 hours ago",
-        icon: AlertCircle,
-        color: "bg-rose-50 border-rose-200 text-rose-600",
-        isNew: true,
-        action: "leave"
-    },
-    {
-        id: 2,
-        type: "Finance & Accounts",
-        title: "Semester Fee Clearance Receipt",
-        desc: "End-Semester examination registration fee of ₹2,400 has been verified. Official receipt generated.",
-        time: "1 day ago",
-        icon: Receipt,
-        color: "bg-emerald-50 border-emerald-200 text-emerald-600",
-        isNew: false,
-        action: "fee"
-    },
-    {
-        id: 3,
-        type: "Advisor Consultation",
-        title: "Parent-Faculty Advisory Session (PTM)",
-        desc: "Quarterly proctor consultation scheduled for Saturday at 10:30 AM in Computer Science Block.",
-        time: "3 days ago",
-        icon: Calendar,
-        color: "bg-blue-50 border-blue-200 text-blue-600",
-        isNew: false,
-        action: null
-    },
-    {
-        id: 4,
-        type: "System Verification",
-        title: "Institutional Registration Verified",
-        desc: "University registration & CIA assessment records for Rahul Deshmukh have been validated by Registrar Office.",
-        time: "1 week ago",
-        icon: ShieldCheck,
-        color: "bg-slate-50 border-slate-200 text-slate-700",
-        isNew: false,
-        action: null
-    },
-];
+interface NotificationItem {
+  id: string | number;
+  type: string;
+  title: string;
+  desc: string;
+  time: string;
+  isNew: boolean;
+  action?: "leave" | "fee" | null;
+}
 
 export default function ParentNotificationsPage() {
+    const [loading, setLoading] = useState(true);
+    const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+
+    const fetchNotifications = async () => {
+      try {
+        setLoading(true);
+        const { data: { user } } = await supabase.auth.getUser();
+        let query = supabase
+          .from('notifications')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(20);
+
+        if (user) {
+          query = query.or(`user_id.eq.${user.id},role.eq.PARENT`);
+        }
+
+        const { data, error } = await query;
+        if (!error && data && data.length > 0) {
+          const mapped: NotificationItem[] = data.map((n: any) => ({
+            id: n.id,
+            type: n.category || "Institutional Notice",
+            title: n.title,
+            desc: n.message,
+            time: n.created_at ? new Date(n.created_at).toLocaleDateString() : "Recent",
+            isNew: !n.is_read,
+            action: n.action_type === 'leave' ? 'leave' : n.action_type === 'fee' ? 'fee' : null
+          }));
+          setNotifications(mapped);
+        } else {
+          setNotifications([]);
+        }
+      } catch (err) {
+        console.error("Error loading parent notifications:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    useEffect(() => {
+      fetchNotifications();
+    }, []);
+
+    const markAllAsRead = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase
+            .from('notifications')
+            .update({ is_read: true })
+            .eq('user_id', user.id);
+        }
+        setNotifications(prev => prev.map(n => ({ ...n, isNew: false })));
+        toast.success("All alerts marked as acknowledged");
+      } catch {
+        toast.error("Failed to update notifications");
+      }
+    };
+
     return (
         <PageTransition>
             <div className="flex flex-col min-h-full pb-20 pt-8 max-w-4xl mx-auto space-y-8 px-4 md:px-0">
@@ -83,14 +108,28 @@ export default function ParentNotificationsPage() {
                     </div>
                     <Button 
                       variant="ghost" 
-                      onClick={() => toast.success("All alerts marked as acknowledged")}
+                      onClick={markAllAsRead}
                       className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50 h-8 rounded-lg"
                     >
                         Mark all as read
                     </Button>
                 </header>
 
-                <div className="space-y-3">
+                {loading ? (
+                  <div className="py-16 flex flex-col items-center justify-center text-slate-400 gap-2">
+                    <Loader2 className="w-6 h-6 animate-spin text-slate-500" />
+                    <span className="text-xs font-medium">Loading notifications from database...</span>
+                  </div>
+                ) : notifications.length === 0 ? (
+                  <Card className="p-12 text-center border-dashed border-slate-300 bg-white rounded-2xl space-y-2">
+                    <AlertCircle className="w-8 h-8 text-slate-400 mx-auto" />
+                    <h4 className="text-sm font-bold text-slate-800">No Notifications</h4>
+                    <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                      There are no institutional alerts or circulars for your ward at this time.
+                    </p>
+                  </Card>
+                ) : (
+                  <div className="space-y-3">
                     {notifications.map((note, i) => (
                         <motion.div
                             key={note.id}
@@ -103,11 +142,8 @@ export default function ParentNotificationsPage() {
                                 note.isNew ? "bg-blue-50/20 ring-1 ring-blue-500/20" : ""
                             )}>
                                 <div className="flex items-start gap-4">
-                                    <div className={cn(
-                                        "w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border",
-                                        note.color
-                                    )}>
-                                        <note.icon className="w-5 h-5" />
+                                    <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border bg-blue-50 border-blue-200 text-blue-600">
+                                        <Bell className="w-5 h-5" />
                                     </div>
 
                                     <div className="flex-1 space-y-1.5 pr-2">
@@ -149,7 +185,8 @@ export default function ParentNotificationsPage() {
                             </Card>
                         </motion.div>
                     ))}
-                </div>
+                  </div>
+                )}
 
                 {/* Messaging Bottom CTA */}
                 <div className="p-8 rounded-2xl bg-slate-900 text-white relative overflow-hidden group">
@@ -173,4 +210,5 @@ export default function ParentNotificationsPage() {
         </PageTransition>
     );
 }
+
 

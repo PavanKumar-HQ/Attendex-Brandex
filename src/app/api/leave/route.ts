@@ -22,23 +22,26 @@ export async function GET() {
     }
 
     if (dbLeaves.length > 0) {
-      const mapped = dbLeaves.map((l: any) => ({
-        id: l.id,
-        displayCode: l.display_code || `LV-${l.id.slice(0, 4).toUpperCase()}`,
-        studentId: l.student_id,
-        studentName: l.student_name || "Student",
-        rollNumber: l.roll_number || "—",
-        className: l.class_name || "B.Tech CSE - 4A",
-        leaveType: l.leave_type || "MEDICAL",
-        startDate: l.start_date,
-        endDate: l.end_date,
-        reason: l.reason,
-        status: l.status || "PENDING",
-        reviewedBy: l.reviewed_by || undefined,
-        reviewNotes: l.review_notes || undefined,
-        reviewedAt: l.reviewed_at || undefined,
-        createdAt: l.created_at || new Date().toISOString()
-      }));
+      const mapped = dbLeaves.map((l: any) => {
+        const fileMatch = fileLeaves.find(f => f.id === l.id);
+        return {
+          id: l.id,
+          displayCode: l.display_code || fileMatch?.displayCode || `LV-${l.id.slice(0, 4).toUpperCase()}`,
+          studentId: l.student_id,
+          studentName: l.student_name || fileMatch?.studentName || "Student",
+          rollNumber: l.roll_number || fileMatch?.rollNumber || "—",
+          className: l.class_name || fileMatch?.className || "B.Tech CSE - 4A",
+          leaveType: l.leave_type || fileMatch?.leaveType || "MEDICAL",
+          startDate: l.start_date || fileMatch?.startDate,
+          endDate: l.end_date || fileMatch?.endDate,
+          reason: l.reason || fileMatch?.reason,
+          status: fileMatch?.status || l.status || "PENDING",
+          reviewedBy: fileMatch?.reviewedBy || l.reviewed_by || undefined,
+          reviewNotes: fileMatch?.reviewNotes || l.review_notes || undefined,
+          reviewedAt: fileMatch?.reviewedAt || l.reviewed_at || undefined,
+          createdAt: l.created_at || fileMatch?.createdAt || new Date().toISOString()
+        };
+      });
 
       // Merge: DB records take precedence, file state fills in any not yet persisted
       const combined = [...mapped, ...fileLeaves.filter(f => !mapped.some(m => m.id === f.id))];
