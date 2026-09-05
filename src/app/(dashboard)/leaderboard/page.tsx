@@ -48,24 +48,28 @@ export default function LeaderboardPage() {
       const { data, error } = await supabase
         .from('students')
         .select(`
+          id,
           name,
           roll_number,
+          cgpa,
+          attendance_percentage,
           class:classes(name, section)
         `)
-        .limit(20);
+        .order('cgpa', { ascending: false })
+        .limit(25);
 
       if (error || !data || data.length === 0) {
         setEntries(DEFAULT_LEADERBOARD);
       } else {
-        const mockEntries: LeaderboardEntry[] = data.map((s: any, i: number) => ({
+        const liveEntries: LeaderboardEntry[] = data.map((s: any, i: number) => ({
           rank: i + 1,
           student_name: s.name,
           section_name: `${s.class?.name || 'Class'} ${s.class?.section || 'A'}`,
-          total_marks: Number((20 - (i * 0.4)).toFixed(1)),
-          points: 980 - (i * 25),
+          total_marks: Number((s.cgpa * 2).toFixed(1)),
+          points: Math.round((s.cgpa || 9.0) * 100),
           roll_number: s.roll_number
         }));
-        setEntries(mockEntries);
+        setEntries(liveEntries);
       }
     } catch {
       setEntries(DEFAULT_LEADERBOARD);
