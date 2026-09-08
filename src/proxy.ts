@@ -3,7 +3,6 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getCSPHeader } from "@/lib/middleware-utils";
 
 export async function proxy(request: NextRequest) {
-
   let supabaseResponse = NextResponse.next({
     request,
   });
@@ -38,7 +37,7 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  // 1. Refresh session (CRITICAL)
+  // 1. Refresh session
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -48,6 +47,7 @@ export async function proxy(request: NextRequest) {
   supabaseResponse.headers.set("X-Frame-Options", "DENY");
   supabaseResponse.headers.set("X-Content-Type-Options", "nosniff");
   supabaseResponse.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  supabaseResponse.headers.set("Permissions-Policy", "camera=(self), microphone=(), geolocation=()");
 
   // 3. Auth Guard & Routing
   const { pathname } = request.nextUrl;
@@ -62,10 +62,11 @@ export async function proxy(request: NextRequest) {
   if (!isApiRoute && !isAuthenticated && !isAuthPage && !isPublicPage) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    // Preserve the intended destination so login can redirect back
     url.searchParams.set("next", pathname);
     return NextResponse.redirect(url);
   }
+
+  const effectiveRole = (user ? (user.user_metadata?.role || "TEACHER") : (demoSession || "TEACHER")).toUpperCase();
 
   if (isAuthenticated && isAuthPage) {
     const url = request.nextUrl.clone();
@@ -77,8 +78,6 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    const effectiveRole = (user ? (user.user_metadata?.role || "TEACHER") : (demoSession || "TEACHER")).toUpperCase();
-
     if (effectiveRole === "SUPER_ADMIN" || effectiveRole === "SUPERADMIN") url.pathname = "/super-admin";
     else if (effectiveRole === "PRINCIPAL") url.pathname = "/principal";
     else if (effectiveRole === "STUDENT") url.pathname = "/student/dashboard";
@@ -89,20 +88,65 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // 4. Strict Multi-Tenant Role-Based Access Boundaries (Prevent Profile Interception)
+  if (isAuthenticated && !isPublicPage && !isApiRoute) {
+    if (effectiveRole === "STUDENT") {
+      if (
+        pathname.startsWith("/parent") ||
+        pathname.startsWith("/principal") ||
+        pathname.startsWith("/super-admin") ||
+        pathname.startsWith("/attendance") ||
+        pathname.startsWith("/results/manage") ||
+        pathname.startsWith("/subjects") ||
+        pathname === "/dashboard"
+      ) {
+        const studentUrl = request.nextUrl.clone();
+        studentUrl.pathname = "/student/dashboard";
+        return NextResponse.redirect(studentUrl);
+      }
+    } else if (effectiveRole === "PARENT") {
+      if (
+        pathname.startsWith("/student") ||
+        pathname.startsWith("/principal") ||
+        pathname.startsWith("/super-admin") ||
+        pathname.startsWith("/attendance") ||
+        pathname.startsWith("/results/manage") ||
+        pathname.startsWith("/subjects") ||
+        pathname === "/dashboard"
+      ) {
+        const parentUrl = request.nextUrl.clone();
+        parentUrl.pathname = "/parent/dashboard";
+        return NextResponse.redirect(parentUrl);
+      }
+    } else if (effectiveRole === "TEACHER") {
+      if (
+        pathname.startsWith("/student") ||
+        pathname.startsWith("/parent") ||
+        pathname.startsWith("/principal") ||
+        pathname.startsWith("/super-admin")
+      ) {
+        const teacherUrl = request.nextUrl.clone();
+        teacherUrl.pathname = "/dashboard";
+        return NextResponse.redirect(teacherUrl);
+      }
+    } else if (effectiveRole === "PRINCIPAL") {
+      if (
+        pathname.startsWith("/student") ||
+        pathname.startsWith("/parent") ||
+        pathname.startsWith("/super-admin")
+      ) {
+        const principalUrl = request.nextUrl.clone();
+        principalUrl.pathname = "/principal";
+        return NextResponse.redirect(principalUrl);
+      }
+    }
+  }
+
   return supabaseResponse;
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths EXCEPT:
-     * - _next/static, _next/image  (Next.js internals)
-     * - favicon.ico, manifest.json (PWA / browser metadata)
-     * - sw.js                      (service worker)
-     * - icons/, .well-known/       (PWA icons + browser special paths)
-     * - globals.css                (public CSS)
-     * - static file extensions     (svg, png, jpg, etc.)
-     */
     "/((?!_next/static|_next/image|favicon\\.ico|manifest\\.json|sw\\.js|icons|globals\\.css|\\.well-known|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff2?|ttf|otf)$).*)",
   ],
 };
