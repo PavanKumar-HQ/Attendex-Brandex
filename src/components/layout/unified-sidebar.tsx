@@ -55,6 +55,19 @@ interface SidebarLink {
   icon: any;
 }
 
+const TEACHER_LINKS: SidebarLink[] = [
+  { name: "Command Center", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Mark Attendance", href: "/attendance", icon: CheckCircle },
+  { name: "CIA Evaluation", href: "/results/manage", icon: AwardIcon },
+  { name: "Class Timetable", href: "/timetable", icon: Calendar },
+  { name: "Subject Registry", href: "/subjects", icon: Library },
+  { name: "Enrolled Students", href: "/students", icon: Users },
+  { name: "Campus Pulse", href: "/pulse", icon: Activity },
+  { name: "Leaderboard", href: "/leaderboard", icon: Trophy },
+  { name: "Sports & Clubs", href: "/sports", icon: Medal },
+  { name: "Notifications", href: "/notifications", icon: Bell },
+];
+
 const ADMIN_LINKS: SidebarLink[] = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Mark Attendance", href: "/attendance", icon: CheckCircle },
@@ -101,42 +114,43 @@ const PARENT_LINKS: SidebarLink[] = [
 
 const PRINCIPAL_LINKS: SidebarLink[] = [
   { name: "Executive Overview", href: "/principal", icon: LayoutDashboard },
-  { name: "Mark Attendance", href: "/attendance", icon: CheckCircle },
   { name: "Campus Telemetry", href: "/pulse", icon: Activity },
-  { name: "Students", href: "/students", icon: Users },
-  { name: "Classes", href: "/classes", icon: GraduationCap },
-  { name: "Subjects", href: "/subjects", icon: Library },
-  { name: "CIA Marks", href: "/results/manage", icon: AwardIcon },
-  { name: "Timetable", href: "/timetable", icon: Calendar },
-  { name: "Promotions", href: "/promotion", icon: RefreshCcw },
-  { name: "Audit Logs", href: "/audit", icon: SearchCode },
+  { name: "Classes & Batches", href: "/classes", icon: GraduationCap },
+  { name: "Curriculum & Subjects", href: "/subjects", icon: Library },
+  { name: "CIA Marks Review", href: "/results/manage", icon: AwardIcon },
+  { name: "Semester Results", href: "/results", icon: BookOpen },
+  { name: "Academic Promotions", href: "/promotion", icon: RefreshCcw },
+  { name: "Institutional Audit", href: "/audit", icon: SearchCode },
+  { name: "Student Registry", href: "/students", icon: Users },
+  { name: "Attendance Terminal", href: "/attendance", icon: CheckCircle },
+  { name: "Academic Leaderboard", href: "/leaderboard", icon: Trophy },
   { name: "Notifications", href: "/notifications", icon: Bell },
 ];
 
 const SUPER_ADMIN_LINKS: SidebarLink[] = [
   { name: "Platform Overview", href: "/super-admin", icon: LayoutDashboard },
-  { name: "Institutions", href: "/super-admin", icon: Building2 },
+  { name: "Institutional Nodes", href: "/super-admin", icon: Building2 },
   { name: "Audit Ledger", href: "/audit", icon: SearchCode },
-  { name: "Settings", href: "/settings", icon: Settings },
+  { name: "Platform Settings", href: "/settings", icon: Settings },
 ];
 
 const VARIANT_CONFIG = {
   admin: {
     links: ADMIN_LINKS,
     title: "Attendex",
-    subtitle: "Faculty & Admin",
+    subtitle: "Dean / Admin",
     showSettings: true,
   },
   principal: {
     links: PRINCIPAL_LINKS,
     title: "Attendex",
-    subtitle: "Principal Authority",
+    subtitle: "Principal Office",
     showSettings: true,
   },
   super_admin: {
     links: SUPER_ADMIN_LINKS,
     title: "Attendex",
-    subtitle: "Super Admin Platform",
+    subtitle: "Super Admin",
     showSettings: true,
   },
   student: {
@@ -152,10 +166,10 @@ const VARIANT_CONFIG = {
     showSettings: false,
   },
   teacher: {
-    links: ADMIN_LINKS,
+    links: TEACHER_LINKS,
     title: "Attendex",
-    subtitle: "Faculty Portal",
-    showSettings: true,
+    subtitle: "Faculty Workspace",
+    showSettings: false,
   },
 } as const;
 
@@ -170,7 +184,27 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const { branding } = useBranding();
-  const config = VARIANT_CONFIG[variant] || VARIANT_CONFIG.admin;
+
+  // Dynamically resolve exact variant by route and session
+  let activeVariant: SidebarVariant = variant;
+  if (pathname.startsWith("/student")) {
+    activeVariant = "student";
+  } else if (pathname.startsWith("/parent")) {
+    activeVariant = "parent";
+  } else if (pathname.startsWith("/principal")) {
+    activeVariant = "principal";
+  } else if (pathname.startsWith("/super-admin")) {
+    activeVariant = "super_admin";
+  } else if (typeof document !== "undefined") {
+    const match = document.cookie.match(/attendex_demo_session=([^;]+)/);
+    const sessionRole = match ? match[1].toLowerCase() : "";
+    if (sessionRole === "principal") activeVariant = "principal";
+    else if (sessionRole === "super_admin") activeVariant = "super_admin";
+    else if (sessionRole === "admin") activeVariant = "admin";
+    else if (sessionRole === "teacher") activeVariant = "teacher";
+  }
+
+  const config = VARIANT_CONFIG[activeVariant] || VARIANT_CONFIG.teacher;
 
   useEffect(() => {
     const handleResize = () => {

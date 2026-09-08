@@ -6,24 +6,19 @@ import { ShieldAlert, Hourglass } from "lucide-react";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { cn } from "@/lib/utils";
 
+import { cookies } from "next/headers";
+
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // DEMO MODE: Bypassing Auth
-  // const supabaseServer = await createClient();
-  // const { data: { user } } = await supabaseServer.auth.getUser();
-  // if (!user) redirect("/login");
-
-  // const { data: profile } = await supabaseServer
-  //     .from('profiles')
-  //     .select('status, role')
-  //     .eq('id', user.id)
-  //     .single();
-
+  const cookieStore = await cookies();
+  const rawRole = (cookieStore.get("attendex_demo_session")?.value || "TEACHER").toLowerCase();
+  const role = 
+    rawRole === "principal" ? "principal" :
+    (rawRole === "super_admin" || rawRole === "admin") ? "admin" : "teacher";
   const status: string = "VERIFIED";
-  const role: string = "admin";
 
   // Verification Gate for Teachers (Admins bypass)
   if (status === 'PENDING' && role !== 'admin') {

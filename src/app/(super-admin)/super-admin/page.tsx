@@ -68,19 +68,19 @@ export default function SuperAdminPlatformPage() {
     <PageTransition>
       <div className="space-y-8">
         {/* Top Platform Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
           <div>
-            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-blue-950/80 border border-blue-800/60 text-blue-400 text-xs font-semibold mb-2">
-              <Server className="w-3.5 h-3.5" />
+            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold mb-2">
+              <Server className="w-3.5 h-3.5 text-blue-600" />
               <span>Attendex Multi-Tenant Cloud Operating System</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Platform Command Center</h1>
-            <p className="text-xs text-slate-400 font-medium mt-1">Global management across all registered institutional nodes and principals</p>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Platform Command Center</h1>
+            <p className="text-xs text-slate-500 font-medium mt-1">Global management across all registered institutional nodes and principals</p>
           </div>
 
           <Button
             onClick={() => setIsCreateOpen(true)}
-            className="h-10 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-lg px-4 flex items-center gap-2 shadow-lg shadow-blue-600/20"
+            className="h-10 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg px-4 flex items-center gap-2 shadow-sm"
           >
             <Plus className="w-4 h-4" />
             <span>Provision Institution</span>
@@ -89,52 +89,52 @@ export default function SuperAdminPlatformPage() {
 
         {/* Global Platform Metrics */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="p-5 bg-slate-800/80 border-slate-700/80 rounded-xl space-y-2 text-white">
-            <div className="flex items-center justify-between text-slate-400">
+          <Card className="p-5 bg-white border border-slate-200 rounded-xl space-y-2 text-slate-900 shadow-sm">
+            <div className="flex items-center justify-between text-slate-500">
               <span className="text-xs font-bold uppercase tracking-wider">Institutions</span>
-              <Building2 className="w-4 h-4 text-blue-400" />
+              <Building2 className="w-4 h-4 text-blue-600" />
             </div>
-            <h3 className="text-3xl font-extrabold text-white tracking-tight">{stats?.totalInstitutions || 12}</h3>
-            <p className="text-xs text-emerald-400 font-medium">100% Multi-Tenant Isolation</p>
+            <h3 className="text-3xl font-extrabold text-slate-900 tracking-tight">{stats?.totalInstitutions || 12}</h3>
+            <p className="text-xs text-emerald-600 font-medium">100% Multi-Tenant Isolation</p>
           </Card>
 
-          <Card className="p-5 bg-slate-800/80 border-slate-700/80 rounded-xl space-y-2 text-white">
-            <div className="flex items-center justify-between text-slate-400">
+          <Card className="p-5 bg-white border border-slate-200 rounded-xl space-y-2 text-slate-900 shadow-sm">
+            <div className="flex items-center justify-between text-slate-500">
               <span className="text-xs font-bold uppercase tracking-wider">Principals Assigned</span>
-              <Users className="w-4 h-4 text-purple-400" />
+              <Users className="w-4 h-4 text-purple-600" />
             </div>
-            <h3 className="text-3xl font-extrabold text-white tracking-tight">{stats?.totalPrincipals || 12}</h3>
-            <p className="text-xs text-slate-400 font-medium">Active College Authorities</p>
+            <h3 className="text-3xl font-extrabold text-slate-900 tracking-tight">{stats?.totalPrincipals || 12}</h3>
+            <p className="text-xs text-slate-500 font-medium">Active College Authorities</p>
           </Card>
 
-          <Card className="p-5 bg-slate-800/80 border-slate-700/80 rounded-xl space-y-2 text-white">
-            <div className="flex items-center justify-between text-slate-400">
+          <Card className="p-5 bg-white border border-slate-200 rounded-xl space-y-2 text-slate-900 shadow-sm">
+            <div className="flex items-center justify-between text-slate-500">
               <span className="text-xs font-bold uppercase tracking-wider">Enrolled Strength</span>
-              <Activity className="w-4 h-4 text-emerald-400" />
+              <Activity className="w-4 h-4 text-emerald-600" />
             </div>
-            <h3 className="text-3xl font-extrabold text-white tracking-tight">{(stats?.totalStudents || 14850).toLocaleString()}</h3>
-            <p className="text-xs text-slate-400 font-medium">Verified Student Identities</p>
+            <h3 className="text-3xl font-extrabold text-slate-900 tracking-tight">{(stats?.totalStudents || 14850).toLocaleString()}</h3>
+            <p className="text-xs text-slate-500 font-medium">Verified Student Identities</p>
           </Card>
 
-          <Card className="p-5 bg-slate-800/80 border-slate-700/80 rounded-xl space-y-2 text-white">
-            <div className="flex items-center justify-between text-slate-400">
+          <Card className="p-5 bg-white border border-slate-200 rounded-xl space-y-2 text-slate-900 shadow-sm">
+            <div className="flex items-center justify-between text-slate-500">
               <span className="text-xs font-bold uppercase tracking-wider">System Health</span>
-              <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+              <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
             </div>
-            <h3 className="text-xl font-bold text-emerald-400 tracking-tight">99.98%</h3>
-            <p className="text-xs text-slate-400 font-medium">Supabase RLS Cluster Active</p>
+            <h3 className="text-xl font-bold text-emerald-600 tracking-tight">99.98%</h3>
+            <p className="text-xs text-slate-500 font-medium">Supabase RLS Cluster Active</p>
           </Card>
         </div>
 
         {/* Section: Institutions List */}
-        <Card className="p-6 bg-slate-800/90 border-slate-700 rounded-xl space-y-6 text-white">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-700/80">
+        <Card className="p-6 bg-white border border-slate-200 rounded-xl space-y-6 text-slate-900 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
             <div>
-              <h2 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-blue-400" />
+              <h2 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                <Building2 className="w-5 h-5 text-blue-600" />
                 <span>Registered Institutional Nodes</span>
               </h2>
-              <p className="text-xs text-slate-400 font-medium mt-0.5">Autonomous institutional clusters with dedicated academic domains and RLS isolation</p>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">Autonomous institutional clusters with dedicated academic domains and RLS isolation</p>
             </div>
 
             <div className="relative w-full sm:w-64">
@@ -143,37 +143,37 @@ export default function SuperAdminPlatformPage() {
                 placeholder="Search college or code..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-9 pl-9 bg-slate-900/90 border-slate-700 text-xs text-white placeholder:text-slate-500 rounded-lg focus-visible:ring-blue-500"
+                className="h-9 pl-9 bg-slate-50 border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 rounded-lg focus-visible:ring-blue-500"
               />
             </div>
           </div>
 
           <div className="space-y-3">
             {isInstLoading ? (
-              <div className="py-12 text-center text-xs text-slate-400">Loading institutional nodes...</div>
+              <div className="py-12 text-center text-xs text-slate-500">Loading institutional nodes...</div>
             ) : filteredInstitutions.length === 0 ? (
-              <div className="py-12 text-center text-xs text-slate-400 bg-slate-900/60 rounded-lg border border-slate-700/60">
+              <div className="py-12 text-center text-xs text-slate-500 bg-slate-50 rounded-lg border border-slate-200">
                 No matching institutions found.
               </div>
             ) : (
               filteredInstitutions.map((inst) => (
-                <div key={inst.id} className="p-4 bg-slate-900/80 hover:bg-slate-900 rounded-xl border border-slate-700/80 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div key={inst.id} className="p-4 bg-slate-50/70 hover:bg-slate-50 rounded-xl border border-slate-200 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="space-y-1.5">
                     <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-900/60 text-blue-300 border border-blue-700/50">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
                         {inst.code}
                       </span>
-                      <span className="text-[10px] font-bold bg-emerald-900/60 text-emerald-300 px-2 py-0.5 rounded border border-emerald-700/50">
+                      <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">
                         ACTIVE
                       </span>
                     </div>
-                    <h3 className="text-sm font-bold text-white">{inst.name}</h3>
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
-                      <span>Principal: <strong className="text-slate-200">{inst.principalName || "Dr. Assigned"}</strong></span>
+                    <h3 className="text-sm font-bold text-slate-900">{inst.name}</h3>
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                      <span>Principal: <strong className="text-slate-700">{inst.principalName || "Dr. Assigned"}</strong></span>
                       <span>•</span>
-                      <span>Students: <strong className="text-slate-200">{(inst.studentCount || 1284).toLocaleString()}</strong></span>
+                      <span>Students: <strong className="text-slate-700">{(inst.studentCount || 1284).toLocaleString()}</strong></span>
                       <span>•</span>
-                      <span>Faculty: <strong className="text-slate-200">{inst.facultyCount || 76}</strong></span>
+                      <span>Faculty: <strong className="text-slate-700">{inst.facultyCount || 76}</strong></span>
                     </div>
                   </div>
 
@@ -182,7 +182,7 @@ export default function SuperAdminPlatformPage() {
                       size="sm"
                       variant="outline"
                       onClick={() => toast.success(`Configuration opened for ${inst.code}`)}
-                      className="border-slate-700 text-slate-300 hover:bg-slate-800 text-xs font-semibold rounded-lg h-9 px-3"
+                      className="border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-semibold rounded-lg h-9 px-3"
                     >
                       <Settings className="w-3.5 h-3.5 mr-1" />
                       <span>Configure</span>
@@ -193,7 +193,7 @@ export default function SuperAdminPlatformPage() {
                         document.cookie = "attendex_demo_session=PRINCIPAL; path=/; max-age=86400; SameSite=Lax";
                         window.location.href = "/principal";
                       }}
-                      className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg h-9 px-3 flex items-center gap-1.5"
+                      className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg h-9 px-3 flex items-center gap-1.5 shadow-sm"
                     >
                       <span>Enter as Principal</span>
                       <ArrowRight className="w-3.5 h-3.5" />
@@ -207,51 +207,51 @@ export default function SuperAdminPlatformPage() {
 
         {/* Modal / Dialog to Provision New College */}
         {isCreateOpen && (
-          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-            <Card className="w-full max-w-md bg-slate-900 border-slate-700 p-6 rounded-2xl shadow-2xl text-white space-y-4 animate-in fade-in zoom-in-95">
+          <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+            <Card className="w-full max-w-md bg-white border border-slate-200 p-6 rounded-2xl shadow-xl text-slate-900 space-y-4 animate-in fade-in zoom-in-95">
               <div className="space-y-1">
-                <h3 className="text-base font-bold text-white">Provision New Institutional Node</h3>
-                <p className="text-xs text-slate-400">Creates an isolated tenant environment with automated schema binding</p>
+                <h3 className="text-base font-bold text-slate-900">Provision New Institutional Node</h3>
+                <p className="text-xs text-slate-500">Creates an isolated tenant environment with automated schema binding</p>
               </div>
 
               <div className="space-y-3 text-xs">
                 <div className="space-y-1">
-                  <label className="font-semibold text-slate-300">Institution Official Name</label>
+                  <label className="font-semibold text-slate-700">Institution Official Name</label>
                   <Input
                     placeholder="e.g. Stanford College of Technology"
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
-                    className="h-10 bg-slate-800 border-slate-700 text-white rounded-lg text-xs"
+                    className="h-10 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-lg text-xs"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-semibold text-slate-300">Institution Code (3-5 Letters)</label>
+                  <label className="font-semibold text-slate-700">Institution Code (3-5 Letters)</label>
                   <Input
                     placeholder="e.g. SCT"
                     value={newCode}
                     onChange={(e) => setNewCode(e.target.value)}
-                    className="h-10 bg-slate-800 border-slate-700 text-white rounded-lg text-xs"
+                    className="h-10 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-lg text-xs"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-semibold text-slate-300">Principal Official Email</label>
+                  <label className="font-semibold text-slate-700">Principal Official Email</label>
                   <Input
                     placeholder="principal@college.edu"
                     value={newEmail}
                     onChange={(e) => setNewEmail(e.target.value)}
-                    className="h-10 bg-slate-800 border-slate-700 text-white rounded-lg text-xs"
+                    className="h-10 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-lg text-xs"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setIsCreateOpen(false)}
-                  className="text-xs text-slate-400 hover:text-white"
+                  className="text-xs text-slate-500 hover:text-slate-900"
                 >
                   Cancel
                 </Button>
@@ -259,7 +259,7 @@ export default function SuperAdminPlatformPage() {
                   size="sm"
                   onClick={() => createMutation.mutate()}
                   disabled={!newName || !newCode || createMutation.isPending}
-                  className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 h-9 rounded-lg"
+                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 h-9 rounded-lg shadow-sm"
                 >
                   Confirm & Provision
                 </Button>

@@ -6,9 +6,9 @@ export default function SuperAdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100">
+    <div className="min-h-screen bg-slate-50 text-slate-900">
       <UnifiedSidebar variant="super_admin" />
-      <main className="md:pl-60 pb-16 md:pb-0 transition-all">
+      <main className="md:pl-20 xl:pl-64 pt-14 md:pt-0 transition-all duration-300">
         <div className="p-4 md:p-8 max-w-7xl mx-auto">
           {children}
         </div>
