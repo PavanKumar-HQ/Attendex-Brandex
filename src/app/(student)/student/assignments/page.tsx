@@ -23,6 +23,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { resolveActiveStudent } from "@/lib/student-auth";
 
 interface Assignment {
   id: string;
@@ -138,13 +139,14 @@ export default function StudentAssignmentsPage() {
     const now = new Date();
     const timestamp = `${now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} • ${now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}`;
 
+    const activeSt = resolveActiveStudent();
     const updated = assignments.map(a => {
       if (a.id === activeModalItem.id) {
         return {
           ...a,
           status: "Submitted" as const,
           score: "Pending Faculty Evaluation",
-          submissionLink: submissionUrl || "https://drive.google.com/attendex/submissions/21CS042",
+          submissionLink: submissionUrl || `https://drive.google.com/attendex/submissions/${activeSt.roll_number}`,
           submittedAt: timestamp
         };
       }

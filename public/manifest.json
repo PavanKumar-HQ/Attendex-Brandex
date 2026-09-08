@@ -1,15 +1,17 @@
 {
-  "name": "KLE Academy | Attendex",
-  "short_name": "KLE Academy",
-  "description": "Premium institutional command center for high-performance attendance and academic tracking.",
+  "name": "Attendex | Institutional Academic Cloud",
+  "short_name": "Attendex",
+  "description": "Enterprise institutional command center for high-performance academic tracking, gatepass control, and student telemetry.",
   "start_url": "/login",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
   "categories": [
     "education",
-    "productivity"
+    "productivity",
+    "utilities"
   ],
   "icons": [
     {
@@ -29,38 +31,42 @@
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "shortcuts": [
     {
-      "name": "Mark Attendance",
+      "name": "Student Dashboard",
+      "short_name": "Dashboard",
+      "description": "View live academic attendance and standing",
+      "url": "/student/dashboard",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Digital Gatepass",
+      "short_name": "Gatepass",
+      "description": "Generate QR gatepass and campus exit slip",
+      "url": "/student/gatepass",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Attendance Terminal",
       "short_name": "Attendance",
-      "description": "Open the attendance terminal",
+      "description": "Faculty batch attendance roll-call",
       "url": "/attendance",
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
-      "name": "Campus Pulse",
-      "short_name": "Pulse",
-      "description": "View real-time campus trends",
-      "url": "/pulse",
+      "name": "Parent Portal",
+      "short_name": "Parent",
+      "description": "Monitor ward telemetry and fee ledgers",
+      "url": "/parent/dashboard",
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
-    },
-    {
-      "name": "Subject Registry",
-      "short_name": "Subjects",
-      "description": "Manage institutional blueprints",
-      "url": "/subjects",
-      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/hero-preview.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "label": "Admin Dashboard",
-      "form_factor": "wide"
     }
   ]
 }

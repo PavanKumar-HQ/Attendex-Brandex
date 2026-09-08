@@ -1,9 +1,12 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { Outfit } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { IosInstallPrompt } from "@/components/layout/ios-install-prompt";
 import { Providers } from "@/components/providers";
+import { AppLoader } from "@/components/ui/app-loader";
+import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 
 const outfit = Outfit({ 
   subsets: ["latin"],
@@ -41,7 +44,6 @@ export const viewport: Viewport = {
   userScalable: false,
   viewportFit: "cover",
 };
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -49,10 +51,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full bg-slate-50 antialiased overflow-x-hidden">
-      <body className={`${outfit.className} min-h-full flex flex-col text-slate-900`}>
+      <body className={`${outfit.className} min-h-full flex flex-col text-slate-900 pb-16 md:pb-0`}>
+        <Suspense fallback={null}>
+          <AppLoader />
+        </Suspense>
         <Providers>
           {children}
         </Providers>
+        <MobileBottomNav />
         <Toaster />
         <IosInstallPrompt />
       </body>

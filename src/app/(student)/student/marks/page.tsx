@@ -24,24 +24,36 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 import { supabase } from "@/lib/supabase";
+import { resolveActiveStudent, InstitutionalStudent } from "@/lib/student-auth";
 
 export default function StudentMarksPage() {
   const { data: academicData, isLoading } = useQuery({
     queryKey: ['student-academic-data'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      let rollNumber: string | undefined = undefined;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        rollNumber = user?.user_metadata?.roll_number;
+      } catch {
+        // Ignore
+      }
 
-      const rollNumber = user.user_metadata.roll_number;
-      const student = await academicService.getStudentByRoll(rollNumber);
-      if (!student) return null;
+      if (!rollNumber && typeof document !== "undefined") {
+        const cookieMatch = document.cookie.match(/attendex_student_roll=([^;]+)/);
+        if (cookieMatch) rollNumber = decodeURIComponent(cookieMatch[1]);
+      }
 
-      const [{ data: marks }, summary] = await Promise.all([
-        academicService.getStudentMarks(student.id),
-        academicService.getStudentSummary(student.id)
-      ]);
+      const student = resolveActiveStudent(rollNumber);
 
-      return { student, marks, summary };
+      try {
+        const [{ data: marks }, summary] = await Promise.all([
+          academicService.getStudentMarks(student.id),
+          academicService.getStudentSummary(student.id)
+        ]);
+        return { student, marks, summary };
+      } catch {
+        return { student, marks: null, summary: null };
+      }
     }
   });
 
@@ -107,12 +119,13 @@ export default function StudentMarksPage() {
       doc.setFillColor(248, 250, 252);
       doc.roundedRect(14, 40, 182, 26, 3, 3, "FD");
 
+      const activeSt = academicData?.student || resolveActiveStudent();
       doc.setFontSize(10);
       doc.setTextColor(15, 23, 42);
-      doc.text(`Student: ${academicData?.student?.name || "Rahul Deshmukh"}`, 20, 50);
-      doc.text(`Roll Number: ${academicData?.student?.roll_number || "21CS042"}`, 20, 58);
-      doc.text(`Semester: 8th Semester B.Tech`, 120, 50);
-      doc.text(`Department: Computer Science`, 120, 58);
+      doc.text(`Student: ${activeSt.name}`, 20, 50);
+      doc.text(`Roll Number: ${activeSt.roll_number}`, 20, 58);
+      doc.text(`Class: ${activeSt.class_name}`, 120, 50);
+      doc.text(`Status: Enrolled`, 120, 58);
 
       const tableData = displaySubjects.map(s => [
         s.code,
@@ -140,7 +153,7 @@ export default function StudentMarksPage() {
       doc.text("This digital transcript is certified by Attendex Academic Registry Division.", 14, finalY);
       doc.text("Controller of Examinations (Sign)", 140, finalY + 14);
 
-      doc.save(`Marksheet_${academicData?.student?.roll_number || "21CS042"}.pdf`);
+      doc.save(`Marksheet_${activeSt.roll_number}.pdf`);
       setIsExporting(false);
       toast.dismiss();
       toast.success("Marksheet Downloaded Successfully!");

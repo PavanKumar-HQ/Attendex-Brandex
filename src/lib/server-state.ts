@@ -198,6 +198,11 @@ export const serverState = {
     state.proctorRequests = state.proctorRequests.map(p => p.id === id ? { ...p, ...updates } : p);
     writeStore(state);
   },
+  resetProctorRequests() {
+    const state = readStore();
+    state.proctorRequests = [...INITIAL_PROCTOR_REQUESTS];
+    writeStore(state);
+  },
   // Debug utility
   getStorePath(): string {
     return STORE_FILE;

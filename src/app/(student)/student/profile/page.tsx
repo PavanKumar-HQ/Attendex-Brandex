@@ -26,28 +26,32 @@ import { supabase } from "@/lib/supabase";
 import { academicService } from "@/services/academic";
 import { LeaveRequestModal } from "@/components/parent/leave-request-modal";
 
+import { resolveActiveStudent, InstitutionalStudent } from "@/lib/student-auth";
+
 export default function StudentProfilePage() {
   const { data: profile } = useQuery({
     queryKey: ['student-profile-info'],
     queryFn: async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return null;
-        const student = await academicService.getStudentByRoll(user.user_metadata?.roll_number || "21CS042");
-        return { user, student };
+        let roll = user?.user_metadata?.roll_number;
+        
+        // Check cookie
+        if (!roll && typeof document !== "undefined") {
+          const cookieMatch = document.cookie.match(/attendex_student_roll=([^;]+)/);
+          if (cookieMatch) roll = decodeURIComponent(cookieMatch[1]);
+        }
+
+        const resolved = resolveActiveStudent(roll);
+        return { user, student: resolved };
       } catch {
-        return null;
+        return { student: resolveActiveStudent() };
       }
     }
   });
 
-  const student = profile?.student || {
-    name: "Rahul Deshmukh",
-    roll_number: "21CS042",
-    classes: { name: "B.Tech Computer Science (4A)" },
-    phone: "+91 98451 23091",
-    parent_email: "parent.rahul@example.com"
-  };
+  const student: InstitutionalStudent = profile?.student || resolveActiveStudent();
+  const isDefaulter = student.attendance_percentage < 75;
 
   return (
     <PageTransition>
@@ -70,20 +74,28 @@ export default function StudentProfilePage() {
             <div className="text-center sm:text-left space-y-1.5 flex-1">
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                     <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{student.name}</h1>
-                    <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200 flex items-center gap-1">
-                      <ShieldCheck className="w-3 h-3" /> Enrolled
+                    <span className={cn(
+                      "px-2 py-0.5 rounded-md text-[10px] font-bold border flex items-center gap-1",
+                      isDefaulter ? "bg-red-50 text-red-700 border-red-200" : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    )}>
+                      <ShieldCheck className="w-3 h-3" /> {isDefaulter ? "Attendance Shortage (<75%)" : "In Good Standing"}
                     </span>
                 </div>
                 <p className="text-xs text-slate-500 font-semibold flex items-center justify-center sm:justify-start gap-1.5">
                     <Hash className="w-3.5 h-3.5 text-blue-600" />
-                    University Reg: <span className="font-bold text-slate-900">{student.roll_number}</span>
+                    University Register No: <span className="font-bold text-slate-900 font-mono">{student.roll_number}</span>
+                    <span className="text-slate-300">•</span>
+                    <span className="text-slate-600">{student.register_number}</span>
                 </p>
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
                     <span className="px-3 py-1 rounded-lg bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-100">
-                      {student.classes?.name || "B.Tech Computer Science"}
+                      {student.class_name}
                     </span>
-                    <span className="px-3 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold">
-                      Academic Year 2026
+                    <span className="px-3 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold font-mono">
+                      DOB: {student.formatted_dob}
+                    </span>
+                    <span className="px-3 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-100">
+                      Attendance: {student.attendance_percentage}%
                     </span>
                 </div>
             </div>
@@ -98,14 +110,14 @@ export default function StudentProfilePage() {
                     </h3>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        <InfoItem icon={Mail} label="University Email" text="rahul.deshmukh@kletech.ac.in" />
-                        <InfoItem icon={Phone} label="Student Phone" text={student.phone || "+91 98451 23091"} />
-                        <InfoItem icon={CalendarCheck} label="Date of Admission" text="Aug 18, 2023" />
-                        <InfoItem icon={IdCard} label="VTU / Institutional ID" text={`KLE-${student.roll_number}`} />
+                        <InfoItem icon={Mail} label="University Email" text={student.email} />
+                        <InfoItem icon={Phone} label="Student Phone" text={student.phone} />
+                        <InfoItem icon={CalendarCheck} label="Date of Birth (DOB)" text={`${student.formatted_dob} (Password: ${student.dob})`} />
+                        <InfoItem icon={IdCard} label="Permanent Register Number" text={student.register_number} />
                     </div>
 
                     <div className="pt-4 border-t border-slate-100">
-                        <InfoItem icon={MapPin} label="Campus Residence / Address" text="Hostel Block 4, KLE Technological University, Vidyanagar, Hubballi" />
+                        <InfoItem icon={MapPin} label="Campus Residence / Hostel" text={student.hostel} />
                     </div>
                 </Card>
 
@@ -114,8 +126,10 @@ export default function StudentProfilePage() {
                       Guardian &amp; Emergency Registry
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        <InfoItem icon={User} label="Primary Guardian" text="Suresh Deshmukh (Father)" />
-                        <InfoItem icon={Mail} label="Registered Parent Email" text={student.parent_email || "parent.rahul@example.com"} />
+                        <InfoItem icon={User} label="Primary Guardian" text={student.parent_name} />
+                        <InfoItem icon={Phone} label="Guardian Contact" text={student.parent_phone} />
+                        <InfoItem icon={Mail} label="Registered Parent Email" text={student.parent_email} />
+                        <InfoItem icon={CalendarCheck} label="Academic Year" text={`Year ${student.year} • Semester ${student.semester}`} />
                     </div>
                 </Card>
             </div>
@@ -130,10 +144,14 @@ export default function StudentProfilePage() {
                         <span className="font-bold text-sm">Academic Standing</span>
                     </div>
                     <div className="space-y-3 divide-y divide-slate-800 text-xs">
-                        <AcademicStats label="Attendance Buffer" val="Safe (≥75%)" color="text-emerald-400" />
-                        <AcademicStats label="Evaluation Status" val="In Good Standing" color="text-blue-400" />
-                        <AcademicStats label="Academic Backlogs" val="0 Active" color="text-slate-300" />
-                        <AcademicStats label="Institutional Sports XP" val="450 XP" color="text-amber-400" />
+                        <AcademicStats 
+                          label="Attendance Buffer" 
+                          val={isDefaulter ? "Shortage (<75%)" : "Safe (≥75%)"} 
+                          color={isDefaulter ? "text-red-400" : "text-emerald-400"} 
+                        />
+                        <AcademicStats label="Current Standing" val={`${student.attendance_percentage}%`} color="text-blue-400" />
+                        <AcademicStats label="Cumulative CGPA" val={`${student.cgpa} / 10.0`} color="text-amber-400" />
+                        <AcademicStats label="Sessions Attended" val={`${student.attended_sessions} / ${student.total_sessions}`} color="text-slate-300" />
                     </div>
                 </Card>
 

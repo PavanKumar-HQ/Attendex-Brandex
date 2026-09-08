@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { resolveActiveStudent } from "@/lib/student-auth";
 
 interface HistoryRecord {
   id: number;
@@ -89,10 +90,8 @@ export default function StudentHistoryPage() {
       doc.setTextColor(15, 23, 42);
       doc.text("ATTENDEX INSTITUTE OF TECHNOLOGY", 105, 20, { align: "center" });
 
-      doc.setFontSize(11);
-      doc.setTextColor(100);
-      doc.text("STUDENT INDIVIDUAL ATTENDANCE AUDIT LOG", 105, 28, { align: "center" });
-      doc.text("CANDIDATE: RAHUL DESHMUKH (21CS042) • SEMESTER 8", 105, 34, { align: "center" });
+      const activeSt = resolveActiveStudent();
+      doc.text(`CANDIDATE: ${activeSt.name.toUpperCase()} (${activeSt.roll_number}) • ${activeSt.class_name.toUpperCase()}`, 105, 34, { align: "center" });
 
       const tableRows = filteredHistory.map(h => [
         h.dateStr,
@@ -112,7 +111,7 @@ export default function StudentHistoryPage() {
         styles: { fontSize: 8.5, cellPadding: 4 },
       });
 
-      doc.save("Attendance_Audit_Statement_21CS042.pdf");
+      doc.save(`Attendance_Audit_${activeSt.roll_number}.pdf`);
       toast.success("Attendance Statement (PDF) Downloaded!");
     } catch {
       toast.error("Failed to generate Attendance PDF.");

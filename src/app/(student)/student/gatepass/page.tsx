@@ -28,6 +28,8 @@ import { supabase } from "@/lib/supabase";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+import { resolveActiveStudent, InstitutionalStudent } from "@/lib/student-auth";
+
 export default function StudentGatepassPage() {
   const [passType, setPassType] = useState("Weekend Hostel Pass (Hometown)");
   const [outDate, setOutDate] = useState("");
@@ -40,46 +42,47 @@ export default function StudentGatepassPage() {
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [gatepasses, setGatepasses] = useState<any[]>([]);
-  const [studentInfo, setStudentInfo] = useState({
-    id: "",
-    name: "Rahul Deshmukh",
-    rollNumber: "21CS042",
-    hostel: "Cauvery Boys Hostel — Block C (Room 304)"
+  const [studentInfo, setStudentInfo] = useState(() => {
+    const active = resolveActiveStudent();
+    return {
+      id: active.id,
+      name: active.name,
+      rollNumber: active.roll_number,
+      hostel: active.hostel
+    };
   });
 
   const loadGatepassHistory = async () => {
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      let studentId = "";
-      if (user) {
-        const { data: st } = await supabase
-          .from('students')
-          .select('id, name, roll_number')
-          .eq('auth_user_id', user.id)
-          .single();
-        if (st) {
-          studentId = st.id;
-          setStudentInfo(prev => ({
-            ...prev,
-            id: st.id,
-            name: st.name,
-            rollNumber: st.roll_number
-          }));
-        }
+      let rollNumber: string | undefined = undefined;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        rollNumber = user?.user_metadata?.roll_number;
+      } catch {
+        // Ignore
       }
 
-      let query = supabase
+      if (!rollNumber && typeof document !== "undefined") {
+        const cookieMatch = document.cookie.match(/attendex_student_roll=([^;]+)/);
+        if (cookieMatch) rollNumber = decodeURIComponent(cookieMatch[1]);
+      }
+
+      const active = resolveActiveStudent(rollNumber);
+      setStudentInfo({
+        id: active.id,
+        name: active.name,
+        rollNumber: active.roll_number,
+        hostel: active.hostel
+      });
+      setGuardianContact(active.parent_phone);
+
+      const { data } = await supabase
         .from('gatepasses')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (studentId) {
-        query = query.eq('student_id', studentId);
-      }
-
-      const { data, error } = await query;
-      if (!error && data) {
+      if (data && data.length > 0) {
         setGatepasses(data);
       } else {
         setGatepasses([]);

@@ -5,11 +5,13 @@ import { GET as getProctorRequests } from "@/app/api/proctor/route";
 import { POST as bookConsultation } from "@/app/api/proctor/book/route";
 import { POST as decideConsultation } from "@/app/api/proctor/decide/route";
 import { GET as getSlots } from "@/app/api/proctor/slots/route";
+import { serverState } from "@/lib/server-state";
 
 const targetDate = "2026-12-05";
 const targetTime = "03:30 PM – 04:00 PM";
 
 test("PROCTOR PIPELINE: Test 1 - Parent / Student Books Proctor Consultation with Specific Slot", async () => {
+  serverState.resetProctorRequests();
   const payload = {
     studentName: "Rahul Deshmukh",
     rollNumber: "21CS042",

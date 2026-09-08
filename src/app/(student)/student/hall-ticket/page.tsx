@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/layout/header";
 import { PageTransition } from "@/components/ui/page-transition";
 import { Card } from "@/components/ui/card";
@@ -21,17 +21,32 @@ import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+import { resolveActiveStudent, InstitutionalStudent } from "@/lib/student-auth";
+
 export default function StudentHallTicketPage() {
   const [isExporting, setIsExporting] = useState(false);
+  const [activeStudent, setActiveStudent] = useState<InstitutionalStudent>(() => resolveActiveStudent());
+
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      const cookieMatch = document.cookie.match(/attendex_student_roll=([^;]+)/);
+      if (cookieMatch) {
+        const roll = decodeURIComponent(cookieMatch[1]);
+        setActiveStudent(resolveActiveStudent(roll));
+      }
+    }
+  }, []);
+
+  const isEligible = activeStudent.attendance_percentage >= 75.0;
 
   const student = {
-    name: "Rahul Deshmukh",
-    rollNumber: "21CS042",
-    branch: "B.Tech Computer Science & Engineering",
-    semester: "Semester 8",
+    name: activeStudent.name,
+    rollNumber: activeStudent.roll_number,
+    branch: activeStudent.class_name,
+    semester: `Semester ${activeStudent.semester}`,
     center: "Campus Center Examination Hall 401",
-    attendance: 91.4,
-    status: "Eligible (Verified)"
+    attendance: activeStudent.attendance_percentage,
+    status: isEligible ? "Eligible (Verified)" : "Hall Ticket Held (Defaulter < 75%)"
   };
 
   const examSubjects = [

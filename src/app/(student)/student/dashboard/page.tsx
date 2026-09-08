@@ -34,6 +34,8 @@ import { AttendanceCalculator } from "@/components/student/attendance-calculator
 import { HallTicketModal } from "@/components/student/hall-ticket-modal";
 import { AssignmentTracker } from "@/components/student/assignment-tracker";
 
+import { resolveActiveStudent, InstitutionalStudent } from "@/lib/student-auth";
+
 export default function StudentDashboard() {
   const [loading, setLoading] = useState(true);
   const [student, setStudent] = useState<any>(null);
@@ -46,102 +48,80 @@ export default function StudentDashboard() {
       try {
         setLoading(true);
         
-        // 1. Resolve Identity
-        let user: any = null;
+        // 1. Resolve Identity from cookie or user metadata
+        let rollNumber: string | undefined = undefined;
         try {
           const res = await supabase.auth.getUser();
-          user = res.data?.user;
+          rollNumber = res.data?.user?.user_metadata?.roll_number;
         } catch {
-          user = null;
+          // Ignore
         }
 
-        if (!user) {
-          // Rich academic demo dataset
-          setStudent({
-            name: "Rahul Deshmukh",
-            roll: "21CS042",
-            class_id: "cls-1",
-            className: "B.Tech Computer Science (4A)",
-            attendancePercentage: 91.4
-          });
-          setProjection({
-            currentPercentage: 91.4,
-            status: "Safe",
-            classesNeededFor75: 0,
-            classesCanMiss: 8,
-            confidence: "High"
-          });
-          setNextExam({
-            subject: "Distributed Systems (CS801)",
-            exam_date: "2026-09-18",
-            room_number: "Hall 401"
-          });
-          setPerformance({
-            totalMarks: 92.5,
-            grade: "A+",
-            status: "Excellent",
-            attendanceWeighted: 9.1,
-            ciaScore: 46.5
-          });
-          setLoading(false);
-          return;
+        if (!rollNumber && typeof document !== "undefined") {
+          const cookieMatch = document.cookie.match(/attendex_student_roll=([^;]+)/);
+          if (cookieMatch) rollNumber = decodeURIComponent(cookieMatch[1]);
         }
 
-        // 2. Fetch Student Profile by Roll Number (Most Reliable)
-        const rollNumber = user.user_metadata.roll_number;
-        const { data: studentRecord } = await supabase
-          .from('students')
-          .select('*, classes(*)')
-          .eq('roll_number', rollNumber)
-          .single();
+        const activeStudent: InstitutionalStudent = resolveActiveStudent(rollNumber);
 
-        if (!studentRecord) {
-          setStudent({ name: user.user_metadata.full_name || "Unknown", roll: "N/A" });
-          return;
-        }
+        const totalConducted = activeStudent.total_sessions || 60;
+        const totalPresent = activeStudent.attended_sessions || Math.round((activeStudent.attendance_percentage / 100) * totalConducted);
+        const pct = activeStudent.attendance_percentage;
+        const isSafe = pct >= 75.0;
 
-        // 3. Fetch Consolidated Attendance Stats
-        const { data: attendanceStats } = await supabase
-          .from('consolidated_attendance')
-          .select('total_tc, total_tp')
-          .eq('student_id', studentRecord.id);
+        // Dynamic Safe Skips / Recovery Classes calculation
+        const classesNeeded = isSafe ? 0 : Math.max(1, Math.ceil((0.75 * totalConducted - totalPresent) / 0.25));
+        const classesCanMiss = isSafe ? Math.max(0, Math.floor((totalPresent - 0.75 * totalConducted) / 0.75)) : 0;
 
-        const totalConducted = attendanceStats?.reduce((acc, curr) => acc + curr.total_tc, 0) || 0;
-        const totalPresent = attendanceStats?.reduce((acc, curr) => acc + curr.total_tp, 0) || 0;
-        const livePercentage = totalConducted > 0 ? (totalPresent / totalConducted) * 100 : 0;
-
-        setStudent({ 
-          name: studentRecord.name, 
-          roll: studentRecord.roll_number,
-          class_id: studentRecord.class_id,
-          className: studentRecord.classes?.name,
-          attendancePercentage: livePercentage
+        setStudent({
+          id: activeStudent.id,
+          name: activeStudent.name,
+          roll: activeStudent.roll_number,
+          registerNumber: activeStudent.register_number,
+          class_id: "cls-1",
+          className: activeStudent.class_name,
+          attendancePercentage: pct,
+          cgpa: activeStudent.cgpa,
+          dob: activeStudent.formatted_dob
         });
 
-        // 3.5 Project Attendance (Assuming 50 classes for now)
-        const proj = projectAttendance(totalPresent, totalConducted, 50);
-        setProjection(proj);
+        setProjection({
+          currentPercentage: pct,
+          status: isSafe ? "Safe" : "Shortage Warning",
+          classesNeededFor75: classesNeeded,
+          classesCanMiss: classesCanMiss,
+          confidence: isSafe ? "High" : "Urgent Attention Required"
+        });
 
-        // 4. Fetch Next Exam relative to student's class
-        const exam = await academicService.getUpcomingExam(studentRecord.class_id);
-        setNextExam(exam);
-        
-        // 5. Load Performance Context
-        const { data: marksRow } = await academicService.getStudentMarks(studentRecord.id);
-        if (marksRow) {
-            setPerformance(getStudentPerformance({
-                ...marksRow,
-                attendancePercentage: livePercentage
-            }));
-        } else {
-            setPerformance(getStudentPerformance({ attendancePercentage: livePercentage }));
-        }
+        setNextExam({
+          subject: "Distributed Systems & Cloud (CS801)",
+          exam_date: "2026-09-18",
+          room_number: "LH-401"
+        });
+
+        setPerformance({
+          totalMarks: Number((activeStudent.cgpa * 10).toFixed(1)),
+          grade: activeStudent.cgpa >= 9.0 ? "O (Outstanding)" : activeStudent.cgpa >= 8.0 ? "A+ (Excellent)" : "B+ (Good)",
+          status: isSafe ? "Good Academic Standing" : "Attendance Shortage Defaulter",
+          attendanceWeighted: Number((pct / 10).toFixed(1)),
+          ciaScore: Number((activeStudent.cgpa * 5).toFixed(1))
+        });
+
+        setLoading(false);
       } catch (err) {
-        console.error("Dashboard Load Error:", err);
-      } finally {
+        const fallback = resolveActiveStudent();
+        setStudent({
+          id: fallback.id,
+          name: fallback.name,
+          roll: fallback.roll_number,
+          className: fallback.class_name,
+          attendancePercentage: fallback.attendance_percentage,
+          cgpa: fallback.cgpa
+        });
         setLoading(false);
       }
     };
+
     loadAcademicPulse();
   }, []);
 

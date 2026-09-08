@@ -34,54 +34,103 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const [showDobHelper, setShowDobHelper] = useState(false);
+  const [lookupQuery, setLookupQuery] = useState("");
+  const [lookupResults, setLookupResults] = useState<any[]>([]);
+  const [isLookingUp, setIsLookingUp] = useState(false);
+
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
   });
 
+  const handleLookup = async (q: string) => {
+    setLookupQuery(q);
+    if (!q || q.trim().length < 2) {
+      setLookupResults([]);
+      return;
+    }
+    setIsLookingUp(true);
+    try {
+      const res = await fetch(`/api/auth/student-lookup?q=${encodeURIComponent(q.trim())}`);
+      const json = await res.json();
+      if (json.success) {
+        setLookupResults(json.results || []);
+      }
+    } catch {
+      setLookupResults([]);
+    } finally {
+      setIsLookingUp(false);
+    }
+  };
+
   const onSubmit = async (values: LoginFormValues) => {
     setIsLoading(true);
 
     try {
-      let email = values.identifier.trim();
-      if (!email.includes("@")) {
-        email = `${email.toLowerCase()}@attendex.edu`;
+      const rawIdentifier = values.identifier.trim();
+      const rawPassword = values.password.trim();
+
+      // 1. Check if user is logging in as a student using Register Number / Roll No & DOB
+      const isLikelyStudent = (
+        !rawIdentifier.includes("@") ||
+        rawIdentifier.toLowerCase().endsWith("@attendex.edu") ||
+        /^(cs|reg|21cs|\d+)/i.test(rawIdentifier)
+      );
+
+      if (isLikelyStudent) {
+        try {
+          const studentRes = await fetch("/api/auth/student-login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ identifier: rawIdentifier, password: rawPassword })
+          });
+          const studentJson = await studentRes.json();
+
+          if (studentJson.success && studentJson.student) {
+            toast.success(`Welcome, ${studentJson.student.name}!`, {
+              description: `Authenticated with Register #${studentJson.student.roll_number} (${studentJson.student.class_name}).`
+            });
+            window.location.href = "/student/dashboard";
+            return;
+          } else if (studentRes.status === 401 && !rawIdentifier.includes("@")) {
+            // Identifier was clearly a student register number but password/DOB failed
+            toast.error("Authentication Failed", {
+              description: studentJson.message || "Invalid credentials. Password is your Date of Birth (DDMMYYYY)."
+            });
+            setIsLoading(false);
+            return;
+          }
+        } catch {
+          // Fall through to general institutional sign-in
+        }
       }
 
-      // Authenticate with Supabase Auth
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password: values.password,
+      // 2. Staff, Faculty, Principal & Admin Authentication via Server API
+      const staffRes = await fetch("/api/auth/faculty-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifier: rawIdentifier, password: rawPassword })
       });
 
-      let role = "TEACHER";
+      const staffJson = await staffRes.json();
 
-      if (data?.user) {
-        // Query database profile to resolve role authoritatively
-        const { data: profile } = await supabase
-          .from("user_profiles")
-          .select("role")
-          .eq("id", data.user.id)
-          .single();
-
-        role = profile?.role || data.user.user_metadata?.role || "TEACHER";
-      } else {
-        // Infer from input identifier for instant demo evaluation
-        const idLower = values.identifier.toLowerCase();
-        if (idLower.includes("super") || idLower.includes("admin")) role = "SUPER_ADMIN";
-        else if (idLower.includes("principal") || idLower.includes("dean")) role = "PRINCIPAL";
-        else if (idLower.includes("student") || /^\d{2}[a-z]{2}\d+$/i.test(values.identifier)) role = "STUDENT";
-        else if (idLower.includes("parent") || idLower.startsWith("p_")) role = "PARENT";
-        else role = "TEACHER";
+      if (!staffRes.ok || !staffJson.success) {
+        toast.error("Authentication Failed", {
+          description: staffJson.message || "Invalid credentials. Please check your identifier and password."
+        });
+        setIsLoading(false);
+        return;
       }
 
-      document.cookie = `attendex_demo_session=${role}; path=/; max-age=86400; SameSite=Lax`;
+      const role = staffJson.role || "TEACHER";
 
       toast.success("Institutional Authentication Verified", {
-        description: `Redirecting to ${role.replace("_", " ").toLowerCase()} workspace...`
+        description: `Welcome back, ${staffJson.user?.name || "User"}! Redirecting to ${role.replace("_", " ").toLowerCase()} workspace...`
       });
 
       const redirectPath = 
@@ -92,16 +141,19 @@ export default function LoginPage() {
 
       window.location.href = redirectPath;
     } catch (err: any) {
-      // Fallback to faculty dashboard
-      document.cookie = `attendex_demo_session=TEACHER; path=/; max-age=86400; SameSite=Lax`;
-      window.location.href = "/dashboard";
+      toast.error("Sign-In Error", {
+        description: err?.message || "An unexpected error occurred during authentication."
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const launchDemoRole = (role: string, targetPath: string) => {
+  const launchDemoRole = (role: string, targetPath: string, studentRoll?: string) => {
     document.cookie = `attendex_demo_session=${role}; path=/; max-age=86400; SameSite=Lax`;
+    if (studentRoll) {
+      document.cookie = `attendex_student_roll=${studentRoll}; path=/; max-age=86400; SameSite=Lax`;
+    }
     toast.success(`Access Granted: ${role.replace("_", " ")} Workspace`);
     window.location.href = targetPath;
   };
@@ -181,6 +233,29 @@ export default function LoginPage() {
                 {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
               </div>
 
+              <div className="p-3 bg-blue-50/80 border border-blue-200/80 rounded-xl text-[11px] text-blue-900 space-y-1.5 shadow-sm">
+                <div className="font-bold flex items-center justify-between text-blue-950">
+                  <span className="flex items-center gap-1.5">
+                    <GraduationCap className="w-3.5 h-3.5 text-blue-600" />
+                    Student Default Credentials:
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowDobHelper(true);
+                      handleLookup("CS");
+                    }}
+                    className="text-blue-700 underline font-semibold hover:text-blue-950 text-[11px]"
+                  >
+                    Forgot DOB?
+                  </button>
+                </div>
+                <div className="text-slate-600 space-y-0.5 font-medium leading-relaxed">
+                  <div>• <strong>Username:</strong> Your Register / Roll Number (e.g. <code className="bg-white px-1 py-0.5 rounded text-blue-800 font-mono text-[10px]">CS-11</code>, <code className="bg-white px-1 py-0.5 rounded text-blue-800 font-mono text-[10px]">CS-12</code>, <code className="bg-white px-1 py-0.5 rounded text-blue-800 font-mono text-[10px]">21CS042</code>)</div>
+                  <div>• <strong>Password:</strong> Your Date of Birth in DDMMYYYY format (e.g. <code className="bg-white px-1 py-0.5 rounded text-blue-800 font-mono text-[10px]">15082004</code> for 15-Aug-2004)</div>
+                </div>
+              </div>
+
               <Button
                 type="submit"
                 className="w-full h-11 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow-sm flex items-center justify-center gap-2"
@@ -202,73 +277,207 @@ export default function LoginPage() {
 
             <div className="relative py-1">
               <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-200" /></div>
-              <div className="relative flex justify-center text-[11px]"><span className="bg-white px-2 text-slate-400 font-semibold uppercase tracking-wider">or 1-click role evaluation</span></div>
+              <div className="relative flex justify-center text-[11px]"><span className="bg-white px-2 text-slate-400 font-semibold uppercase tracking-wider">or test real student profiles</span></div>
             </div>
 
-            {/* Quick 5-Role Demo Launcher Bar */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {/* Quick 1-Click Real Student Profile Selectors */}
+            <div className="space-y-1.5">
+              <div className="text-[11px] font-bold text-slate-600 flex items-center justify-between">
+                <span>Select Real Student Profile:</span>
+                <span className="text-[10px] text-slate-400 font-normal">Loads live student data</span>
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => launchDemoRole("STUDENT", "/student/dashboard", "CS-11")}
+                  className="p-2 rounded-lg border border-slate-200 hover:border-blue-400 hover:bg-blue-50/50 text-left transition-all group"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-900 group-hover:text-blue-700">Aarav Sharma</span>
+                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1 py-0.5 rounded">94%</span>
+                  </div>
+                  <span className="text-[10px] text-slate-500 font-mono block">Reg: CS-11 • CSE-A</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => launchDemoRole("STUDENT", "/student/dashboard", "CS-12")}
+                  className="p-2 rounded-lg border border-slate-200 hover:border-blue-400 hover:bg-blue-50/50 text-left transition-all group"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-900 group-hover:text-blue-700">Ishani Patel</span>
+                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1 py-0.5 rounded">87%</span>
+                  </div>
+                  <span className="text-[10px] text-slate-500 font-mono block">Reg: CS-12 • CSE-A</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => launchDemoRole("STUDENT", "/student/dashboard", "CS-23")}
+                  className="p-2 rounded-lg border border-red-200 hover:border-red-400 hover:bg-red-50/50 text-left transition-all group"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-900 group-hover:text-red-700">Ayush Tiwari</span>
+                    <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1 py-0.5 rounded">66%</span>
+                  </div>
+                  <span className="text-[10px] text-red-500 font-mono block">Reg: CS-23 • Shortage</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => launchDemoRole("STUDENT", "/student/dashboard", "21CS042")}
+                  className="p-2 rounded-lg border border-slate-200 hover:border-blue-400 hover:bg-blue-50/50 text-left transition-all group"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-900 group-hover:text-blue-700">Rahul Deshmukh</span>
+                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1 py-0.5 rounded">91.4%</span>
+                  </div>
+                  <span className="text-[10px] text-slate-500 font-mono block">Reg: 21CS042 • 4A</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="relative py-1">
+              <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-200" /></div>
+              <div className="relative flex justify-center text-[11px]"><span className="bg-white px-2 text-slate-400 font-semibold uppercase tracking-wider">or faculty &amp; admin roles</span></div>
+            </div>
+
+            {/* Quick Staff Demo Launcher */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
               <button
                 type="button"
                 onClick={() => launchDemoRole("SUPER_ADMIN", "/super-admin")}
-                className="p-2.5 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-left transition-all"
+                className="p-2 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-left transition-all"
               >
-                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
-                  <Crown className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Super Admin</span>
+                <div className="flex items-center gap-1 text-xs font-bold text-slate-900">
+                  <Crown className="w-3 h-3 text-amber-500" />
+                  <span>Admin</span>
                 </div>
-                <span className="text-[10px] text-slate-500 block mt-0.5">Platform Setup</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => launchDemoRole("PRINCIPAL", "/principal")}
-                className="p-2.5 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-left transition-all"
+                className="p-2 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-left transition-all"
               >
-                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
-                  <School className="w-3.5 h-3.5 text-blue-600" />
+                <div className="flex items-center gap-1 text-xs font-bold text-slate-900">
+                  <School className="w-3 h-3 text-blue-600" />
                   <span>Principal</span>
                 </div>
-                <span className="text-[10px] text-slate-500 block mt-0.5">College Authority</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => launchDemoRole("TEACHER", "/dashboard")}
-                className="p-2.5 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-left transition-all"
+                className="p-2 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-left transition-all"
               >
-                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
-                  <GraduationCap className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>Teacher</span>
+                <div className="flex items-center gap-1 text-xs font-bold text-slate-900">
+                  <GraduationCap className="w-3 h-3 text-indigo-600" />
+                  <span>Faculty</span>
                 </div>
-                <span className="text-[10px] text-slate-500 block mt-0.5">Attendance & CIA</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => launchDemoRole("STUDENT", "/student/dashboard")}
-                className="p-2.5 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-left transition-all"
-              >
-                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
-                  <BookOpen className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Student</span>
-                </div>
-                <span className="text-[10px] text-slate-500 block mt-0.5">Radar & Gatepass</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => launchDemoRole("PARENT", "/parent/dashboard")}
-                className="p-2.5 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-left transition-all col-span-2 sm:col-span-1"
+                className="p-2 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-left transition-all"
               >
-                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
-                  <Users className="w-3.5 h-3.5 text-purple-600" />
+                <div className="flex items-center gap-1 text-xs font-bold text-slate-900">
+                  <Users className="w-3 h-3 text-purple-600" />
                   <span>Parent</span>
                 </div>
-                <span className="text-[10px] text-slate-500 block mt-0.5">Wards & Leaves</span>
               </button>
             </div>
           </Card>
         </div>
+
+        {/* Student Credential Recovery / DOB Helper Modal */}
+        {showDobHelper && (
+          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+              <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-blue-100 text-blue-700 rounded-lg">
+                    <GraduationCap className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">Student Credential Recovery</h3>
+                    <p className="text-[11px] text-slate-500">Find your Register Number &amp; default DOB password</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowDobHelper(false)}
+                  className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="p-5 space-y-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700">Search by Name or Register No:</label>
+                  <input
+                    type="text"
+                    value={lookupQuery}
+                    onChange={(e) => handleLookup(e.target.value)}
+                    placeholder="e.g. Aarav, Ishani, CS-11, 21CS042"
+                    className="w-full h-10 px-3 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
+                  {isLookingUp ? (
+                    <div className="py-6 text-center text-xs text-slate-400">Searching registry...</div>
+                  ) : lookupResults.length > 0 ? (
+                    lookupResults.map((s, i) => (
+                      <div
+                        key={i}
+                        onClick={() => {
+                          setValue("identifier", s.roll_number);
+                          setShowDobHelper(false);
+                          toast.info(`Selected ${s.name}`, {
+                            description: `Register No: ${s.roll_number}. Enter password: ${s.dob_hint} (in DDMMYYYY format)`
+                          });
+                        }}
+                        className="p-3 rounded-xl border border-slate-100 bg-slate-50/70 hover:bg-blue-50/60 hover:border-blue-200 cursor-pointer transition-all space-y-1"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-slate-900">{s.name}</span>
+                          <span className="text-[11px] font-mono font-bold text-blue-700 bg-blue-100/70 px-1.5 py-0.5 rounded">
+                            {s.roll_number}
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-slate-500 flex items-center justify-between pt-0.5">
+                          <span>{s.class_name}</span>
+                          <span className="font-semibold text-emerald-700">DOB: {s.dob_hint}</span>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="py-6 text-center text-xs text-slate-500">
+                      Type your name or roll number above to retrieve your credentials.
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-3 rounded-xl bg-amber-50 border border-amber-200/80 text-[11px] text-amber-900 leading-relaxed">
+                  💡 <strong>Password Rule:</strong> Your default password is your Date of Birth in <span className="font-mono font-bold">DDMMYYYY</span> format without spaces or symbols. (Example: Born 15-Aug-2004 $\rightarrow$ enter <span className="font-mono font-bold">15082004</span>).
+                </div>
+              </div>
+
+              <div className="p-3.5 bg-slate-50 border-t border-slate-100 text-right">
+                <button
+                  type="button"
+                  onClick={() => setShowDobHelper(false)}
+                  className="px-4 py-2 text-xs font-bold bg-slate-900 text-white rounded-lg hover:bg-slate-800"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="max-w-7xl mx-auto w-full text-center text-xs text-slate-500 font-medium py-2">
