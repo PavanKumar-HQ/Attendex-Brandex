@@ -43,8 +43,29 @@ export interface UniversalGatepassRequest {
   createdAt: string;
 }
 
+export interface UniversalProctorRequest {
+  id: string;
+  displayCode: string;
+  studentId: string;
+  studentName: string;
+  rollNumber: string;
+  className: string;
+  proctorName: string;
+  topic: string;
+  message: string;
+  preferredTime?: string;
+  contactPhone?: string;
+  status: "PENDING" | "SCHEDULED" | "COMPLETED" | "CANCELLED";
+  scheduledDate?: string;
+  scheduledTime?: string;
+  meetingNotes?: string;
+  actionItems?: string;
+  createdAt: string;
+}
+
 const STORAGE_KEY_LEAVES = "attendex_universal_leaves_v5";
 const STORAGE_KEY_GATEPASSES = "attendex_universal_gatepasses_v5";
+const STORAGE_KEY_PROCTOR = "attendex_universal_proctor_v5";
 const CHANNEL_NAME = "attendex_live_cross_portal_sync_v5";
 const LOCAL_EVENT_NAME = "attendex_workflow_event";
 
@@ -92,8 +113,58 @@ const INITIAL_GATEPASSES: UniversalGatepassRequest[] = [];
 
 let memoryLeaves: UniversalLeaveRequest[] = [];
 let memoryGatepasses: UniversalGatepassRequest[] = [];
+let memoryProctor: UniversalProctorRequest[] = [];
 
 export const universalWorkflow = {
+  /**
+   * Reads all proctor consultation requests with localStorage persistence.
+   */
+  getAllProctorRequests(): UniversalProctorRequest[] {
+    if (typeof window === "undefined") return memoryProctor;
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY_PROCTOR);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) return parsed;
+      }
+      return memoryProctor;
+    } catch {
+      return memoryProctor;
+    }
+  },
+
+  /**
+   * Adds or updates a proctor request in client-side persistence.
+   */
+  addProctorRequest(req: UniversalProctorRequest): void {
+    const current = this.getAllProctorRequests();
+    const updated = [req, ...current.filter(p => p.id !== req.id)];
+    memoryProctor = updated;
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(STORAGE_KEY_PROCTOR, JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+    }
+  },
+
+  /**
+   * Updates an existing proctor request.
+   */
+  updateProctorRequest(id: string, updates: Partial<UniversalProctorRequest>): void {
+    const current = this.getAllProctorRequests();
+    const updated = current.map(p => p.id === id ? { ...p, ...updates } : p);
+    memoryProctor = updated;
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(STORAGE_KEY_PROCTOR, JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+    }
+  },
+
   /**
    * Reads all leave requests.
    */
@@ -423,7 +494,7 @@ export const universalWorkflow = {
     };
 
     const storageHandler = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY_LEAVES || e.key === STORAGE_KEY_GATEPASSES) {
+      if (e.key === STORAGE_KEY_LEAVES || e.key === STORAGE_KEY_GATEPASSES || e.key === STORAGE_KEY_PROCTOR) {
         callback({ type: "STORAGE_UPDATED", key: e.key });
       }
     };
@@ -451,6 +522,19 @@ export const universalWorkflow = {
    * Dispatches a realtime cross-portal event (e.g. PROCTOR_REQUEST_SUBMITTED, QUERY_SUBMITTED)
    */
   emitEvent(event: any): void {
+    if (event.type === "PROCTOR_REQUEST_SUBMITTED" && event.payload) {
+      this.addProctorRequest(event.payload);
+    } else if (event.type === "PROCTOR_REQUEST_DECIDED") {
+      const id = event.requestId || event.payload?.id;
+      if (id) {
+        this.updateProctorRequest(id, {
+          status: event.status || "SCHEDULED",
+          scheduledDate: event.scheduledDate,
+          scheduledTime: event.scheduledTime,
+          meetingNotes: event.notes
+        });
+      }
+    }
     dispatchRealtimeEvent(event);
   }
 };

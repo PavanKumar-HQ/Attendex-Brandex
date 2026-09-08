@@ -133,13 +133,14 @@ export default function ParentProctorPage() {
 
   const loadRequests = async () => {
     try {
-      const res = await fetch("/api/proctor");
+      const res = await fetch("/api/proctor", { cache: "no-store" });
       const json = await res.json();
-      if (json.success && Array.isArray(json.data)) {
-        setRequests(json.data);
-      }
+      const apiReqs = (json.success && Array.isArray(json.data)) ? json.data : [];
+      const localReqs = universalWorkflow.getAllProctorRequests();
+      const merged = [...apiReqs, ...localReqs.filter(l => !apiReqs.some((a: any) => a.id === l.id))];
+      setRequests(merged);
     } catch {
-      // Ignore
+      setRequests(universalWorkflow.getAllProctorRequests());
     } finally {
       setLoading(false);
     }

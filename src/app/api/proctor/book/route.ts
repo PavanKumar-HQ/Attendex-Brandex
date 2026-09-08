@@ -20,6 +20,9 @@ const bookConsultationSchema = z.object({
   contactPhone: z.string().optional().default("+91 98450 12345"),
 });
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();

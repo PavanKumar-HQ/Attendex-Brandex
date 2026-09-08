@@ -66,9 +66,9 @@ export function TeacherActionQueue() {
   const loadData = async () => {
     try {
       const [leaveRes, gpRes, proctorRes] = await Promise.all([
-        fetch("/api/leave"),
-        fetch("/api/gatepass"),
-        fetch("/api/proctor")
+        fetch("/api/leave", { cache: "no-store" }),
+        fetch("/api/gatepass", { cache: "no-store" }),
+        fetch("/api/proctor", { cache: "no-store" })
       ]);
       const [leaveJson, gpJson, proctorJson] = await Promise.all([
         leaveRes.json(),
@@ -77,23 +77,33 @@ export function TeacherActionQueue() {
       ]);
 
       if (leaveJson.success && Array.isArray(leaveJson.data)) {
-        setLeaves(leaveJson.data.filter((l: any) => l.status === "PENDING"));
+        const apiLeaves = leaveJson.data.filter((l: any) => l.status === "PENDING");
+        const localLeaves = universalWorkflow.getAllLeaves().filter(l => l.status === "PENDING");
+        const merged = [...apiLeaves, ...localLeaves.filter(l => !apiLeaves.some((a: any) => a.id === l.id))];
+        setLeaves(merged);
       } else {
         setLeaves(universalWorkflow.getAllLeaves().filter(l => l.status === "PENDING"));
       }
 
       if (gpJson.success && Array.isArray(gpJson.data)) {
-        setGatepasses(gpJson.data.filter((g: any) => g.status === "PENDING"));
+        const apiGps = gpJson.data.filter((g: any) => g.status === "PENDING");
+        const localGps = universalWorkflow.getAllGatepasses().filter(g => g.status === "PENDING");
+        const merged = [...apiGps, ...localGps.filter(g => !apiGps.some((a: any) => a.id === g.id))];
+        setGatepasses(merged);
       } else {
         setGatepasses(universalWorkflow.getAllGatepasses().filter(g => g.status === "PENDING"));
       }
 
-      if (proctorJson.success && Array.isArray(proctorJson.data)) {
-        setProctorRequests(proctorJson.data.filter((p: any) => p.status === "PENDING"));
-      }
+      const apiProctors = proctorJson.success && Array.isArray(proctorJson.data)
+        ? proctorJson.data.filter((p: any) => p.status === "PENDING")
+        : [];
+      const localProctors = universalWorkflow.getAllProctorRequests().filter(p => p.status === "PENDING");
+      const mergedProctors = [...apiProctors, ...localProctors.filter(l => !apiProctors.some((a: any) => a.id === l.id))];
+      setProctorRequests(mergedProctors);
     } catch {
       setLeaves(universalWorkflow.getAllLeaves().filter(l => l.status === "PENDING"));
       setGatepasses(universalWorkflow.getAllGatepasses().filter(g => g.status === "PENDING"));
+      setProctorRequests(universalWorkflow.getAllProctorRequests().filter(p => p.status === "PENDING"));
     }
   };
 
@@ -101,7 +111,7 @@ export function TeacherActionQueue() {
     setSlotsLoading(true);
     try {
       const url = `/api/proctor/slots?date=${date}${excludeId ? `&excludeId=${excludeId}` : ""}`;
-      const res = await fetch(url);
+      const res = await fetch(url, { cache: "no-store" });
       const json = await res.json();
       if (json.success && Array.isArray(json.slots)) {
         setSlots(json.slots);
@@ -136,6 +146,13 @@ export function TeacherActionQueue() {
         toast.info("New Proctor Consultation Request", {
           description: `${event.payload.studentName} (${event.payload.rollNumber}) booked slot for ${event.payload.topic}.`
         });
+        if (event.payload) {
+          universalWorkflow.addProctorRequest(event.payload);
+          setProctorRequests(prev => {
+            if (prev.some(p => p.id === event.payload.id)) return prev;
+            return [event.payload, ...prev];
+          });
+        }
         loadData();
       } else if (event.type === "LEAVE_DECIDED" || event.type === "GATEPASS_DECIDED" || event.type === "LEAVE_CANCELLED" || event.type === "PROCTOR_REQUEST_DECIDED") {
         loadData();
