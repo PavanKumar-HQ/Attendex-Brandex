@@ -6,6 +6,8 @@
 
 -- ─── 1. ENUM EXTENSIONS ──────────────────────────────────────────────────────
 ALTER TYPE assessment_type ADD VALUE IF NOT EXISTS 'CIA';
+ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'PRINCIPAL';
+ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'SUPER_ADMIN';
 
 -- ─── 2. SCHEMA EXTENSIONS ────────────────────────────────────────────────────
 -- Students extensions
@@ -110,16 +112,16 @@ ON CONFLICT (institution_id, code) DO NOTHING;
 
 INSERT INTO programs (id, department_id, name, code, degree, duration_years) VALUES
 ('20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 'B.Tech Computer Science & Engineering', 'BT-CSE', 'B.Tech', 4)
-ON CONFLICT (department_id, code) DO NOTHING;
+ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO batches (id, program_id, start_year, end_year, name) VALUES
 ('30000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', 2024, 2028, 'Batch 2024-2028')
-ON CONFLICT DO NOTHING;
+ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO classes (id, institution_id, department_id, program_id, batch_id, name, section, year, semester, academic_year) VALUES
 ('40000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001', 'B.Tech Computer Science', 'CS-A', 2, 4, '2026-2027'),
 ('40000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001', 'B.Tech Computer Science', 'CS-B', 2, 4, '2026-2027')
-ON CONFLICT DO NOTHING;
+ON CONFLICT (id) DO NOTHING;
 
 -- ─── 5. SEED SUBJECTS ────────────────────────────────────────────────────────
 INSERT INTO subjects (id, institution_id, department_id, code, name, credits, semester, is_lab, color_code) VALUES
@@ -128,7 +130,7 @@ INSERT INTO subjects (id, institution_id, department_id, code, name, credits, se
 ('50000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 'CS403', 'Computer Networks & Protocol Security', 3, 4, false, '#059669'),
 ('50000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 'CS404', 'Distributed Systems & Cloud Computing', 4, 4, false, '#d97706'),
 ('50000000-0000-0000-0000-000000000005', '00000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 'CS405', 'Design & Analysis of Algorithms', 4, 4, false, '#dc2626')
-ON CONFLICT (institution_id, code) DO UPDATE SET
+ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
     credits = EXCLUDED.credits;
 
@@ -138,7 +140,7 @@ INSERT INTO user_profiles (id, institution_id, role, email, full_name, phone, pa
 ('aa000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000001', 'TEACHER', 'faculty.cs@attendex.institution.edu', 'Prof. Arvind Sharma', '+91 98765 00002', '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918', 'attendex_sec_salt_2026', 'ACTIVE'),
 ('aa000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000001', 'PRINCIPAL', 'principal@attendex.edu', 'Dr. K. S. Prabhakar', '+91 98765 00005', '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918', 'attendex_sec_salt_2026', 'ACTIVE'),
 ('aa000000-0000-0000-0000-000000000005', '00000000-0000-0000-0000-000000000001', 'PARENT', 'parent.deshmukh@attendex.institution.edu', 'Sanjay Deshmukh', '+91 98765 99999', '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918', 'attendex_sec_salt_2026', 'ACTIVE')
-ON CONFLICT (institution_id, email) DO UPDATE SET
+ON CONFLICT (id) DO UPDATE SET
     full_name = EXCLUDED.full_name,
     role = EXCLUDED.role,
     password_hash = EXCLUDED.password_hash;
@@ -146,7 +148,7 @@ ON CONFLICT (institution_id, email) DO UPDATE SET
 -- ─── 7. SEED TEACHERS ────────────────────────────────────────────────────────
 INSERT INTO teachers (id, user_id, institution_id, department_id, employee_id, designation, cabin_location) VALUES
 ('bb000000-0000-0000-0000-000000000002', 'aa000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 'FAC-CS-001', 'Associate Professor', 'Block C - Room 304')
-ON CONFLICT (institution_id, employee_id) DO NOTHING;
+ON CONFLICT (id) DO NOTHING;
 
 -- ─── 8. SEED CORE STUDENTS DIRECTORY ─────────────────────────────────────────
 INSERT INTO students (
@@ -188,7 +190,7 @@ INSERT INTO students (
  '21CS042', 'REG2021CS042', 'Rahul Deshmukh', 'student.rahul@attendex.institution.edu', '+91 98765 33333',
  '08062003', '08/06/2003', '1f5a542bdf04432d43aa5145b23eb91f531952e4250da7d2645eb48ca09e8648', 'attendex_sec_salt_2026',
  9.12, 91.40, 140, 128, 'Sanjay Deshmukh', 'parent.deshmukh@attendex.institution.edu', '+91 98765 99999', 'Block A - Room 402, Campus Residence', 'ACTIVE')
-ON CONFLICT (institution_id, roll_number) DO UPDATE SET
+ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
     email = EXCLUDED.email,
     dob = EXCLUDED.dob,

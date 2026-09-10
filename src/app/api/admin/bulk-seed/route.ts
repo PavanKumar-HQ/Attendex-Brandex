@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { INSTITUTIONAL_STUDENTS } from "@/lib/student-auth";
 import { computePasswordHash } from "@/lib/server-auth";
+import { randomUUID } from "node:crypto";
 
 export async function POST(req: NextRequest) {
   try {
@@ -67,31 +68,39 @@ export async function POST(req: NextRequest) {
     else results.errors.push(`Class error: ${classRes.error.message}`);
 
     // 4. Ingest All Students with Hashed Passwords
-    const studentRows = INSTITUTIONAL_STUDENTS.map(s => ({
-      id: s.id.startsWith("cc") ? s.id : undefined,
-      institution_id: instId,
-      class_id: s.section === "CS-B" ? "40000000-0000-0000-0000-000000000002" : "40000000-0000-0000-0000-000000000001",
-      roll_number: s.roll_number,
-      register_number: s.register_number,
-      name: s.name,
-      email: s.email,
-      phone: s.phone,
-      dob: s.dob,
-      formatted_dob: s.formatted_dob,
-      password_hash: computePasswordHash(s.dob),
-      salt: "attendex_sec_salt_2026",
-      attendance_percentage: s.attendance_percentage,
-      cgpa: s.cgpa,
-      total_sessions: s.total_sessions,
-      attended_sessions: s.attended_sessions,
-      parent_name: s.parent_name,
-      parent_email: s.parent_email,
-      parent_phone: s.parent_phone,
-      hostel: s.hostel,
-      status: s.status
-    }));
+    const { data: existingDbStudents } = await supabase.from("students").select("id, roll_number");
+    const existingMap = new Map((existingDbStudents || []).map(s => [s.roll_number, s.id]));
 
-    const studentRes = await supabase.from("students").upsert(studentRows, { onConflict: "institution_id,roll_number" });
+    const studentRows = INSTITUTIONAL_STUDENTS.map(s => {
+      const stableId = existingMap.get(s.roll_number) || 
+        (s.id.startsWith("cc") ? s.id : `cc000000-0000-0000-0000-${s.roll_number.replace(/\D/g, "").padStart(12, "0")}`);
+
+      return {
+        id: stableId,
+        institution_id: instId,
+        class_id: s.section === "CS-B" ? "40000000-0000-0000-0000-000000000002" : "40000000-0000-0000-0000-000000000001",
+        roll_number: s.roll_number,
+        register_number: s.register_number,
+        name: s.name,
+        email: s.email,
+        phone: s.phone,
+        dob: s.dob,
+        formatted_dob: s.formatted_dob,
+        password_hash: computePasswordHash(s.dob),
+        salt: "attendex_sec_salt_2026",
+        attendance_percentage: s.attendance_percentage,
+        cgpa: s.cgpa,
+        total_sessions: s.total_sessions,
+        attended_sessions: s.attended_sessions,
+        parent_name: s.parent_name,
+        parent_email: s.parent_email,
+        parent_phone: s.parent_phone,
+        hostel: s.hostel,
+        status: s.status
+      };
+    });
+
+    const studentRes = await supabase.from("students").upsert(studentRows, { onConflict: "id" });
     if (!studentRes.error) {
       results.students = studentRows.length;
     } else {
@@ -127,12 +136,22 @@ export async function POST(req: NextRequest) {
         email: "principal@attendex.edu",
         full_name: "Dr. K. S. Prabhakar (Principal)",
         phone: "+91 98765 00005",
-        password_hash: computePasswordHash("admin123"),
+        password_hash: computePasswordHash("principal123"),
+        status: "ACTIVE"
+      },
+      {
+        id: "aa000000-0000-0000-0000-000000000005",
+        institution_id: instId,
+        role: "PARENT",
+        email: "parent.deshmukh@attendex.institution.edu",
+        full_name: "Sanjay Deshmukh",
+        phone: "+91 98765 99999",
+        password_hash: computePasswordHash("parent123"),
         status: "ACTIVE"
       }
     ];
 
-    const staffRes = await supabase.from("user_profiles").upsert(staffProfiles, { onConflict: "institution_id,email" });
+    const staffRes = await supabase.from("user_profiles").upsert(staffProfiles, { onConflict: "id" });
     if (!staffRes.error) results.staff = staffProfiles.length;
     else results.errors.push(`Staff insert error: ${staffRes.error.message}`);
 

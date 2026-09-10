@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
 
     // 2. Try to persist to Supabase PostgreSQL (schema-aligned)
     try {
-      const targetStudentId = studentId.length === 36 ? studentId : "cc000000-0000-0000-0000-000000000011";
+      const targetStudentId = studentId.length === 36 ? studentId : "cc000000-0000-0000-0000-000000000001";
       const dbLeaveType = validated.leaveType === "FAMILY_EMERGENCY" 
         ? "EMERGENCY" 
         : validated.leaveType === "SPORTS" 

@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     // 2. Insert into PostgreSQL gatepasses table (schema-aligned)
     let inserted: any = null;
     try {
-      const targetStudentId = studentId.length === 36 ? studentId : "cc000000-0000-0000-0000-000000000011";
+      const targetStudentId = studentId.length === 36 ? studentId : "cc000000-0000-0000-0000-000000000001";
       const now = new Date();
       const returnTime = new Date(now.getTime() + 4 * 3600000);
       const expiresAt = new Date(now.getTime() + 24 * 3600000);

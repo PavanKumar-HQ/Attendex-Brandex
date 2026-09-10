@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
 
     const isUUID = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(s);
     const validClassId = isUUID(validated.classId) ? validated.classId : "40000000-0000-0000-0000-000000000001";
-    const validSubjectId = isUUID(validated.subjectId) ? validated.subjectId : "20000000-0000-0000-0000-000000000001";
+    const validSubjectId = isUUID(validated.subjectId) ? validated.subjectId : "50000000-0000-0000-0000-000000000001";
 
     // 1. Create Assessment Component in PostgreSQL
     const { data: component, error: compErr } = await supabase
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
     const markRows = validated.records.map(r => ({
       id: randomUUID(),
       assessment_component_id: componentId,
-      student_id: isUUID(r.studentId) ? r.studentId : "cc000000-0000-0000-0000-000000000011",
+      student_id: isUUID(r.studentId) ? r.studentId : "cc000000-0000-0000-0000-000000000001",
       marks_obtained: r.marksObtained,
       is_absent: false,
       entered_by: teacherId
