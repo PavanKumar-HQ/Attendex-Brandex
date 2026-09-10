@@ -24,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
     manifest: "/manifest.json",
     appleWebApp: {
       capable: true,
-      statusBarStyle: "black-translucent",
+      statusBarStyle: "default",
       title: brandName,
     },
     icons: {
@@ -32,13 +32,13 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     other: {
       "apple-mobile-web-app-capable": "yes",
-      "apple-mobile-web-app-status-bar-style": "black-translucent",
+      "apple-mobile-web-app-status-bar-style": "default",
     }
   };
 }
 
 export const viewport: Viewport = {
-  themeColor: "#0f172a",
+  themeColor: "#ffffff",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,

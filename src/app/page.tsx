@@ -45,8 +45,8 @@ export default function LandingPage() {
       {/* ─── Desktop View: Institutional Portal ─── */}
       <div className="hidden md:flex min-h-screen bg-slate-50 text-slate-900 selection:bg-blue-100 selection:text-blue-900 flex-col font-sans overflow-x-hidden max-w-full">
         {/* Institutional Top Notification Bar */}
-        <div className="bg-slate-900 text-slate-300 text-xs py-2 px-4 text-center font-medium border-b border-slate-800 flex items-center justify-center gap-2">
-        <span className="inline-flex items-center justify-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-400/30">
+        <div className="bg-slate-100 text-slate-700 text-xs py-2 px-4 text-center font-medium border-b border-slate-200 flex items-center justify-center gap-2">
+        <span className="inline-flex items-center justify-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
           v2.4 Academic Release
         </span>
         <span>Unified Attendance, Continuous Internal Assessment (CIA) & Parent Gateway</span>
@@ -489,42 +489,42 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Compliance & Security Section */}
-      <section id="security" className="py-16 bg-slate-900 text-white border-t border-slate-800">
+      {/* Compliance & Security Section (Light Theme) */}
+      <section id="security" className="py-16 bg-slate-100/70 text-slate-900 border-t border-slate-200">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
-              <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-slate-800 border border-slate-700 rounded text-blue-400 text-xs font-semibold">
-                <ShieldCheck className="w-3.5 h-3.5" />
+              <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-white border border-slate-200 rounded text-blue-700 text-xs font-semibold shadow-2xs">
+                <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
                 Institutional Data Security
               </div>
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
                 Compliant, Isolated & Fully Auditable.
               </h2>
-              <p className="text-slate-400 text-sm leading-relaxed">
+              <p className="text-slate-600 text-sm leading-relaxed">
                 Attendex adheres to university data protection standards. All grade entries and attendance modifications are recorded with timestamped audit logs.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                <div className="p-4 bg-slate-800/60 rounded-xl border border-slate-700/60">
-                  <h4 className="text-sm font-semibold text-white flex items-center gap-2">
-                    <Lock className="w-4 h-4 text-blue-400" />
+                <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-2xs">
+                  <h4 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                    <Lock className="w-4 h-4 text-blue-600" />
                     Role-Based Access (RBAC)
                   </h4>
-                  <p className="text-xs text-slate-400 mt-1">Strict isolation between Faculty, Students, and Administration.</p>
+                  <p className="text-xs text-slate-500 mt-1">Strict isolation between Faculty, Students, and Administration.</p>
                 </div>
-                <div className="p-4 bg-slate-800/60 rounded-xl border border-slate-700/60">
-                  <h4 className="text-sm font-semibold text-white flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-2xs">
+                  <h4 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                     Immutable Audit Trail
                   </h4>
-                  <p className="text-xs text-slate-400 mt-1">Every mark alteration and attendance override is tracked.</p>
+                  <p className="text-xs text-slate-500 mt-1">Every mark alteration and attendance override is tracked.</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-slate-800/80 p-6 rounded-2xl border border-slate-700 text-xs font-mono space-y-2">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-700 text-slate-400">
+            <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800 text-xs font-mono space-y-2 shadow-sm">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-800 text-slate-400">
                 <span>institutional_audit.json</span>
                 <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded">VERIFIED</span>
               </div>
