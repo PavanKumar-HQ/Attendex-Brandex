@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
       success: true,
       anomalies: anomalies.length > 0 ? anomalies : [
         {
-          student_id: "stud-cs-023",
+          student_id: "cc000000-0000-0000-0000-000000000023",
           student_name: "Ayush Tiwari",
           roll_number: "CS-23",
           pattern_type: "Consecutive Laboratory Shortage",

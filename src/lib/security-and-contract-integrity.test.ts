@@ -204,7 +204,7 @@ test("MARKS PIPELINE: Real-time sync reflects teacher submission directly into s
       class_id: "cls-csa",
       subject_id: "sub-cs401",
       records: [{
-        student_id: "stud-cs-011",
+        student_id: "cc000000-0000-0000-0000-000000000011",
         roll_number: "CS-11",
         cia1: 9,
         cia2: 10,

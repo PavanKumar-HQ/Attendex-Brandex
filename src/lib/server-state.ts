@@ -267,7 +267,7 @@ const INITIAL_ASSIGNMENTS: ServerAssignment[] = [
     description: "Implement leader election and log replication module with test suite validation.",
     submissions: [
       {
-        student_id: "stud-cs-011",
+        student_id: "cc000000-0000-0000-0000-000000000011",
         student_name: "Aarav Sharma",
         roll_number: "CS-11",
         submission_url: "https://github.com/aaravsharma/raft-consensus",
@@ -382,7 +382,20 @@ function readStore(): StateStore {
     let modified = false;
     if (!parsed.classes || parsed.classes.length === 0) { parsed.classes = INITIAL_CLASSES; modified = true; }
     if (!parsed.subjects || parsed.subjects.length === 0) { parsed.subjects = INITIAL_SUBJECTS; modified = true; }
-    if (!parsed.students || parsed.students.length === 0) { parsed.students = INSTITUTIONAL_STUDENTS; modified = true; }
+    if (!parsed.students || parsed.students.length === 0) { 
+      parsed.students = INSTITUTIONAL_STUDENTS; 
+      modified = true; 
+    } else {
+      // Ensure student IDs match canonical institutional UUIDs
+      const instMap = new Map(INSTITUTIONAL_STUDENTS.map(s => [s.roll_number, s.id]));
+      for (const s of parsed.students) {
+        const canonicalId = instMap.get(s.roll_number);
+        if (canonicalId && s.id !== canonicalId) {
+          s.id = canonicalId;
+          modified = true;
+        }
+      }
+    }
     if (!parsed.assignments) { parsed.assignments = INITIAL_ASSIGNMENTS; modified = true; }
     if (!parsed.sports) { parsed.sports = INITIAL_SPORTS; modified = true; }
     if (!parsed.auditLogs) { parsed.auditLogs = INITIAL_AUDIT_LOGS; modified = true; }

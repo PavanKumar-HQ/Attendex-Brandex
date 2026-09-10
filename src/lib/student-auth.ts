@@ -37,7 +37,7 @@ export interface InstitutionalStudent {
 // Full institutional directory parsed from students_india.csv + canonical students
 export const INSTITUTIONAL_STUDENTS: InstitutionalStudent[] = [
   {
-    id: "stud-cs-011",
+    id: "cc000000-0000-0000-0000-000000000011",
     name: "Aarav Sharma",
     roll_number: "CS-11",
     register_number: "REG2024CS011",
@@ -60,7 +60,7 @@ export const INSTITUTIONAL_STUDENTS: InstitutionalStudent[] = [
     status: "ACTIVE"
   },
   {
-    id: "stud-cs-012",
+    id: "cc000000-0000-0000-0000-000000000012",
     name: "Ishani Patel",
     roll_number: "CS-12",
     register_number: "REG2024CS012",
@@ -83,7 +83,7 @@ export const INSTITUTIONAL_STUDENTS: InstitutionalStudent[] = [
     status: "ACTIVE"
   },
   {
-    id: "stud-cs-013",
+    id: "cc000000-0000-0000-0000-000000000013",
     name: "Vihaan Gupta",
     roll_number: "CS-13",
     register_number: "REG2024CS013",
@@ -106,7 +106,7 @@ export const INSTITUTIONAL_STUDENTS: InstitutionalStudent[] = [
     status: "ACTIVE"
   },
   {
-    id: "stud-cs-014",
+    id: "cc000000-0000-0000-0000-000000000014",
     name: "Ananya Iyer",
     roll_number: "CS-14",
     register_number: "REG2024CS014",
@@ -129,7 +129,7 @@ export const INSTITUTIONAL_STUDENTS: InstitutionalStudent[] = [
     status: "ACTIVE"
   },
   {
-    id: "stud-cs-015",
+    id: "cc000000-0000-0000-0000-000000000015",
     name: "Arjun Reddy",
     roll_number: "CS-15",
     register_number: "REG2024CS015",
@@ -152,7 +152,7 @@ export const INSTITUTIONAL_STUDENTS: InstitutionalStudent[] = [
     status: "ACTIVE"
   },
   {
-    id: "stud-cs-016",
+    id: "cc000000-0000-0000-0000-000000000016",
     name: "Saanvi Nair",
     roll_number: "CS-16",
     register_number: "REG2024CS016",
@@ -175,7 +175,7 @@ export const INSTITUTIONAL_STUDENTS: InstitutionalStudent[] = [
     status: "ACTIVE"
   },
   {
-    id: "stud-cs-017",
+    id: "cc000000-0000-0000-0000-000000000017",
     name: "Rohan Verma",
     roll_number: "CS-17",
     register_number: "REG2024CS017",
@@ -198,7 +198,7 @@ export const INSTITUTIONAL_STUDENTS: InstitutionalStudent[] = [
     status: "ACTIVE"
   },
   {
-    id: "stud-cs-018",
+    id: "cc000000-0000-0000-0000-000000000018",
     name: "Misha Kulkarni",
     roll_number: "CS-18",
     register_number: "REG2024CS018",
@@ -221,7 +221,7 @@ export const INSTITUTIONAL_STUDENTS: InstitutionalStudent[] = [
     status: "ACTIVE"
   },
   {
-    id: "stud-cs-019",
+    id: "cc000000-0000-0000-0000-000000000019",
     name: "Aditya Joshi",
     roll_number: "CS-19",
     register_number: "REG2024CS019",
@@ -244,7 +244,7 @@ export const INSTITUTIONAL_STUDENTS: InstitutionalStudent[] = [
     status: "ACTIVE"
   },
   {
-    id: "stud-cs-020",
+    id: "cc000000-0000-0000-0000-000000000020",
     name: "Diya Malhotra",
     roll_number: "CS-20",
     register_number: "REG2024CS020",
@@ -267,7 +267,7 @@ export const INSTITUTIONAL_STUDENTS: InstitutionalStudent[] = [
     status: "ACTIVE"
   },
   {
-    id: "stud-cs-021",
+    id: "cc000000-0000-0000-0000-000000000021",
     name: "Pranav Singh",
     roll_number: "CS-21",
     register_number: "REG2024CS021",
@@ -290,7 +290,7 @@ export const INSTITUTIONAL_STUDENTS: InstitutionalStudent[] = [
     status: "ACTIVE"
   },
   {
-    id: "stud-cs-022",
+    id: "cc000000-0000-0000-0000-000000000022",
     name: "Tanvi Rao",
     roll_number: "CS-22",
     register_number: "REG2024CS022",
@@ -313,7 +313,7 @@ export const INSTITUTIONAL_STUDENTS: InstitutionalStudent[] = [
     status: "ACTIVE"
   },
   {
-    id: "stud-cs-023",
+    id: "cc000000-0000-0000-0000-000000000023",
     name: "Ayush Tiwari",
     roll_number: "CS-23",
     register_number: "REG2024CS023",
@@ -336,7 +336,7 @@ export const INSTITUTIONAL_STUDENTS: InstitutionalStudent[] = [
     status: "ACTIVE"
   },
   {
-    id: "stud-cs-024",
+    id: "cc000000-0000-0000-0000-000000000024",
     name: "Kavya Saxena",
     roll_number: "CS-24",
     register_number: "REG2024CS024",
@@ -359,7 +359,7 @@ export const INSTITUTIONAL_STUDENTS: InstitutionalStudent[] = [
     status: "ACTIVE"
   },
   {
-    id: "stud-cs-025",
+    id: "cc000000-0000-0000-0000-000000000025",
     name: "Devansh Mishra",
     roll_number: "CS-25",
     register_number: "REG2024CS025",
@@ -382,7 +382,7 @@ export const INSTITUTIONAL_STUDENTS: InstitutionalStudent[] = [
     status: "ACTIVE"
   },
   {
-    id: "stud-21cs042",
+    id: "cc000000-0000-0000-0000-000000000001",
     name: "Rahul Deshmukh",
     roll_number: "21CS042",
     register_number: "REG2021CS042",

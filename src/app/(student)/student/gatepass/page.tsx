@@ -23,6 +23,7 @@ import {
   Loader2
 } from "lucide-react";
 import { toast } from "sonner";
+import { getQrFallbackDataUri } from "@/lib/qr-helper";
 import { universalWorkflow } from "@/lib/workflow-engine";
 import { supabase } from "@/lib/supabase";
 import jsPDF from "jspdf";
@@ -278,6 +279,10 @@ export default function StudentGatepassPage() {
                     src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=ATTENDEX-GATEPASS-${activePass.id}-${studentInfo.rollNumber}`} 
                     alt="Security QR" 
                     className="w-32 h-32"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = getQrFallbackDataUri(`ATTENDEX-GATEPASS-${activePass.id}-${studentInfo.rollNumber}`);
+                    }}
                   />
                   <div className="space-y-0.5">
                     <span className="text-[10px] font-mono font-bold text-slate-500 uppercase block tracking-wider">GATE SCAN QR TOKEN</span>

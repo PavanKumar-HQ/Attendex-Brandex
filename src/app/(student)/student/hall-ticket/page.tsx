@@ -22,6 +22,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 import { resolveActiveStudent, InstitutionalStudent } from "@/lib/student-auth";
+import { getQrFallbackDataUri } from "@/lib/qr-helper";
 
 export default function StudentHallTicketPage() {
   const [isExporting, setIsExporting] = useState(false);
@@ -175,6 +176,10 @@ export default function StudentHallTicketPage() {
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=ATTENDEX-VERIFIED-PASS-${student.rollNumber}`} 
                   alt="QR Token" 
                   className="w-24 h-24"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = getQrFallbackDataUri(`ATTENDEX-VERIFIED-PASS-${student.rollNumber}`);
+                  }}
                 />
                 <span className="text-[9px] font-mono font-bold text-slate-400 mt-1">VERIFIED QR PASS</span>
               </div>

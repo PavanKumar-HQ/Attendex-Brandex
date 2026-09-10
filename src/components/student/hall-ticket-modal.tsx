@@ -7,6 +7,7 @@ import { QrCode, Download, Printer, CheckCircle2, ShieldCheck, Building2, Calend
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { getQrFallbackDataUri } from "@/lib/qr-helper";
 
 interface HallTicketModalProps {
   studentName?: string;
@@ -142,6 +143,10 @@ export function HallTicketModal({
                 src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=ATTENDEX-VERIFIED-CANDIDATE-${rollNumber}`} 
                 alt="QR Pass" 
                 className="w-20 h-20"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = getQrFallbackDataUri(`ATTENDEX-VERIFIED-CANDIDATE-${rollNumber}`);
+                }}
               />
               <span className="text-[9px] font-mono font-semibold text-slate-400 mt-1">SCAN FOR ENTRY</span>
             </div>

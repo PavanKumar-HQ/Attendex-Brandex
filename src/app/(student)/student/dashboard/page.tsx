@@ -3,6 +3,7 @@
 import { Header } from "@/components/layout/header";
 import { PageTransition } from "@/components/ui/page-transition";
 import { Card } from "@/components/ui/card";
+import { getQrFallbackDataUri } from "@/lib/qr-helper";
 import { 
   Activity, 
   Users, 
@@ -202,7 +203,15 @@ export default function StudentDashboard() {
                             {isEligible && (
                                 <div className="bg-white p-4 rounded-xl shadow-2xl rotate-3">
                                     <div className="w-32 h-32 bg-slate-50 rounded-xl flex items-center justify-center">
-                                        <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=STU-${student?.roll}`} alt="QR" className="w-24 h-24 mix-blend-multiply" />
+                                        <img 
+                                            src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=STU-${student?.roll}`} 
+                                            alt="QR" 
+                                            className="w-24 h-24 mix-blend-multiply"
+                                            onError={(e) => {
+                                                e.currentTarget.onerror = null;
+                                                e.currentTarget.src = getQrFallbackDataUri(`STU-${student?.roll || 'CS-11'}`);
+                                            }}
+                                        />
                                     </div>
                                 </div>
                             )}
