@@ -38,43 +38,66 @@ export async function POST(req: NextRequest) {
     else if (rawType.includes("SEMESTER") || rawType.includes("EXAM")) compType = "SEMESTER_EXAM";
     else compType = "CIA1";
 
-    const isUUID = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(s);
-    const validClassId = isUUID(validated.classId) ? validated.classId : "40000000-0000-0000-0000-000000000001";
-    const validSubjectId = isUUID(validated.subjectId) ? validated.subjectId : "50000000-0000-0000-0000-000000000001";
+    const validClassIds = ["40000000-0000-0000-0000-000000000001", "40000000-0000-0000-0000-000000000002", "40000000-0000-0000-0000-000000000003"];
+    const validSubjectIds = ["50000000-0000-0000-0000-000000000001", "50000000-0000-0000-0000-000000000002", "50000000-0000-0000-0000-000000000003", "50000000-0000-0000-0000-000000000004", "50000000-0000-0000-0000-000000000005"];
+    const validClassId = validClassIds.includes(validated.classId) ? validated.classId : "40000000-0000-0000-0000-000000000001";
+    const validSubjectId = validSubjectIds.includes(validated.subjectId) ? validated.subjectId : "50000000-0000-0000-0000-000000000001";
 
-    // 1. Create Assessment Component in PostgreSQL
-    const { data: component, error: compErr } = await supabase
+    // 1. Get or Create Assessment Component in PostgreSQL
+    let activeComponentId = componentId;
+    const { data: existingComp } = await supabase
       .from("assessment_components")
-      .insert({
-        id: componentId,
-        institution_id: institutionId,
-        class_id: validClassId,
-        subject_id: validSubjectId,
-        name: validated.assessmentName,
-        type: compType,
-        max_marks: validated.maxMarks,
-        weightage: validated.weightage,
-        semester: 4,
-        academic_year: "2026-2027"
-      })
-      .select()
-      .single();
+      .select("id")
+      .eq("class_id", validClassId)
+      .eq("subject_id", validSubjectId)
+      .eq("name", validated.assessmentName)
+      .maybeSingle();
 
-    if (compErr) {
-      console.warn("[Supabase Sync Warning] assessment_components:", compErr.message);
+    if (existingComp) {
+      activeComponentId = existingComp.id;
+    } else {
+      const { error: compErr } = await supabase
+        .from("assessment_components")
+        .insert({
+          id: componentId,
+          institution_id: institutionId,
+          class_id: validClassId,
+          subject_id: validSubjectId,
+          name: validated.assessmentName,
+          type: compType,
+          max_marks: validated.maxMarks,
+          weightage: validated.weightage,
+          semester: 4,
+          academic_year: "2026-2027"
+        });
+
+      if (compErr) {
+        console.warn("[Supabase Sync Warning] assessment_components:", compErr.message);
+      }
     }
 
-    // 2. Insert Marks Rows
-    const markRows = validated.records.map(r => ({
-      id: randomUUID(),
-      assessment_component_id: componentId,
-      student_id: isUUID(r.studentId) ? r.studentId : "cc000000-0000-0000-0000-000000000001",
-      marks_obtained: r.marksObtained,
-      is_absent: false,
-      entered_by: teacherId
-    }));
+    // 2. Insert / Upsert Marks Rows
+    const allStudents = serverState.getStudents();
+    const markRows = validated.records.map(r => {
+      const matched = allStudents.find(s => 
+        s.id === r.studentId || 
+        s.roll_number.toLowerCase() === r.studentId.toLowerCase()
+      );
+      const studentId = (matched && matched.id.startsWith("cc")) ? matched.id : "cc000000-0000-0000-0000-000000000001";
 
-    const { error: marksErr } = await supabase.from("marks").insert(markRows);
+      return {
+        id: randomUUID(),
+        assessment_component_id: activeComponentId,
+        student_id: studentId,
+        marks_obtained: r.marksObtained,
+        is_absent: false,
+        entered_by: teacherId
+      };
+    });
+
+    const { error: marksErr } = await supabase
+      .from("marks")
+      .upsert(markRows, { onConflict: "assessment_component_id,student_id" });
     if (marksErr) {
       console.warn("[Supabase Sync Warning] marks:", marksErr.message);
     }
@@ -136,8 +159,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       message: `Successfully published ${validated.assessmentName} scores for ${validated.records.length} students.`,
-      componentId,
-      component
+      componentId: activeComponentId
     });
   } catch (err: any) {
     return NextResponse.json(

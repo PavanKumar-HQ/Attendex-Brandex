@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/layout/header";
 import { PageTransition } from "@/components/ui/page-transition";
 import { Card } from "@/components/ui/card";
@@ -19,32 +19,18 @@ import { toast } from "sonner";
 
 export default function ParentConductPage() {
   const [student, setStudent] = useState({
-    name: "Aarav Sharma",
-    rollNumber: "CS-11",
-    conductGrade: "Exemplary (Grade A+)",
-    punctualityRate: "98.2%",
+    name: "",
+    rollNumber: "",
+    conductGrade: "Calculating...",
+    punctualityRate: "0%",
     libraryRecord: "Clean (0 Overdue Books)",
     labCompliance: "100% Certified"
   });
 
-  const [commendations, setCommendations] = useState([
-    {
-      date: "Sep 04, 2026",
-      faculty: "Prof. Arvind Sharma (HOD CSE)",
-      title: "Dean's Commendation for Technical Leadership",
-      note: "Demonstrated outstanding collaborative discipline during laboratory assignments."
-    },
-    {
-      date: "Aug 18, 2026",
-      faculty: "Dr. Priya Kulkarni (AI Lab)",
-      title: "Laboratory Equipment Care & Compliance",
-      note: "Maintained pristine GPU server workstations during practicum sessions with zero infractions."
-    }
-  ]);
+  const [commendations, setCommendations] = useState<any[]>([]);
 
-  useState(() => {
-    if (typeof window !== "undefined") {
-      fetch("/api/parent/ward", { cache: "no-store" })
+  useEffect(() => {
+    fetch("/api/parent/ward", { cache: "no-store" })
         .then(res => res.json())
         .then(json => {
           if (json.success && json.data) {
@@ -64,8 +50,7 @@ export default function ParentConductPage() {
           }
         })
         .catch(() => {});
-    }
-  });
+  }, []);
 
   return (
     <PageTransition>

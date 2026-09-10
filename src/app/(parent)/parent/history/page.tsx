@@ -66,10 +66,27 @@ export default function ParentHistoryPage() {
           if (st) {
             studentId = st.id;
             setStudentInfo({
-              name: st.name || "Rahul Deshmukh",
-              rollNumber: st.roll_number || "21CS042",
-              attendancePercentage: Number(st.attendance_percentage || 91.4)
+              name: st.name || "Aarav Sharma",
+              rollNumber: st.roll_number || "CS-11",
+              attendancePercentage: Number(st.attendance_percentage || 94.0)
             });
+          }
+        }
+
+        if (!studentId) {
+          try {
+            const wardRes = await fetch("/api/parent/ward", { cache: "no-store" });
+            const wardJson = await wardRes.json();
+            if (wardJson.success && wardJson.data?.student) {
+              studentId = wardJson.data.student.id;
+              setStudentInfo({
+                name: wardJson.data.student.name,
+                rollNumber: wardJson.data.student.roll_number,
+                attendancePercentage: Number(wardJson.data.student.attendance_percentage || 94.0)
+              });
+            }
+          } catch {
+            // ignore
           }
         }
 

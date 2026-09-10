@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
           deptMap[dept].sumPct += s.attendance_percentage;
         }
 
-        const overallAttendance = totalStudents > 0 ? Number((totalPct / totalStudents).toFixed(1)) : 89.4;
+        const overallAttendance = totalStudents > 0 ? Number((totalPct / totalStudents).toFixed(1)) : 0;
 
         const departmentPulse = Object.keys(deptMap).map(d => ({
           department: d,

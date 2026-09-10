@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     const displayCode = `LV-${Math.floor(1000 + Math.random() * 9000)}`;
     const institutionId = "00000000-0000-0000-0000-000000000001";
     const studentId = validated.studentId || "00000000-0000-0000-0000-000000000030";
-    const appliedByUserId = "00000000-0000-0000-0000-000000000005";
+    const appliedByUserId = "aa000000-0000-0000-0000-000000000005";
 
     // 1. Write to persistent file store (guaranteed cross-process)
     serverState.addLeave({
@@ -52,7 +52,11 @@ export async function POST(req: NextRequest) {
 
     // 2. Try to persist to Supabase PostgreSQL (schema-aligned)
     try {
-      const targetStudentId = studentId.length === 36 ? studentId : "cc000000-0000-0000-0000-000000000001";
+      const student = serverState.getStudents().find(s => 
+        s.id === studentId || 
+        s.roll_number.toLowerCase() === validated.rollNumber.toLowerCase()
+      );
+      const targetStudentId = (student && student.id.startsWith("cc")) ? student.id : "cc000000-0000-0000-0000-000000000001";
       const dbLeaveType = validated.leaveType === "FAMILY_EMERGENCY" 
         ? "EMERGENCY" 
         : validated.leaveType === "SPORTS" 

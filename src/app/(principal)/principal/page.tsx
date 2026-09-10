@@ -27,7 +27,7 @@ import { cn, formatDateDDMMYYYY } from "@/lib/utils";
 export default function PrincipalDashboardPage() {
   const [leaves, setLeaves] = useState<UniversalLeaveRequest[]>([]);
   const [gatepasses, setGatepasses] = useState<UniversalGatepassRequest[]>([]);
-  const [pulse, setPulse] = useState({ totalStudents: 16, totalClasses: 5, overallAttendance: 89.4 });
+  const [pulse, setPulse] = useState({ totalStudents: 0, totalClasses: 0, overallAttendance: 0 });
 
   const loadData = async () => {
     try {
@@ -44,9 +44,9 @@ export default function PrincipalDashboardPage() {
 
       if (pulseJson.success) {
         setPulse({
-          totalStudents: pulseJson.totalStudents || 16,
-          totalClasses: pulseJson.totalClasses || 5,
-          overallAttendance: pulseJson.overallAttendance || 89.4
+          totalStudents: pulseJson.totalStudents ?? 0,
+          totalClasses: pulseJson.totalClasses ?? 0,
+          overallAttendance: pulseJson.overallAttendance ?? 0
         });
       }
 

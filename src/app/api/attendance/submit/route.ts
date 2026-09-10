@@ -65,13 +65,24 @@ export async function POST(req: NextRequest) {
 
     // 2. Synchronize to Supabase PostgreSQL (schema-aligned)
     try {
+      const validClassIds = ["40000000-0000-0000-0000-000000000001", "40000000-0000-0000-0000-000000000002", "40000000-0000-0000-0000-000000000003"];
+      const targetClassId = validClassIds.includes(classId) ? classId : "40000000-0000-0000-0000-000000000001";
+      const validSubjectIds = [
+        "50000000-0000-0000-0000-000000000001",
+        "50000000-0000-0000-0000-000000000002",
+        "50000000-0000-0000-0000-000000000003",
+        "50000000-0000-0000-0000-000000000004",
+        "50000000-0000-0000-0000-000000000005"
+      ];
+      const targetSubjectId = validSubjectIds.includes(subjectId) ? subjectId : "50000000-0000-0000-0000-000000000001";
+
       const { error: sessionErr } = await supabase
         .from("attendance_sessions")
         .insert({
           id: sessionId,
           institution_id: institutionId,
-          class_id: classId.length === 36 ? classId : "40000000-0000-0000-0000-000000000001",
-          subject_id: subjectId.length === 36 ? subjectId : "50000000-0000-0000-0000-000000000001",
+          class_id: targetClassId,
+          subject_id: targetSubjectId,
           teacher_id: "bb000000-0000-0000-0000-000000000001",
           date,
           period_number: period,
@@ -86,15 +97,29 @@ export async function POST(req: NextRequest) {
         console.warn("[Supabase Sync Warning] attendance_sessions:", sessionErr.message);
       }
 
-      const attendanceRows = records.map(r => ({
-        id: randomUUID(),
-        session_id: sessionId,
-        student_id: r.student_id.length === 36 ? r.student_id : "cc000000-0000-0000-0000-000000000001",
-        status: r.status === "ON_DUTY" ? "OD" : r.status,
-        source: "WEB",
-        marked_by: "aa000000-0000-0000-0000-000000000002",
-        version: 1
-      }));
+      const allStudents = serverState.getStudents();
+      const studentMap = new Map(allStudents.map(s => [s.roll_number.toLowerCase(), s.id]));
+
+      const attendanceRows = records.map(r => {
+        const matchedId = studentMap.get(r.student_id.toLowerCase()) || 
+          (r.student_id.startsWith("cc") ? r.student_id : "cc000000-0000-0000-0000-000000000001");
+        
+        let mappedStatus = (r.status || "PRESENT").toUpperCase();
+        if (mappedStatus === "ON_DUTY") mappedStatus = "OD";
+        if (!["PRESENT", "ABSENT", "OD", "ML", "LATE", "HOLIDAY"].includes(mappedStatus)) {
+          mappedStatus = "PRESENT";
+        }
+
+        return {
+          id: randomUUID(),
+          session_id: sessionId,
+          student_id: matchedId,
+          status: mappedStatus,
+          source: "WEB",
+          marked_by: "aa000000-0000-0000-0000-000000000002",
+          version: 1
+        };
+      });
 
       const { error: recordsErr } = await supabase.from("attendance_records").insert(attendanceRows);
       if (recordsErr) {

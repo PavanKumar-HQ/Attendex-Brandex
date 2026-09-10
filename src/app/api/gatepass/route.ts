@@ -15,21 +15,25 @@ export async function GET() {
     if (dbPasses && dbPasses.length > 0) {
       const mapped = dbPasses.map((g: any) => {
         const student = students.find(s => s.id === g.student_id || s.roll_number === g.student_id);
+        const mem = memoryPasses.find(m => m.id === g.id);
+        const resolvedStatus = (mem?.status && mem.status !== "PENDING") ? mem.status : (g.status || "PENDING");
+        const resolvedReviewer = mem?.reviewedBy || (g.approved_by ? "Prof. Rajesh Verma" : undefined);
+
         return {
           id: g.id,
           displayCode: `GP-${g.id.slice(0, 4).toUpperCase()}`,
           studentId: g.student_id,
-          studentName: student?.name || "Student",
-          rollNumber: student?.roll_number || "—",
-          exitTime: g.out_time || g.departure_time || "Today 04:00 PM",
-          expectedReturn: g.expected_in_time || g.expected_return_time || "Today 08:00 PM",
-          destination: g.reason || "Campus Exit",
-          reason: g.reason || "Personal",
-          emergencyContact: g.emergency_contact_phone || g.guardian_phone || "+91 98450 12345",
-          qrNonce: g.qr_code_token || g.qr_token || `GP-${g.id.slice(0, 6).toUpperCase()}`,
-          status: g.status || "PENDING",
-          reviewedBy: g.approved_by ? "Prof. Rajesh Verma" : undefined,
-          createdAt: g.created_at || new Date().toISOString()
+          studentName: student?.name || mem?.studentName || "Student",
+          rollNumber: student?.roll_number || mem?.rollNumber || "—",
+          exitTime: g.out_time || g.departure_time || mem?.exitTime || "Today 04:00 PM",
+          expectedReturn: g.expected_in_time || g.expected_return_time || mem?.expectedReturn || "Today 08:00 PM",
+          destination: g.reason || mem?.destination || "Campus Exit",
+          reason: g.reason || mem?.reason || "Personal",
+          emergencyContact: g.emergency_contact_phone || g.guardian_phone || mem?.emergencyContact || "+91 98450 12345",
+          qrNonce: g.qr_code_token || g.qr_token || mem?.qrNonce || `GP-${g.id.slice(0, 6).toUpperCase()}`,
+          status: resolvedStatus,
+          reviewedBy: resolvedReviewer,
+          createdAt: g.created_at || mem?.createdAt || new Date().toISOString()
         };
       });
 

@@ -18,13 +18,23 @@ export default function PromotionPage() {
   const [isPromoting, setIsPromoting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [recentLogs, setRecentLogs] = useState<any[]>([]);
 
   useEffect(() => {
     const loadClasses = async () => {
       try {
         setLoading(true);
-        const data = await academicService.getClasses();
+        const [data, auditRes] = await Promise.all([
+          academicService.getClasses(),
+          fetch("/api/audit", { cache: "no-store" }).then(r => r.json()).catch(() => ({ auditLogs: [] }))
+        ]);
         setClasses(data || []);
+        if (auditRes.auditLogs) {
+          const promoLogs = auditRes.auditLogs.filter((l: any) => 
+            l.action?.includes("PROMOT") || l.action?.includes("BATCH") || l.entity_type === "class"
+          );
+          setRecentLogs(promoLogs.slice(0, 5));
+        }
       } catch (err) {
         toast.error("Failed to load classes for promotion");
       } finally {
@@ -150,10 +160,22 @@ export default function PromotionPage() {
                     <History className="w-4 h-4 text-slate-400" />
                     Recent Logs
                   </h4>
-                  <div className="space-y-4 py-8 text-center">
-                    <History className="w-8 h-8 text-slate-100 mx-auto" />
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest italic">Logs Empty</p>
-                  </div>
+                  {recentLogs.length > 0 ? (
+                    <div className="space-y-3">
+                      {recentLogs.map((log: any, i: number) => (
+                        <div key={i} className="p-3 bg-slate-50 rounded-xl text-left border border-slate-100 space-y-1">
+                          <p className="text-xs font-bold text-slate-800">{log.action || "Batch Action"}</p>
+                          <p className="text-[11px] text-slate-500 leading-snug">{log.details || log.description}</p>
+                          <p className="text-[9px] font-mono text-slate-400">{log.timestamp ? new Date(log.timestamp).toLocaleDateString() : "Recent"}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-4 py-8 text-center">
+                      <History className="w-8 h-8 text-slate-100 mx-auto" />
+                      <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest italic">Logs Empty</p>
+                    </div>
+                  )}
                </Card>
             </div>
           </div>

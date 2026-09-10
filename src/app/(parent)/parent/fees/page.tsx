@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/layout/header";
 import { PageTransition } from "@/components/ui/page-transition";
 import { Card } from "@/components/ui/card";
@@ -18,39 +18,32 @@ import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-const FEE_BREAKDOWN = [
-  { category: "Tuition & Academic Term Fee (Sem 8)", amount: 65000, status: "Paid", date: "Jul 15, 2026", ref: "TXN-8849201" },
-  { category: "Laboratory & Computing Facility Fee", amount: 12500, status: "Paid", date: "Jul 15, 2026", ref: "TXN-8849202" },
-  { category: "University Examination & Evaluation Fee", amount: 3500, status: "Paid", date: "Aug 02, 2026", ref: "TXN-9018471" },
-  { category: "Digital Library & IEEE Access Deposit", amount: 2000, status: "Paid", date: "Jul 15, 2026", ref: "TXN-8849203" },
-];
-
 export default function ParentFeesPage() {
   const [isExporting, setIsExporting] = useState(false);
-  const [studentName, setStudentName] = useState("Aarav Sharma");
-  const [studentRoll, setStudentRoll] = useState("CS-11");
-  const [fees, setFees] = useState(FEE_BREAKDOWN);
+  const [studentName, setStudentName] = useState("");
+  const [studentRoll, setStudentRoll] = useState("");
+  const [fees, setFees] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  useState(() => {
-    if (typeof window !== "undefined") {
-      fetch("/api/parent/ward", { cache: "no-store" })
-        .then(res => res.json())
-        .then(json => {
-          if (json.success && json.data) {
-            if (json.data.student) {
-              setStudentName(json.data.student.name);
-              setStudentRoll(json.data.student.roll_number);
-            }
-            if (json.data.fees && json.data.fees.length > 0) {
-              setFees(json.data.fees);
-            }
+  useEffect(() => {
+    fetch("/api/parent/ward", { cache: "no-store" })
+      .then(res => res.json())
+      .then(json => {
+        if (json.success && json.data) {
+          if (json.data.student) {
+            setStudentName(json.data.student.name);
+            setStudentRoll(json.data.student.roll_number);
           }
-        })
-        .catch(() => {});
-    }
-  });
+          if (json.data.fees) {
+            setFees(json.data.fees);
+          }
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
-  const totalPaid = fees.reduce((acc, curr) => acc + curr.amount, 0);
+  const totalPaid = fees.reduce((acc, curr) => acc + (curr.amount || 0), 0);
 
   const handleDownloadCertificate = () => {
     setIsExporting(true);

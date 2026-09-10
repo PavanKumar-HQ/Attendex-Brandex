@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const reviewerId = "00000000-0000-0000-0000-000000000003";
+    const reviewerId = "aa000000-0000-0000-0000-000000000002";
 
     // 1. Update in-memory server state
     serverState.updateGatepass(targetId, {

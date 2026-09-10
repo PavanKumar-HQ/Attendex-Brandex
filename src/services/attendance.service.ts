@@ -27,7 +27,7 @@ export const attendanceService = {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             classId,
-            subjectId: subjectId || "00000000-0000-0000-0000-000000000050",
+            subjectId: subjectId || "50000000-0000-0000-0000-000000000001",
             date,
             period: periodNumber,
             lectureType: options?.lectureType || "Theory",

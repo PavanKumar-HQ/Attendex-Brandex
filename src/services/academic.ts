@@ -29,12 +29,12 @@ export const academicService = {
       // fallback
     }
     return {
-      totalStudents: 16,
-      totalClasses: 5,
-      overallAttendance: 89.4,
-      attendanceRate: 89.4,
-      absenteesToday: 1,
-      shortageAlerts: 1,
+      totalStudents: 0,
+      totalClasses: 0,
+      overallAttendance: 0,
+      attendanceRate: 0,
+      absenteesToday: 0,
+      shortageAlerts: 0,
       weeklyTrend: [],
       recentActivity: [],
       departmentPulse: []
@@ -193,12 +193,12 @@ export const academicService = {
     }
 
     return {
-      attendancePct: 92.5,
-      totalSessions: 60,
-      presentSessions: 55,
-      attendance: "92.5%",
-      credits: "24 / 24",
-      rank: "#4"
+      attendancePct: 0,
+      totalSessions: 0,
+      presentSessions: 0,
+      attendance: "0%",
+      credits: "0 / 0",
+      rank: "-"
     };
   },
 

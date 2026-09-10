@@ -42,8 +42,8 @@ export default function ResultsPage() {
         const enriched = classJson.data.map((cls: any) => {
           const classMarks = marksData.filter((m: any) => m.class_id === cls.id || m.section === cls.section);
           const avgScore = classMarks.length > 0
-            ? Number(((classMarks.reduce((acc: number, m: any) => acc + (m.final_marks || 18), 0) / classMarks.length) * 5).toFixed(1))
-            : 88.5;
+            ? Number(((classMarks.reduce((acc: number, m: any) => acc + (m.final_marks || 0), 0) / classMarks.length) * 5).toFixed(1))
+            : 0;
           const topStudent = classMarks.length > 0
             ? classMarks.sort((a: any, b: any) => (b.final_marks || 0) - (a.final_marks || 0))[0]
             : null;
@@ -52,11 +52,11 @@ export default function ResultsPage() {
             class_id: cls.id,
             class_name: cls.name,
             section: cls.section,
-            student_count: cls.student_count || 8,
+            student_count: cls.student_count || 0,
             average_score: avgScore,
-            status: "Published",
-            semester: `Sem ${cls.semester}`,
-            top_scorer: topStudent ? `${topStudent.name} (${Math.round(topStudent.final_marks * 5)}%)` : "Aarav Sharma (96.5%)"
+            status: classMarks.length > 0 ? "Published" : "In Progress",
+            semester: `Sem ${cls.semester || 4}`,
+            top_scorer: topStudent ? `${topStudent.name} (${Math.round(topStudent.final_marks * 5)}%)` : "Pending Evaluation"
           };
         });
 
