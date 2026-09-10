@@ -35,12 +35,29 @@ export default function SportsEntryPage() {
   const fetchInitialData = async () => {
     try {
       setLoading(true);
-      const { data: classData, error } = await supabase.from('classes').select('id, name, section').order('name');
-      if (!error && classData && classData.length > 0) {
-        setClasses(classData);
+      const [classRes, sportsRes] = await Promise.all([
+        fetch("/api/classes", { cache: "no-store" }),
+        fetch("/api/sports", { cache: "no-store" })
+      ]);
+      const [classJson, sportsJson] = await Promise.all([
+        classRes.json(),
+        sportsRes.json()
+      ]);
+
+      if (classJson.success && Array.isArray(classJson.data)) {
+        setClasses(classJson.data);
+      }
+      if (sportsJson.success && Array.isArray(sportsJson.data) && sportsJson.data.length > 0) {
+        setEntries(sportsJson.data.map((s: any) => ({
+          id: s.id,
+          category: s.category,
+          class_id: s.class_id,
+          position: s.position,
+          points: s.points
+        })));
       }
     } catch (err) {
-      console.error("Error loading sports classes:", err);
+      console.error("Error loading sports data:", err);
     } finally {
       setLoading(false);
     }

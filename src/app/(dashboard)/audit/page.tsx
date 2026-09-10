@@ -44,22 +44,25 @@ export default function ProxyAuditPage() {
   const [loading, setLoading] = useState(false);
   const [anomalies, setAnomalies] = useState<any[]>(DEFAULT_ANOMALIES);
 
-  useEffect(() => {
-    if (!isSupabaseConfigured) {
-      setAnomalies(DEFAULT_ANOMALIES);
-      return;
-    }
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
 
-    academicService.getAttendanceAnomalies()
-        .then(data => {
-            if (!data || data.length === 0) setAnomalies(DEFAULT_ANOMALIES);
-            else setAnomalies(data);
-            setLoading(false);
-        })
-        .catch(() => {
-          setAnomalies(DEFAULT_ANOMALIES);
-          setLoading(false);
-        });
+  useEffect(() => {
+    fetch("/api/audit", { cache: "no-store" })
+      .then(res => res.json())
+      .then(json => {
+        if (json.success) {
+          if (json.anomalies && json.anomalies.length > 0) {
+            setAnomalies(json.anomalies);
+          }
+          if (json.auditLogs) {
+            setAuditLogs(json.auditLogs);
+          }
+        }
+        setLoading(false);
+      })
+      .catch(() => {
+        setLoading(false);
+      });
   }, []);
 
   return (

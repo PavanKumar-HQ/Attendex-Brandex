@@ -27,10 +27,30 @@ const FEE_BREAKDOWN = [
 
 export default function ParentFeesPage() {
   const [isExporting, setIsExporting] = useState(false);
+  const [studentName, setStudentName] = useState("Aarav Sharma");
+  const [studentRoll, setStudentRoll] = useState("CS-11");
+  const [fees, setFees] = useState(FEE_BREAKDOWN);
 
-  const studentName = "Rahul Deshmukh";
-  const studentRoll = "21CS042";
-  const totalPaid = FEE_BREAKDOWN.reduce((acc, curr) => acc + curr.amount, 0);
+  useState(() => {
+    if (typeof window !== "undefined") {
+      fetch("/api/parent/ward", { cache: "no-store" })
+        .then(res => res.json())
+        .then(json => {
+          if (json.success && json.data) {
+            if (json.data.student) {
+              setStudentName(json.data.student.name);
+              setStudentRoll(json.data.student.roll_number);
+            }
+            if (json.data.fees && json.data.fees.length > 0) {
+              setFees(json.data.fees);
+            }
+          }
+        })
+        .catch(() => {});
+    }
+  });
+
+  const totalPaid = fees.reduce((acc, curr) => acc + curr.amount, 0);
 
   const handleDownloadCertificate = () => {
     setIsExporting(true);
@@ -58,7 +78,7 @@ export default function ParentFeesPage() {
       doc.text(`Department: B.Tech Computer Science`, 110, 52);
       doc.text(`Account Status: 100% CLEARED (NO DUES)`, 110, 60);
 
-      const tableRows = FEE_BREAKDOWN.map(f => [
+      const tableRows = fees.map(f => [
         f.category,
         f.ref,
         f.date,
@@ -148,7 +168,7 @@ export default function ParentFeesPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
-                  {FEE_BREAKDOWN.map((fee, idx) => (
+                  {fees.map((fee, idx) => (
                     <tr key={idx} className="hover:bg-slate-50/50">
                       <td className="py-3.5 px-4 font-bold text-slate-900">{fee.category}</td>
                       <td className="py-3.5 px-4 font-mono text-slate-500 text-[11px]">{fee.ref}</td>

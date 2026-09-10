@@ -52,7 +52,7 @@ export default function MarksManagementPage() {
       setLoading(true);
       const data = await registryService.getStudentsByClassWithMarks(selectedClass, selectedSubject);
       
-      const studentsWithMarks = data.map(s => {
+      const studentsWithMarks = (data || []).map((s: any) => {
         const m = s.marks || {};
         return {
           ...s,

@@ -27,17 +27,28 @@ import { cn, formatDateDDMMYYYY } from "@/lib/utils";
 export default function PrincipalDashboardPage() {
   const [leaves, setLeaves] = useState<UniversalLeaveRequest[]>([]);
   const [gatepasses, setGatepasses] = useState<UniversalGatepassRequest[]>([]);
+  const [pulse, setPulse] = useState({ totalStudents: 16, totalClasses: 5, overallAttendance: 89.4 });
 
   const loadData = async () => {
     try {
-      const [leaveRes, gpRes] = await Promise.all([
+      const [leaveRes, gpRes, pulseRes] = await Promise.all([
         fetch("/api/leave"),
-        fetch("/api/gatepass")
+        fetch("/api/gatepass"),
+        fetch("/api/pulse")
       ]);
-      const [leaveJson, gpJson] = await Promise.all([
+      const [leaveJson, gpJson, pulseJson] = await Promise.all([
         leaveRes.json(),
-        gpRes.json()
+        gpRes.json(),
+        pulseRes.json()
       ]);
+
+      if (pulseJson.success) {
+        setPulse({
+          totalStudents: pulseJson.totalStudents || 16,
+          totalClasses: pulseJson.totalClasses || 5,
+          overallAttendance: pulseJson.overallAttendance || 89.4
+        });
+      }
 
       if (leaveJson.success && Array.isArray(leaveJson.data)) {
         setLeaves(leaveJson.data.filter((l: any) => l.status === "PENDING"));
@@ -96,16 +107,16 @@ export default function PrincipalDashboardPage() {
               <span className="text-xs font-bold uppercase tracking-wider">Students Enrolled</span>
               <Users className="w-4 h-4 text-blue-600" />
             </div>
-            <h3 className="text-3xl font-extrabold text-slate-900 tracking-tight">1,284</h3>
+            <h3 className="text-3xl font-extrabold text-slate-900 tracking-tight">{pulse.totalStudents}</h3>
             <p className="text-xs text-slate-500 font-medium">Active Cohorts across Departments</p>
           </Card>
 
           <Card className="p-5 bg-white border-slate-200/90 shadow-sm rounded-xl space-y-2">
             <div className="flex items-center justify-between text-slate-500">
-              <span className="text-xs font-bold uppercase tracking-wider">Faculty Strength</span>
+              <span className="text-xs font-bold uppercase tracking-wider">Classes &amp; Batches</span>
               <GraduationCap className="w-4 h-4 text-indigo-600" />
             </div>
-            <h3 className="text-3xl font-extrabold text-slate-900 tracking-tight">76</h3>
+            <h3 className="text-3xl font-extrabold text-slate-900 tracking-tight">{pulse.totalClasses}</h3>
             <p className="text-xs text-slate-500 font-medium">100% Course Allocation Locked</p>
           </Card>
 
@@ -114,7 +125,7 @@ export default function PrincipalDashboardPage() {
               <span className="text-xs font-bold uppercase tracking-wider">Campus Attendance</span>
               <Activity className="w-4 h-4 text-emerald-600" />
             </div>
-            <h3 className="text-3xl font-extrabold text-emerald-700 tracking-tight">89.4%</h3>
+            <h3 className="text-3xl font-extrabold text-emerald-700 tracking-tight">{pulse.overallAttendance}%</h3>
             <p className="text-xs text-emerald-600 font-medium">Optimal Institutional Average</p>
           </Card>
 

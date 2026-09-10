@@ -102,16 +102,23 @@ export default function StudentAssignmentsPage() {
   const [submissionNotes, setSubmissionNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Load from localStorage if present
+  // Load from /api/assignments and fallback to localStorage
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("attendex_student_assignments");
-      if (stored) {
-        setAssignments(JSON.parse(stored));
-      }
-    } catch {
-      // Ignore
-    }
+    const activeSt = resolveActiveStudent();
+    fetch(`/api/assignments?roll_number=${activeSt.roll_number}`, { cache: "no-store" })
+      .then(res => res.json())
+      .then(json => {
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+          setAssignments(json.data);
+        } else {
+          const stored = localStorage.getItem("attendex_student_assignments");
+          if (stored) setAssignments(JSON.parse(stored));
+        }
+      })
+      .catch(() => {
+        const stored = localStorage.getItem("attendex_student_assignments");
+        if (stored) setAssignments(JSON.parse(stored));
+      });
   }, []);
 
   const saveAssignments = (items: Assignment[]) => {
@@ -131,7 +138,7 @@ export default function StudentAssignmentsPage() {
     setSubmissionNotes("");
   };
 
-  const handleConfirmSubmission = (e: React.FormEvent) => {
+  const handleConfirmSubmission = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeModalItem) return;
 
@@ -140,13 +147,32 @@ export default function StudentAssignmentsPage() {
     const timestamp = `${now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} • ${now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}`;
 
     const activeSt = resolveActiveStudent();
+    const finalUrl = submissionUrl || `https://drive.google.com/attendex/submissions/${activeSt.roll_number}`;
+
+    // POST to backend API
+    try {
+      await fetch("/api/assignments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          assignment_id: activeModalItem.id,
+          student_id: activeSt.id,
+          student_name: activeSt.name,
+          roll_number: activeSt.roll_number,
+          submission_url: finalUrl
+        })
+      });
+    } catch {
+      // Ignore fallback
+    }
+
     const updated = assignments.map(a => {
       if (a.id === activeModalItem.id) {
         return {
           ...a,
           status: "Submitted" as const,
           score: "Pending Faculty Evaluation",
-          submissionLink: submissionUrl || `https://drive.google.com/attendex/submissions/${activeSt.roll_number}`,
+          submissionLink: finalUrl,
           submittedAt: timestamp
         };
       }

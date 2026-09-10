@@ -18,29 +18,54 @@ import {
 import { toast } from "sonner";
 
 export default function ParentConductPage() {
-  const student = {
-    name: "Rahul Deshmukh",
-    rollNumber: "21CS042",
+  const [student, setStudent] = useState({
+    name: "Aarav Sharma",
+    rollNumber: "CS-11",
     conductGrade: "Exemplary (Grade A+)",
     punctualityRate: "98.2%",
     libraryRecord: "Clean (0 Overdue Books)",
     labCompliance: "100% Certified"
-  };
+  });
 
-  const commendations = [
+  const [commendations, setCommendations] = useState([
     {
-      date: "Sep 18, 2026",
-      faculty: "Prof. R. Sharma (HOD CSE)",
+      date: "Sep 04, 2026",
+      faculty: "Prof. Arvind Sharma (HOD CSE)",
       title: "Dean's Commendation for Technical Leadership",
-      note: "Rahul mentored junior batch students during the Open Source Linux kernel workshop with exemplary discipline and patience."
+      note: "Demonstrated outstanding collaborative discipline during laboratory assignments."
     },
     {
-      date: "Aug 25, 2026",
-      faculty: "Dr. K. Nair (AI Lab Incharge)",
-      title: "Laboratory Discipline & Equipment Care",
-      note: "Maintained pristine GPU server workstations during deep learning practicum sessions with zero safety violations."
+      date: "Aug 18, 2026",
+      faculty: "Dr. Priya Kulkarni (AI Lab)",
+      title: "Laboratory Equipment Care & Compliance",
+      note: "Maintained pristine GPU server workstations during practicum sessions with zero infractions."
     }
-  ];
+  ]);
+
+  useState(() => {
+    if (typeof window !== "undefined") {
+      fetch("/api/parent/ward", { cache: "no-store" })
+        .then(res => res.json())
+        .then(json => {
+          if (json.success && json.data) {
+            if (json.data.student) {
+              setStudent({
+                name: json.data.student.name,
+                rollNumber: json.data.student.roll_number,
+                conductGrade: json.data.conduct?.conductGrade || "Exemplary (Grade A+)",
+                punctualityRate: json.data.conduct?.punctualityRate || "98.2%",
+                libraryRecord: json.data.conduct?.libraryRecord || "Clean (0 Overdue Books)",
+                labCompliance: json.data.conduct?.labCompliance || "100% Certified"
+              });
+            }
+            if (json.data.conduct?.commendations) {
+              setCommendations(json.data.conduct.commendations);
+            }
+          }
+        })
+        .catch(() => {});
+    }
+  });
 
   return (
     <PageTransition>

@@ -114,45 +114,19 @@ export default function StudentTimetable({ isParentView = false, isTeacherView =
     const loadSchedule = useCallback(async () => {
         try {
             setLoading(true);
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
+            const res = await fetch(`/api/timetable?day=${selectedDay}`, { cache: "no-store" });
+            const json = await res.json();
+            if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+                setSchedule(json.data);
+            } else {
                 setSchedule(DEFAULT_TIMETABLE[selectedDay] || DEFAULT_TIMETABLE.Monday);
-                return;
-            }
-
-            let classId: string | null = null;
-            if (isParentView) {
-                const student = await academicService.getStudentByParentEmail(user.email!);
-                classId = student?.class_id ?? null;
-            } else {
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('class_id')
-                    .eq('id', user.id)
-                    .single();
-                classId = profile?.class_id ?? null;
-            }
-
-            let query = supabase
-                .from('timetables')
-                .select('*, classes(name, section)')
-                .eq('day_of_week', selectedDay)
-                .order('start_time', { ascending: true });
-
-            if (classId) query = query.eq('class_id', classId);
-
-            const { data, error } = await query;
-            if (error || !data || data.length === 0) {
-              setSchedule(DEFAULT_TIMETABLE[selectedDay] || DEFAULT_TIMETABLE.Monday);
-            } else {
-              setSchedule(data as TimetableSlot[]);
             }
         } catch {
             setSchedule(DEFAULT_TIMETABLE[selectedDay] || DEFAULT_TIMETABLE.Monday);
         } finally {
             setLoading(false);
         }
-    }, [selectedDay, isParentView, isTeacherView]);
+    }, [selectedDay]);
 
     useEffect(() => { loadSchedule(); }, [loadSchedule]);
 

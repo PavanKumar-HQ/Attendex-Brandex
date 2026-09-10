@@ -295,8 +295,8 @@ export default function AttendancePage() {
     ? Math.round((presentCount / students.length) * 100) 
     : 100;
 
-  const currentClassName = classes.find(c => c.id === selectedClassId)?.name || "Select Class";
-  const currentSubjectName = filteredSubjects.find(s => s.id === selectedSubjectId)?.name || "Select Subject";
+  const currentClassName = classes.find((c: any) => c.id === selectedClassId)?.name || "Select Class";
+  const currentSubjectName = filteredSubjects.find((s: any) => s.id === selectedSubjectId)?.name || "Select Subject";
 
   return (
     <PageTransition>
@@ -328,7 +328,7 @@ export default function AttendancePage() {
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border-slate-200">
-                  {filteredClasses.map(cls => (
+                  {filteredClasses.map((cls: any) => (
                     <SelectItem key={cls.id} value={cls.id} className="text-xs font-medium">
                       {cls.name} ({cls.section || 'Sec A'})
                     </SelectItem>

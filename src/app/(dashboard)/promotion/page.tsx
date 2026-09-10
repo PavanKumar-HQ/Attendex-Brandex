@@ -41,16 +41,35 @@ export default function PromotionPage() {
     setSelectedClasses(next);
   };
 
-  const handlePromote = () => {
-    setIsPromoting(true);
-    setTimeout(() => {
-      setIsPromoting(false);
+  const handlePromote = async () => {
+    if (selectedClasses.size === 0) {
+      toast.error("Select at least one class to promote");
+      return;
+    }
+    try {
+      setIsPromoting(true);
+      const res = await fetch("/api/promotion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ class_ids: Array.from(selectedClasses) })
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error || "Promotion failed");
+
       setShowConfirm(false);
       setSelectedClasses(new Set());
       toast.success("Batch Promotion Successful!", {
-        description: "Year 2023 records archived. Students moved to Year 2024 classes."
+        description: json.message || "Classes and students advanced to next academic year."
       });
-    }, 2500);
+
+      // Reload updated classes
+      const updatedClasses = await academicService.getClasses();
+      setClasses(updatedClasses || []);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to promote batches");
+    } finally {
+      setIsPromoting(false);
+    }
   };
 
   return (
