@@ -4,20 +4,30 @@ import { z } from "zod";
 import { serverState } from "@/lib/server-state";
 
 const decideGatepassSchema = z.object({
-  gatepassId: z.string().min(1),
+  gatepassId: z.string().optional(),
+  id: z.string().optional(),
   decision: z.enum(["APPROVED", "REJECTED"]),
-  decidedBy: z.string().optional()
+  decidedBy: z.string().optional(),
+  notes: z.string().optional()
 });
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const validated = decideGatepassSchema.parse(body);
+    const targetId = validated.gatepassId || validated.id;
+
+    if (!targetId) {
+      return NextResponse.json(
+        { success: false, message: "gatepassId or id is required." },
+        { status: 400 }
+      );
+    }
 
     const reviewerId = "00000000-0000-0000-0000-000000000003";
 
     // 1. Update in-memory server state
-    serverState.updateGatepass(validated.gatepassId, {
+    serverState.updateGatepass(targetId, {
       status: validated.decision,
       reviewedBy: validated.decidedBy || "Dr. S. Kulkarni (Warden)"
     });
@@ -30,14 +40,14 @@ export async function POST(req: NextRequest) {
           status: validated.decision,
           approved_by: reviewerId
         })
-        .eq("id", validated.gatepassId);
+        .eq("id", targetId);
 
       await supabase.from("audit_logs").insert({
         institution_id: "00000000-0000-0000-0000-000000000001",
         actor_id: reviewerId,
         action: `GATEPASS_${validated.decision}`,
         entity_type: "gatepasses",
-        entity_id: validated.gatepassId,
+        entity_id: targetId,
         metadata: {
           decision: validated.decision
         }

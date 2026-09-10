@@ -12,11 +12,15 @@ export async function GET(req: NextRequest) {
     const subjectId = searchParams.get("subject_id");
 
     const students = serverState.getStudents();
+    const classes = serverState.getClasses();
+    const matchedClass = classes.find(c => c.id === classId || c.section === classId);
+    const targetSection = matchedClass ? matchedClass.section : classId;
+
     const storedMarks = serverState.getMarks(classId || undefined, subjectId || undefined);
 
     // Map stored marks or default realistic assessment scores for students in this class
     const targetStudents = classId
-      ? students.filter(s => s.class_name.includes(classId) || s.section === classId)
+      ? students.filter(s => s.section === targetSection || s.class_name.includes(targetSection || "") || s.class_name.includes(classId))
       : students;
 
     const result = targetStudents.map(s => {

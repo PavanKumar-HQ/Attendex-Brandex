@@ -17,10 +17,9 @@ export async function GET(req: NextRequest) {
     }
 
     const students = serverState.getStudents();
-    const student = students.find(s =>
-      (roll && (s.roll_number.toLowerCase() === roll.toLowerCase() || s.id === roll)) ||
-      s.roll_number === "CS-11"
-    ) || students[0] || resolveActiveStudent();
+    const student = roll
+      ? students.find(s => s.roll_number.toLowerCase() === roll.toLowerCase() || s.id === roll) || students[0]
+      : students.find(s => s.roll_number === "CS-11") || students[0] || resolveActiveStudent();
 
     // Calculate real fees
     const fees = [
