@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { cacheManager } from "@/lib/cache-manager";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
 
@@ -67,6 +68,8 @@ export async function POST(req: NextRequest) {
         students_scored: validated.records.length
       }
     });
+
+    cacheManager.invalidateTags(["marks", "ward"]);
 
     return NextResponse.json({
       success: true,

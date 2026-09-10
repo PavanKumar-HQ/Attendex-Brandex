@@ -1,13 +1,14 @@
 {
+  "id": "/",
   "name": "Attendex | Institutional Academic Cloud",
   "short_name": "Attendex",
   "description": "Enterprise institutional command center for high-performance academic tracking, gatepass control, and student telemetry.",
-  "start_url": "/login",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#0f172a",
-  "theme_color": "#0f172a",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
   "categories": [
     "education",
     "productivity",

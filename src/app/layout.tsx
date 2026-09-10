@@ -3,7 +3,8 @@ import { Suspense } from "react";
 import { Outfit } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
-import { IosInstallPrompt } from "@/components/layout/ios-install-prompt";
+import { UniversalPwaInstallPrompt } from "@/components/layout/universal-pwa-install-prompt";
+import { NetworkStatusBadge } from "@/components/ui/network-status-badge";
 import { Providers } from "@/components/providers";
 import { AppLoader } from "@/components/ui/app-loader";
 import { BrandexSplash } from "@/components/ui/brandex-splash";
@@ -54,6 +55,7 @@ export default function RootLayout({
     <html lang="en" className="h-full bg-slate-50 antialiased overflow-x-hidden">
       <body className={`${outfit.className} min-h-full flex flex-col text-slate-900 pb-16 md:pb-0 overflow-x-hidden w-full max-w-full`}>
         <BrandexSplash />
+        <NetworkStatusBadge />
         <Suspense fallback={null}>
           <AppLoader />
         </Suspense>
@@ -62,7 +64,7 @@ export default function RootLayout({
         </Providers>
         <MobileBottomNav />
         <Toaster />
-        <IosInstallPrompt />
+        <UniversalPwaInstallPrompt />
       </body>
     </html>
   );

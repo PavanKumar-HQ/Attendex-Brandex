@@ -30,24 +30,38 @@ const MASTER_TIMETABLE: Record<string, any[]> = {
   ]
 };
 
+import { cacheManager } from "@/lib/cache-manager";
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const day = searchParams.get("day");
+    const day = searchParams.get("day") || "all";
+    const cacheKey = `api:timetable:${day}`;
 
-    if (day && MASTER_TIMETABLE[day]) {
-      return NextResponse.json({
-        success: true,
-        data: MASTER_TIMETABLE[day]
-      });
-    }
+    const { data, isCached, ageSeconds } = await cacheManager.getOrSet(
+      cacheKey,
+      async () => {
+        if (day !== "all" && MASTER_TIMETABLE[day]) {
+          return {
+            success: true,
+            data: MASTER_TIMETABLE[day]
+          };
+        }
 
-    return NextResponse.json({
-      success: true,
-      data: MASTER_TIMETABLE
-    }, {
+        return {
+          success: true,
+          data: MASTER_TIMETABLE
+        };
+      },
+      300, // 5 minutes TTL
+      ["timetable"]
+    );
+
+    return NextResponse.json(data, {
       headers: {
-        "Cache-Control": "no-store, no-cache, must-revalidate"
+        "X-Cache": isCached ? "HIT" : "MISS",
+        "X-Cache-Age": `${ageSeconds}s`,
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600"
       }
     });
   } catch (error: any) {

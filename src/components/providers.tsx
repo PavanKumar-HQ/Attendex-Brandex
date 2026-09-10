@@ -9,14 +9,17 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 60 * 1000,
+        staleTime: 5 * 60 * 1000, // 5 minutes cache freshness for instant loads
+        gcTime: 24 * 60 * 60 * 1000, // 24 hours garbage collection retention
         refetchOnWindowFocus: false,
+        refetchOnReconnect: true,
+        retry: 2,
       },
     },
   }));
 
   useEffect(() => {
-    if (typeof window !== "undefined" && "serviceWorker" in navigator && process.env.NODE_ENV === "production") {
+    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
       navigator.serviceWorker
         .register("/sw.js")
         .then((reg) => {
@@ -32,8 +35,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
             }
           };
         })
-        .catch(() => {
-          // Fail gracefully if service workers are disabled
+        .catch((err) => {
+          console.warn("[PWA] Service worker registration notice:", err);
         });
     }
   }, []);

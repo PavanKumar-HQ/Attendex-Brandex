@@ -1,30 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
 import { serverState } from "@/lib/server-state";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { cacheManager } from "@/lib/cache-manager";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export async function GET(req: NextRequest) {
   try {
-    const classes = serverState.getClasses();
-    const students = serverState.getStudents();
+    const { data, isCached, ageSeconds } = await cacheManager.getOrSet(
+      "api:classes",
+      async () => {
+        const classes = serverState.getClasses();
+        const students = serverState.getStudents();
 
-    // Dynamically update student count
-    const enriched = classes.map(c => {
-      const count = students.filter(s => s.class_name.includes(c.section) || s.section === c.section).length;
-      return {
-        ...c,
-        student_count: count > 0 ? count : c.student_count || 8
-      };
-    });
+        // Dynamically update student count
+        const enriched = classes.map(c => {
+          const count = students.filter(s => s.class_name.includes(c.section) || s.section === c.section).length;
+          return {
+            ...c,
+            student_count: count > 0 ? count : c.student_count || 8
+          };
+        });
 
-    return NextResponse.json({
-      success: true,
-      data: enriched
-    }, {
+        return {
+          success: true,
+          data: enriched
+        };
+      },
+      120, // 2 minutes TTL
+      ["classes"]
+    );
+
+    return NextResponse.json(data, {
       headers: {
-        "Cache-Control": "no-store, no-cache, must-revalidate"
+        "X-Cache": isCached ? "HIT" : "MISS",
+        "X-Cache-Age": `${ageSeconds}s`,
+        "Cache-Control": "public, s-maxage=120, stale-while-revalidate=180"
       }
     });
   } catch (error: any) {
@@ -52,6 +64,7 @@ export async function POST(req: NextRequest) {
     };
 
     serverState.addClass(newClass);
+    cacheManager.invalidateTags(["classes"]);
 
     serverState.addAuditLog({
       id: `aud-${Date.now()}`,

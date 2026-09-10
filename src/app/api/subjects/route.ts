@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { serverState } from "@/lib/server-state";
+import { cacheManager } from "@/lib/cache-manager";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -9,22 +10,34 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const department = searchParams.get("department");
     const semester = searchParams.get("semester");
+    const cacheKey = `api:subjects:${department || "all"}:${semester || "all"}`;
 
-    let subjects = serverState.getSubjects();
+    const { data, isCached, ageSeconds } = await cacheManager.getOrSet(
+      cacheKey,
+      async () => {
+        let subjects = serverState.getSubjects();
 
-    if (department && department !== "all") {
-      subjects = subjects.filter(s => s.department === department);
-    }
-    if (semester && semester !== "all") {
-      subjects = subjects.filter(s => s.semester === Number(semester));
-    }
+        if (department && department !== "all") {
+          subjects = subjects.filter(s => s.department === department);
+        }
+        if (semester && semester !== "all") {
+          subjects = subjects.filter(s => s.semester === Number(semester));
+        }
 
-    return NextResponse.json({
-      success: true,
-      data: subjects
-    }, {
+        return {
+          success: true,
+          data: subjects
+        };
+      },
+      300, // 5 minutes TTL
+      ["subjects"]
+    );
+
+    return NextResponse.json(data, {
       headers: {
-        "Cache-Control": "no-store, no-cache, must-revalidate"
+        "X-Cache": isCached ? "HIT" : "MISS",
+        "X-Cache-Age": `${ageSeconds}s`,
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600"
       }
     });
   } catch (error: any) {
@@ -51,6 +64,7 @@ export async function POST(req: NextRequest) {
     };
 
     serverState.addSubject(newSubject);
+    cacheManager.invalidateTags(["subjects"]);
 
     serverState.addAuditLog({
       id: `aud-${Date.now()}`,
@@ -76,6 +90,7 @@ export async function PUT(req: NextRequest) {
     }
 
     serverState.updateSubject(body.id, body);
+    cacheManager.invalidateTags(["subjects"]);
 
     serverState.addAuditLog({
       id: `aud-${Date.now()}`,

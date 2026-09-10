@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { serverState } from "@/lib/server-state";
+import { cacheManager } from "@/lib/cache-manager";
 import { randomUUID } from "node:crypto";
 
 export const dynamic = "force-dynamic";
@@ -105,6 +106,9 @@ export async function POST(req: NextRequest) {
 
     const presentCount = records.filter(r => r.status === "PRESENT" || r.status === "ON_DUTY").length;
     const rate = Math.round((presentCount / records.length) * 100);
+
+    // Invalidate stale telemetry and ward caches
+    cacheManager.invalidateTags(["pulse", "attendance", "ward"]);
 
     return NextResponse.json({
       success: true,
