@@ -17,9 +17,19 @@ export async function GET(req: NextRequest) {
     }
 
     const students = serverState.getStudents();
-    const student = roll
-      ? students.find(s => s.roll_number.toLowerCase() === roll.toLowerCase() || s.id === roll) || students[0]
-      : students.find(s => s.roll_number === "CS-11") || students[0] || resolveActiveStudent();
+    let student: any = null;
+
+    if (roll) {
+      student = students.find(s => s.roll_number.toLowerCase() === roll!.toLowerCase() || s.id === roll);
+      if (!student) {
+        return NextResponse.json({
+          success: false,
+          error: `Ward record not found for student identifier: "${roll}".`
+        }, { status: 404 });
+      }
+    } else {
+      student = students.find(s => s.roll_number === "CS-11") || students[0] || resolveActiveStudent();
+    }
 
     // Calculate real fees
     const fees = [

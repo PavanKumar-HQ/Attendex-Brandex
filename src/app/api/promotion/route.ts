@@ -21,27 +21,42 @@ export async function POST(req: NextRequest) {
     for (const classId of class_ids) {
       const cls = allClasses.find(c => c.id === classId);
       if (cls) {
-        const nextYear = cls.year + 1;
-        const nextSem = cls.semester + 2;
-        const nextAcademicYear = `${2026 + cls.year - 1}-${2027 + cls.year - 1}`;
+        if (cls.year >= 4) {
+          // Final-year graduating cohort
+          serverState.updateClass(classId, {
+            academic_year: `${2026 + cls.year - 1}-${2027 + cls.year - 1}`
+          });
+          promotedClassCount++;
 
-        serverState.updateClass(classId, {
-          year: nextYear,
-          semester: nextSem,
-          academic_year: nextAcademicYear
-        });
-        promotedClassCount++;
+          for (const st of allStudents) {
+            if (st.class_name.includes(cls.section) || st.section === cls.section) {
+              promotedStudentCount++;
+            }
+          }
+        } else {
+          const nextYear = cls.year + 1;
+          const nextSem = cls.semester + 2;
+          const nextAcademicYear = `${2026 + cls.year - 1}-${2027 + cls.year - 1}`;
 
-        // Advance all students in this class
-        for (const st of allStudents) {
-          if (st.class_name.includes(cls.section) || st.section === cls.section) {
-            serverState.updateStudent(st.id, {
-              year: nextYear,
-              semester: nextSem,
-              total_sessions: 0,
-              attended_sessions: 0
-            });
-            promotedStudentCount++;
+          serverState.updateClass(classId, {
+            year: nextYear,
+            semester: nextSem,
+            academic_year: nextAcademicYear
+          });
+          promotedClassCount++;
+
+          // Advance all students in this class and initialize clean standing for new semester
+          for (const st of allStudents) {
+            if (st.class_name.includes(cls.section) || st.section === cls.section) {
+              serverState.updateStudent(st.id, {
+                year: nextYear,
+                semester: nextSem,
+                total_sessions: 0,
+                attended_sessions: 0,
+                attendance_percentage: 100.0
+              });
+              promotedStudentCount++;
+            }
           }
         }
       }

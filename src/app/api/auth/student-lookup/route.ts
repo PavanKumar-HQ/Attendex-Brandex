@@ -6,13 +6,13 @@ export async function GET(req: NextRequest) {
   const query = searchParams.get("q")?.trim().toLowerCase();
 
   if (!query) {
-    // Return student list summary with masked DOB hints for credential recovery
+    // Return student list summary with safe format guide (no raw credential leakage)
     const directory = INSTITUTIONAL_STUDENTS.map(s => ({
       roll_number: s.roll_number,
       register_number: s.register_number,
       name: s.name,
       class_name: s.class_name,
-      dob_hint: `${s.formatted_dob.substring(0, 6)}**** (DDMMYYYY format)`
+      dob_hint: "DDMMYYYY format (e.g. DDMMYYYY of your birth date)"
     }));
     return NextResponse.json({ success: true, count: directory.length, directory });
   }
@@ -26,8 +26,7 @@ export async function GET(req: NextRequest) {
     register_number: s.register_number,
     name: s.name,
     class_name: s.class_name,
-    dob_hint: s.formatted_dob,
-    password_format: `Enter ${s.dob} (DDMMYYYY)`
+    dob_hint: "DDMMYYYY format (Enter your Date of Birth without slashes or spaces)"
   }));
 
   return NextResponse.json({ success: true, count: matched.length, results: matched });

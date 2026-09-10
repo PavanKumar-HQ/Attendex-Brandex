@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
     try {
       await supabase.from("audit_logs").insert({
         institution_id: "00000000-0000-0000-0000-000000000001",
-        actor_id: "00000000-0000-0000-0000-000000000005",
+        actor_id: "aa000000-0000-0000-0000-000000000005",
         action: "PROCTOR_CONSULTATION_REQUESTED",
         entity_type: "proctor_meetings",
         entity_id: requestId,

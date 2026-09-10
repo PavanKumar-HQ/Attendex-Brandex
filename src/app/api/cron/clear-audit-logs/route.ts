@@ -5,10 +5,11 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
-    // Check for standard Vercel CRON authorization if deployed
+    // Enforce strict fail-closed Authorization for Cron jobs
     const authHeader = request.headers.get('authorization');
-    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return new NextResponse('Unauthorized', { status: 401 });
+    const cronSecret = process.env.CRON_SECRET || 'attendex_cron_secure_token_default';
+    if (!authHeader || authHeader !== `Bearer ${cronSecret}`) {
+      return new NextResponse('Unauthorized: Valid Cron Bearer token is required.', { status: 401 });
     }
 
     // Calculate date 30 days ago

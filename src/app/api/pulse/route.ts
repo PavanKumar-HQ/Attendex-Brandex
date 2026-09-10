@@ -71,13 +71,31 @@ export async function GET(req: NextRequest) {
       }))
     ];
 
+    // Calculate actual absentees recorded in sessions
+    const today = new Date().toISOString().split("T")[0];
+    const sessions = serverState.getAttendanceSessions();
+    const todaySessions = sessions.filter(s => s.date === today);
+    let absenteesToday = 0;
+    if (todaySessions.length > 0) {
+      const absentStudentIds = new Set<string>();
+      for (const sess of todaySessions) {
+        for (const rec of sess.records) {
+          if (rec.status === "ABSENT") absentStudentIds.add(rec.student_id);
+        }
+      }
+      absenteesToday = absentStudentIds.size;
+    } else if (sessions.length > 0) {
+      const latestSession = sessions[sessions.length - 1];
+      absenteesToday = latestSession.records.filter(r => r.status === "ABSENT").length;
+    }
+
     return NextResponse.json({
       success: true,
       totalStudents,
       totalClasses,
       overallAttendance,
       attendanceRate: overallAttendance,
-      absenteesToday: shortageCount,
+      absenteesToday,
       shortageAlerts: shortageCount,
       weeklyTrend,
       recentActivity,

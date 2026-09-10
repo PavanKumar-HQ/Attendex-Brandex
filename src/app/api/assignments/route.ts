@@ -55,6 +55,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Assignment ID and submission URL required" }, { status: 400 });
     }
 
+    const assignments = serverState.getAssignments();
+    const matchedAssignment = assignments.find(a => a.id === assignment_id);
+    if (!matchedAssignment) {
+      return NextResponse.json({
+        success: false,
+        error: `Assignment with ID "${assignment_id}" not found.`
+      }, { status: 404 });
+    }
+
     const now = new Date();
     const timestamp = `${now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} • ${now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}`;
 
