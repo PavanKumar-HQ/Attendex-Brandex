@@ -96,20 +96,20 @@ export default function ParentNotificationsPage() {
         <PageTransition>
             <div className="flex flex-col min-h-full pb-20 pt-8 max-w-4xl mx-auto space-y-8 px-4 md:px-0">
 
-                <header className="flex items-center justify-between">
-                    <div className="flex items-center gap-3.5">
-                        <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shadow-sm">
-                            <Bell className="w-6 h-6" />
+                <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3.5 min-w-0">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shadow-xs shrink-0">
+                            <Bell className="w-5 h-5 sm:w-6 sm:h-6" />
                         </div>
-                        <div>
-                            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Family Notifications &amp; Alerts</h1>
-                            <p className="text-slate-500 font-medium text-xs mt-0.5">Official communication from Attendex Academic Office</p>
+                        <div className="min-w-0">
+                            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight truncate">Family Alerts</h1>
+                            <p className="text-slate-500 font-medium text-xs mt-0.5 truncate">Official communication from Academic Office</p>
                         </div>
                     </div>
                     <Button 
                       variant="ghost" 
                       onClick={markAllAsRead}
-                      className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50 h-8 rounded-lg"
+                      className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50 h-8 rounded-lg self-start sm:self-auto"
                     >
                         Mark all as read
                     </Button>

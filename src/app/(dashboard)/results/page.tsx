@@ -212,7 +212,7 @@ export default function ResultsPage() {
   return (
     <PageTransition>
       <div className="flex flex-col min-h-full space-y-6">
-        <Header title="Academic Merit & Examination Ledger" />
+        <Header title="Examination Ledger" />
         
         <div className="space-y-6">
           {/* Institutional Metric Stats Grid */}

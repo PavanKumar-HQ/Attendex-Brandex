@@ -303,9 +303,9 @@ export default function AttendancePage() {
       <div className="space-y-6">
         <Header 
           title={
-            <div className="flex items-center gap-2">
-              <span>Classroom Roll-Call Execution</span>
-              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 min-w-0">
+              <span className="text-slate-900 font-bold text-base sm:text-lg md:text-xl tracking-tight">Roll-Call Execution</span>
+              <span className="text-[11px] sm:text-xs font-semibold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 truncate max-w-[160px] sm:max-w-none">
                 {currentClassName}
               </span>
             </div>

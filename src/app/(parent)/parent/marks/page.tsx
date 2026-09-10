@@ -137,11 +137,11 @@ export default function ParentMarksPage() {
 
   return (
     <PageTransition>
-      <div className="flex flex-col min-h-full pb-20 pt-8 max-w-5xl mx-auto space-y-10">
+      <div className="flex flex-col min-h-full pb-20 pt-8 max-w-5xl mx-auto space-y-10 px-4 md:px-0">
         
         <header className="flex items-center justify-between">
             <div>
-                <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Academic Progress Report</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Academic Progress Report</h1>
                 <p className="text-slate-500 font-semibold uppercase tracking-wider text-[10px] mt-1">Real-time evaluation ledger for {student?.name || "Your Ward"}</p>
             </div>
             <button 
@@ -162,17 +162,16 @@ export default function ParentMarksPage() {
             <div className="space-y-8">
         {/* Intelligence Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="p-6 md:p-8 border-none bg-slate-900 rounded-2xl text-white shadow-xl relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16" />
-                <Award className="w-9 h-9 text-indigo-400 mb-4" />
+            <Card className="p-6 md:p-8 border border-slate-200 bg-white rounded-2xl text-slate-900 shadow-sm relative overflow-hidden group">
+                <Award className="w-9 h-9 text-blue-600 mb-4" />
                 <h3 className="text-lg font-bold mb-2">Internal Assessment Summary</h3>
-                <p className="text-slate-300 text-xs font-medium leading-relaxed">
+                <p className="text-slate-600 text-xs font-medium leading-relaxed">
                     {student?.name?.split(' ')[0]} has secured an aggregate internal rating of <strong>{(summary as any)?.cgpa || "0.0"}</strong>. 
                     {Number((summary as any)?.cgpa || 0) > 8 ? " This is significantly higher than the class median." : " Focus on consistent attendance to improve performance."}
                 </p>
-                <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between">
+                <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Predicted Semester GPA</span>
-                    <span className="text-2xl font-bold text-emerald-400">{(Number((summary as any)?.cgpa || 8.4) * 0.95).toFixed(2)}</span>
+                    <span className="text-2xl font-bold text-emerald-600">{(Number((summary as any)?.cgpa || 8.4) * 0.95).toFixed(2)}</span>
                 </div>
             </Card>
 

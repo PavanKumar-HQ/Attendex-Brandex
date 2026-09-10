@@ -120,7 +120,7 @@ export default function NotificationsPage() {
   return (
     <PageTransition>
       <div className="flex flex-col min-h-full space-y-6">
-        <Header title="Institutional Notifications & Broadcast Hub" />
+        <Header title="Notifications Hub" />
         
         <div className="space-y-6">
           {/* Institutional Broadcaster */}

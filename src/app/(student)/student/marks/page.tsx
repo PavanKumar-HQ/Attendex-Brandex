@@ -176,12 +176,11 @@ export default function StudentMarksPage() {
             <div className="space-y-10">
         {/* GPA Summary */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="p-6 rounded-xl bg-slate-900 border-none text-white shadow-xl relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -mr-12 -mt-12" />
+            <Card className="p-6 rounded-xl bg-white border border-slate-200 text-slate-900 shadow-sm relative overflow-hidden group">
                 <div className="relative z-10">
-                    <Award className="w-8 h-8 text-yellow-400 mb-4" />
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Internal CGPA</p>
-                    <h2 className="text-4xl font-bold">{(summary as any)?.cgpa || "0.0"}</h2>
+                    <Award className="w-8 h-8 text-amber-500 mb-4" />
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Internal CGPA</p>
+                    <h2 className="text-4xl font-bold text-slate-900">{(summary as any)?.cgpa || "0.0"}</h2>
                 </div>
             </Card>
             <StatusStat label="Total Credits" value={(summary as any)?.credits || "0 / 24"} icon={BookOpen} color="blue" />

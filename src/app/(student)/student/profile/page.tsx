@@ -1,5 +1,6 @@
 "use client";
 
+import { Header } from "@/components/layout/header";
 import { PageTransition } from "@/components/ui/page-transition";
 import { Card } from "@/components/ui/card";
 import { 
@@ -56,7 +57,7 @@ export default function StudentProfilePage() {
   return (
     <PageTransition>
       <div className="flex flex-col min-h-full pb-20 pt-8 max-w-5xl mx-auto space-y-8 px-4 md:px-0">
-        
+        <Header title="My Profile" showBack />
         {/* Profile Header */}
         <section className="flex flex-col sm:flex-row items-center gap-6 p-6 rounded-2xl bg-white border border-slate-200 shadow-sm">
             <div className="relative group">

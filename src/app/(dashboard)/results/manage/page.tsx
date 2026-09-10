@@ -129,17 +129,17 @@ export default function MarksManagementPage() {
   return (
     <PageTransition>
       <div className="flex flex-col min-h-full space-y-6">
-        <Header title="Continuous Internal Assessment (CIA) Evaluation Ledger" showBack />
+        <Header title="CIA Evaluation Ledger" showBack />
         
         <div className="space-y-6">
           {/* Top Controls Toolbar */}
-          <Card className="p-4 border-slate-200 bg-white shadow-sm rounded-xl">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-2 border border-slate-200 rounded-lg px-3 h-10 bg-slate-50">
-                  <GraduationCap className="w-4 h-4 text-slate-500" />
+          <Card className="p-4 border-slate-200 bg-white shadow-2xs rounded-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2.5 flex-1 min-w-0">
+                <div className="flex items-center gap-2 border border-slate-200 rounded-lg px-2.5 h-10 bg-slate-50 flex-1 sm:flex-initial">
+                  <GraduationCap className="w-4 h-4 text-slate-500 shrink-0" />
                   <select 
-                    className="bg-transparent border-none text-slate-900 font-semibold text-xs focus:ring-0 cursor-pointer outline-none"
+                    className="bg-transparent border-none text-slate-900 font-semibold text-xs focus:ring-0 cursor-pointer outline-none w-full"
                     value={selectedClass}
                     onChange={(e) => setSelectedClass(e.target.value)}
                   >
@@ -147,10 +147,10 @@ export default function MarksManagementPage() {
                   </select>
                 </div>
 
-                <div className="flex items-center gap-2 border border-slate-200 rounded-lg px-3 h-10 bg-slate-50">
-                  <BookOpen className="w-4 h-4 text-slate-500" />
+                <div className="flex items-center gap-2 border border-slate-200 rounded-lg px-2.5 h-10 bg-slate-50 flex-1 sm:flex-initial">
+                  <BookOpen className="w-4 h-4 text-slate-500 shrink-0" />
                   <select 
-                    className="bg-transparent border-none text-slate-900 font-semibold text-xs focus:ring-0 cursor-pointer outline-none"
+                    className="bg-transparent border-none text-slate-900 font-semibold text-xs focus:ring-0 cursor-pointer outline-none w-full"
                     value={selectedSubject}
                     onChange={(e) => setSelectedSubject(e.target.value)}
                   >
@@ -158,13 +158,13 @@ export default function MarksManagementPage() {
                   </select>
                 </div>
 
-                <div className="relative">
+                <div className="relative flex-1 min-w-[140px]">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                   <Input 
                     placeholder="Search student..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="pl-8 h-10 rounded-lg border-slate-200 bg-slate-50 text-xs w-48 font-medium"
+                    className="pl-8 h-10 rounded-lg border-slate-200 bg-slate-50 text-xs w-full font-medium"
                   />
                 </div>
               </div>
@@ -173,7 +173,7 @@ export default function MarksManagementPage() {
                 disabled={students.length === 0 || saving}
                 onClick={saveMarks}
                 size="sm"
-                className="h-10 px-5 rounded-lg bg-slate-900 text-white font-semibold text-xs hover:bg-slate-800 shadow-sm gap-2"
+                className="h-10 px-5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-xs shrink-0 w-full sm:w-auto"
               >
                 {saving ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 {saving ? "Saving..." : "Save Evaluation"}

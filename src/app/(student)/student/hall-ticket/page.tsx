@@ -117,7 +117,7 @@ export default function StudentHallTicketPage() {
   return (
     <PageTransition>
       <div className="flex flex-col min-h-screen w-full bg-slate-50">
-        <Header title="Semester Hall Ticket &amp; Entry Pass" showBack />
+        <Header title="Exam Hall Ticket" showBack />
 
         <div className="flex-1 w-full max-w-5xl mx-auto px-4 md:px-6 py-6 md:py-8 space-y-6">
           {/* Admit Pass Card */}

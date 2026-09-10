@@ -250,21 +250,21 @@ export default function StudentsPage() {
         <Header title="Institutional Roster" />
 
           {/* Clean Action & Search Toolbar */}
-          <Card className="p-3 border-slate-200 bg-white shadow-sm rounded-xl">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-              <div className="relative flex-1 max-w-md">
+          <Card className="p-3 border-slate-200 bg-white shadow-2xs rounded-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="relative flex-1 w-full max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
                   placeholder="Search by student name, roll number, or email..."
-                  className="pl-9 h-10 rounded-lg border-slate-200 bg-slate-50 text-slate-900 text-xs focus-visible:ring-slate-900"
+                  className="pl-9 h-10 w-full rounded-lg border-slate-200 bg-slate-50 text-slate-900 text-xs focus-visible:ring-slate-900"
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                 />
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                 <Select value={selectedSection} onValueChange={(v) => v && setSelectedSection(v)}>
-                  <SelectTrigger className="w-[120px] h-10 border-slate-200 bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg">
+                  <SelectTrigger className="flex-1 sm:w-[120px] h-10 border-slate-200 bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg shrink-0">
                     <SelectValue placeholder="Section" />
                   </SelectTrigger>
                   <SelectContent className="rounded-lg border-slate-200">

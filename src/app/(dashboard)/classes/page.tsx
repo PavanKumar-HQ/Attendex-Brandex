@@ -300,17 +300,17 @@ export default function ClassesPage() {
                     <p className="text-xs text-slate-500 font-medium">Manage departmental batches, courses, and student allocations</p>
                 </div>
                 
-                <div className="flex items-center gap-3">
-                    <div className="relative">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
+                    <div className="relative flex-1 sm:w-[260px]">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                         <Input 
                             placeholder="Filter classes..." 
-                            className="pl-9 w-full sm:w-[260px] border-slate-200 shadow-sm rounded-lg h-10 bg-white text-xs font-medium"
+                            className="pl-9 w-full border-slate-200 shadow-2xs rounded-lg h-10 bg-white text-xs font-medium"
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                         />
                     </div>
-                    <Button onClick={() => setIsAddOpen(true)} size="sm" className="h-10 px-4 rounded-lg bg-slate-900 text-white font-semibold text-xs shadow-sm">
+                    <Button onClick={() => setIsAddOpen(true)} size="sm" className="h-10 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs shrink-0 flex items-center justify-center">
                         <Plus className="w-4 h-4 mr-1.5" /> New Class
                     </Button>
                 </div>

@@ -198,7 +198,7 @@ export default function StudentGatepassPage() {
   return (
     <PageTransition>
       <div className="flex flex-col min-h-screen w-full bg-slate-50">
-        <Header title="Campus Digital Gatepass & Outpass" showBack />
+        <Header title="Digital Gatepass" showBack />
 
         <div className="flex-1 w-full max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-8 space-y-6">
           {/* Header Card */}

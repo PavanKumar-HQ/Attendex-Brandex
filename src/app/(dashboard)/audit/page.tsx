@@ -68,7 +68,7 @@ export default function ProxyAuditPage() {
   return (
     <PageTransition>
       <div className="flex flex-col min-h-full space-y-6">
-        <Header title="Attendance Verification & Pattern Audit" />
+        <Header title="Audit & Verification" />
         
         <div className="space-y-6">
           {/* Institutional Advisory */}

@@ -132,29 +132,31 @@ export default function SubjectsPage() {
       <div className="flex flex-col h-[calc(100vh-4rem)]">
         <Header
           title={
-            <div className="flex items-center gap-2">
-              <span className="text-slate-900 font-bold text-xl tracking-tight">Subject Registry</span>
-              <div className="w-1.5 h-1.5 rounded-full bg-slate-300 mx-2" />
-              <span className="text-slate-500 text-sm font-medium">{subjects.length} Blueprints</span>
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 min-w-0">
+              <span className="text-slate-900 font-bold text-base sm:text-lg md:text-xl tracking-tight">Subject Registry</span>
+              <div className="hidden sm:block w-1.5 h-1.5 rounded-full bg-slate-300 mx-1" />
+              <span className="px-2 py-0.5 rounded text-[11px] sm:text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                {subjects.length} Blueprints
+              </span>
             </div>
           }
         />
 
-        <div className="flex-1 overflow-hidden flex flex-col pt-6 pb-24 px-4 md:px-0">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-4 pb-6">
-            <div className="flex items-center gap-3 w-full lg:w-auto">
-              <div className="relative flex-1 lg:w-80">
+        <div className="flex-1 overflow-hidden flex flex-col pt-4 sm:pt-6 pb-24 px-1 sm:px-4 md:px-0">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pb-6 w-full">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-1 min-w-0">
+              <div className="relative flex-1 min-w-0">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
                   placeholder="Search code or name..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-10 h-10 bg-white border-slate-200 rounded-lg shadow-sm font-medium text-sm"
+                  className="pl-9 h-10 w-full bg-white border-slate-200 rounded-lg shadow-2xs font-medium text-xs sm:text-sm"
                 />
               </div>
               
               <Select value={selectedDept} onValueChange={(v) => v && setSelectedDept(v)}>
-                <SelectTrigger className="w-[180px] h-10 bg-white border-slate-200 rounded-lg shadow-sm font-medium text-sm">
+                <SelectTrigger className="w-full sm:w-[170px] h-10 bg-white border-slate-200 rounded-lg shadow-2xs font-medium text-xs sm:text-sm shrink-0">
                   <SelectValue placeholder="Department" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
@@ -168,9 +170,9 @@ export default function SubjectsPage() {
               </Select>
             </div>
 
-            <Button onClick={() => setIsAddOpen(true)} className="h-10 px-5 rounded-lg bg-slate-900 text-white font-semibold text-sm hover:bg-slate-800 transition-all flex items-center gap-2 shadow-sm">
+            <Button onClick={() => setIsAddOpen(true)} className="h-10 px-4 sm:px-5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-xs shrink-0">
               <Plus className="w-4 h-4" />
-              New Subject
+              <span>New Subject</span>
             </Button>
           </div>
 

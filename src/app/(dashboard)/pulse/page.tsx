@@ -61,7 +61,7 @@ export default function PulsePage() {
   return (
     <PageTransition>
       <div className="flex flex-col min-h-full space-y-6">
-        <Header title="Live Institutional Attendance & Telemetry" />
+        <Header title="Campus Telemetry" />
         
         {isLoading ? (
             <div className="flex-1 py-24 flex flex-col items-center justify-center">
@@ -72,14 +72,14 @@ export default function PulsePage() {
         <div className="space-y-6">
           {/* Executive Summary Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="p-5 bg-slate-900 border-slate-800 rounded-xl text-white shadow-sm flex flex-col justify-between space-y-4">
+            <Card className="p-5 bg-white border-slate-200/90 rounded-xl text-slate-900 shadow-2xs flex flex-col justify-between space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Campus Pulse</span>
-                <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+                <span className="text-xs font-semibold text-blue-700 uppercase tracking-wider bg-blue-50 px-2 py-0.5 rounded border border-blue-100">Campus Pulse</span>
+                <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
               </div>
               <div>
-                <h3 className="text-3xl font-bold tracking-tight text-white">{Math.round(aggregateAttendance)}%</h3>
-                <p className="text-xs text-slate-400 font-medium mt-1">Aggregate Daily Attendance</p>
+                <h3 className="text-3xl font-bold tracking-tight text-slate-900">{Math.round(aggregateAttendance)}%</h3>
+                <p className="text-xs text-slate-500 font-medium mt-1">Aggregate Daily Attendance</p>
               </div>
             </Card>
 

@@ -35,19 +35,19 @@ export function RoleSwitcher() {
     <Popover>
       <PopoverTrigger
         className={cn(
-          "flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-xs hover:shadow-sm cursor-pointer",
+          "flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl border text-xs font-bold transition-all shadow-2xs hover:shadow-xs cursor-pointer shrink-0",
           colors.bg,
           colors.text,
           colors.border
         )}
       >
-        <span className={cn("w-2 h-2 rounded-full", colors.badge)} />
-        <Icon className="w-3.5 h-3.5" />
-        <span className="hidden sm:inline font-bold">{currentUser.name}</span>
-        <span className="text-[10px] px-1.5 py-0.2 rounded bg-white/80 border border-current font-bold uppercase">
+        <span className={cn("w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full", colors.badge)} />
+        <Icon className="w-3.5 h-3.5 shrink-0" />
+        <span className="hidden sm:inline font-bold truncate max-w-[100px]">{currentUser.name}</span>
+        <span className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0.2 rounded bg-white/80 border border-current font-bold uppercase">
           {role}
         </span>
-        <ChevronDown className="w-3 h-3 opacity-60 ml-0.5" />
+        <ChevronDown className="w-3 h-3 opacity-60 ml-0.5 shrink-0" />
       </PopoverTrigger>
 
       <PopoverContent align="end" className="w-72 p-2 rounded-2xl shadow-xl border-slate-200 bg-white">

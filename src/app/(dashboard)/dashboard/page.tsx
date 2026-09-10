@@ -169,7 +169,7 @@ export default function DashboardPage() {
   return (
     <PageTransition>
       <div className="flex flex-col min-h-full space-y-6">
-        <Header title="Institutional Command Center" />
+        <Header title="Command Center" />
         
         <div className="space-y-6">
           {/* Top 3 Executive Metrics */}

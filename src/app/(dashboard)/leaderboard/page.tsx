@@ -94,7 +94,7 @@ export default function LeaderboardPage() {
   return (
     <PageTransition>
       <div className="flex flex-col min-h-full space-y-6">
-        <Header title="Academic Honors & Department Rankings" />
+        <Header title="Academic Honors" />
         
         <div className="space-y-6">
           {/* Top Control Bar */}

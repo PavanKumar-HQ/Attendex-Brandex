@@ -133,12 +133,12 @@ export default function PromotionPage() {
             </Card>
 
             <div className="space-y-6">
-               <Card className="p-6 border-slate-200 shadow-sm rounded-2xl bg-slate-900 text-white">
-                  <h4 className="font-bold mb-4 flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4 text-amber-500" />
+               <Card className="p-6 border-amber-200/80 shadow-xs rounded-2xl bg-amber-50/70 text-amber-950">
+                  <h4 className="font-bold mb-4 flex items-center gap-2 text-amber-900">
+                    <AlertTriangle className="w-4 h-4 text-amber-600" />
                     Crucial Notes
                   </h4>
-                  <ul className="text-xs space-y-3 text-slate-300">
+                  <ul className="text-xs space-y-3 text-amber-900/80 font-medium">
                     <li>• History will be archived. Attendance resets to 0% for the new year.</li>
                     <li>• Roll numbers remain unchanged.</li>
                     <li>• Graduation status will be applied to Final Year students.</li>

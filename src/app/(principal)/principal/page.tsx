@@ -98,7 +98,7 @@ export default function PrincipalDashboardPage() {
   return (
     <PageTransition>
       <div className="space-y-6">
-        <Header title="Principal Institutional Authority" />
+        <Header title="Executive Office" />
 
         {/* Executive 4-Metric Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

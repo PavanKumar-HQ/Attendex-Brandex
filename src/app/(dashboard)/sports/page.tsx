@@ -121,7 +121,7 @@ export default function SportsEntryPage() {
   return (
     <PageTransition>
       <div className="flex flex-col min-h-full space-y-6">
-        <Header title="Sports & Extra-Curricular Points Registry" />
+        <Header title="Sports & Extra-Curriculars" />
         
         <div className="space-y-6">
           <div className="flex flex-col lg:flex-row items-start gap-6">
