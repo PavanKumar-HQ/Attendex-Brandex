@@ -330,38 +330,20 @@ export function MobileAppShowcase() {
               )}
             </AnimatePresence>
 
-            {/* Live Database Pulse (Real Telemetry, No Mockups) */}
-            <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                  <Activity className="w-4 h-4 text-blue-600" />
-                  Live Campus Pulse
-                </span>
-                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                  REAL DATABASE METRICS
-                </span>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                  <div className="text-lg font-black text-slate-900">
-                    {pulse?.overallAttendance ?? 89.4}%
-                  </div>
-                  <span className="text-[10px] text-slate-500 font-medium">Campus Standing</span>
+            {/* Institutional Privacy & Protected Data Gate (Zero Data Visible Before Login) */}
+            <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-2.5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+                  <Lock className="w-4 h-4" />
                 </div>
-                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                  <div className="text-lg font-black text-blue-600">
-                    {pulse?.totalStudents ?? 16}
-                  </div>
-                  <span className="text-[10px] text-slate-500 font-medium">Active Students</span>
-                </div>
-                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                  <div className="text-lg font-black text-slate-900">
-                    {pulse?.totalClasses ?? 5}
-                  </div>
-                  <span className="text-[10px] text-slate-500 font-medium">Class Batches</span>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900">Institutional Privacy Shield</h4>
+                  <p className="text-[10px] text-slate-500 font-medium">Authentication required to view records</p>
                 </div>
               </div>
+              <p className="text-[11px] text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
+                In strict accordance with academic privacy protocols, all attendance figures, internal assessment marks, and class telemetries remain protected and invisible until verified login.
+              </p>
             </div>
 
             {/* Quick Institutional Modules (Link to login) */}

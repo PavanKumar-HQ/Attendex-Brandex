@@ -30,9 +30,18 @@ import { PoweredByBrandex } from "@/components/ui/powered-by-brandex";
 export default function LandingPage() {
   const [activeTab, setActiveTab] = useState<"faculty" | "student" | "parent">("faculty");
   const [mounted, setMounted] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
+    if (typeof document !== "undefined") {
+      const match = document.cookie.match(/attendex_demo_session=([^;]+)/);
+      if (match) {
+        setIsLoggedIn(true);
+        setUserRole(decodeURIComponent(match[1]).toLowerCase());
+      }
+    }
   }, []);
 
   return (
@@ -115,51 +124,59 @@ export default function LandingPage() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link 
-              href="/dashboard" 
-              onClick={() => { document.cookie = "attendex_demo_session=TEACHER; path=/; max-age=86400; SameSite=Lax"; }}
-              className="w-full sm:w-auto"
-            >
-              <Button size="lg" className="w-full sm:w-auto h-12 px-8 text-sm font-semibold bg-slate-900 hover:bg-slate-800 text-white rounded-lg shadow-sm flex items-center justify-center gap-2">
-                <span>Launch Faculty Dashboard</span>
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </Link>
-            <Link 
-              href="/student/dashboard" 
-              onClick={() => { document.cookie = "attendex_demo_session=STUDENT; path=/; max-age=86400; SameSite=Lax"; }}
-              className="w-full sm:w-auto"
-            >
-              <Button variant="outline" size="lg" className="w-full sm:w-auto h-12 px-8 text-sm font-semibold border-slate-300 text-slate-700 hover:bg-slate-100 rounded-lg">
-                View Student Portal
-              </Button>
-            </Link>
+            {isLoggedIn ? (
+              <Link 
+                href={userRole === "student" ? "/student/dashboard" : userRole === "parent" ? "/parent/dashboard" : userRole === "principal" ? "/principal" : "/dashboard"}
+                className="w-full sm:w-auto"
+              >
+                <Button size="lg" className="w-full sm:w-auto h-12 px-8 text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm flex items-center justify-center gap-2">
+                  <span>Continue to Your Dashboard</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Link href="/login" className="w-full sm:w-auto">
+                  <Button size="lg" className="w-full sm:w-auto h-12 px-8 text-sm font-semibold bg-slate-900 hover:bg-slate-800 text-white rounded-lg shadow-sm flex items-center justify-center gap-2">
+                    <span>Access Institutional Portal</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </Link>
+                <Link href="/login?role=student" className="w-full sm:w-auto">
+                  <Button variant="outline" size="lg" className="w-full sm:w-auto h-12 px-8 text-sm font-semibold border-slate-300 text-slate-700 hover:bg-slate-100 rounded-lg">
+                    Student Sign-In
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
 
-          {/* Quick Metrics Bar */}
+          {/* Quick Institutional Capabilities Bar (Zero Fake Data) */}
           <div className="mt-14 pt-10 border-t border-slate-200 grid grid-cols-2 md:grid-cols-4 gap-6 text-left">
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Attendance Rate</p>
-              <h3 className="text-2xl font-bold text-slate-900 mt-1">94.8%</h3>
-              <p className="text-xs text-emerald-600 font-medium mt-1 flex items-center gap-1">
-                <TrendingUp className="w-3.5 h-3.5" /> +2.4% this semester
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Classroom Roll-Call</p>
+              <h3 className="text-base font-bold text-slate-900 mt-1">Period 1–6 Marking</h3>
+              <p className="text-xs text-blue-600 font-medium mt-1 flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Biometric &amp; Web Sync
               </p>
             </div>
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Sync Speed</p>
-              <h3 className="text-2xl font-bold text-slate-900 mt-1">&lt; 300ms</h3>
-              <p className="text-xs text-slate-500 font-medium mt-1">Real-time DB updates</p>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Sync Latency</p>
+              <h3 className="text-base font-bold text-slate-900 mt-1">&lt; 300ms Real-Time</h3>
+              <p className="text-xs text-slate-500 font-medium mt-1">PostgreSQL replication</p>
             </div>
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Active Enrollment</p>
-              <h3 className="text-2xl font-bold text-slate-900 mt-1">12,400+</h3>
-              <p className="text-xs text-slate-500 font-medium mt-1">Verified student profiles</p>
-            </div>
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Parent Dispatch</p>
-              <h3 className="text-2xl font-bold text-slate-900 mt-1">99.9%</h3>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Shortage Prevention</p>
+              <h3 className="text-base font-bold text-slate-900 mt-1">75% Policy Engine</h3>
               <p className="text-xs text-emerald-600 font-medium mt-1 flex items-center gap-1">
-                <CheckCheck className="w-3.5 h-3.5" /> Automated notifications
+                <ShieldCheck className="w-3.5 h-3.5" /> Debarment avoidance
+              </p>
+            </div>
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Multi-Platform</p>
+              <h3 className="text-base font-bold text-slate-900 mt-1">Offline-Ready PWA</h3>
+              <p className="text-xs text-emerald-600 font-medium mt-1 flex items-center gap-1">
+                <CheckCheck className="w-3.5 h-3.5" /> iOS, Mac, Win &amp; Android
               </p>
             </div>
           </div>
@@ -224,11 +241,11 @@ export default function LandingPage() {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
                   <div>
                     <h3 className="text-lg font-bold text-slate-900">Faculty Command Center</h3>
-                    <p className="text-xs text-slate-500">Live attendance sessions, Continuous Internal Assessment & class rosters</p>
+                    <p className="text-xs text-slate-500">Classroom roll-call execution, Continuous Assessment (CIA) &amp; student registries</p>
                   </div>
-                  <Link href="/dashboard">
-                    <Button size="sm" className="bg-slate-900 text-white text-xs font-semibold rounded-lg">
-                      Open Live Faculty Dashboard →
+                  <Link href={isLoggedIn ? "/dashboard" : "/login?role=teacher"}>
+                    <Button size="sm" className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg">
+                      {isLoggedIn ? "Open Faculty Dashboard →" : "Sign In to Faculty Console →"}
                     </Button>
                   </Link>
                 </div>
@@ -236,58 +253,55 @@ export default function LandingPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-700">CS-302: Operating Systems</span>
-                      <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">
-                        Session Active
-                      </span>
-                    </div>
-                    <div className="flex items-end justify-between">
-                      <div>
-                        <p className="text-2xl font-bold text-slate-900">58 / 62</p>
-                        <p className="text-xs text-slate-500">Students Marked Present</p>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-xs font-bold text-emerald-600">93.5%</span>
-                      </div>
-                    </div>
-                    <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                      <div className="bg-blue-600 h-full rounded-full" style={{ width: "93.5%" }} />
-                    </div>
-                  </div>
-
-                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-700">CIA Marks Entry Status</span>
+                      <span className="text-xs font-bold text-slate-700">Period Roll-Call Execution</span>
                       <span className="text-[10px] font-bold bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">
-                        Test 1 Completed
+                        Periods 1–6
                       </span>
                     </div>
-                    <div className="space-y-1.5 text-xs text-slate-600">
-                      <div className="flex justify-between py-1 border-b border-slate-100">
-                        <span>Database Systems</span>
-                        <span className="font-semibold text-slate-900">Avg: 23.4 / 25</span>
-                      </div>
-                      <div className="flex justify-between py-1 border-b border-slate-100">
-                        <span>Algorithms & Complexity</span>
-                        <span className="font-semibold text-slate-900">Avg: 21.8 / 25</span>
-                      </div>
+                    <div>
+                      <h4 className="text-base font-bold text-slate-900">Classroom Marking Terminal</h4>
+                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                        One-click roll call with automatic student tallying, RFID integration, and immediate SMS dispatch for absent students.
+                      </p>
+                    </div>
+                    <div className="pt-2 border-t border-slate-100 flex items-center gap-2 text-xs font-semibold text-blue-600">
+                      <CheckCircle2 className="w-4 h-4" /> Real-time database sync
                     </div>
                   </div>
 
                   <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-700">Automated Audit Log</span>
-                      <span className="text-[10px] font-medium text-slate-400">Past 1 hour</span>
+                      <span className="text-xs font-bold text-slate-700">CIA Evaluation Ledger</span>
+                      <span className="text-[10px] font-bold bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded border border-indigo-200">
+                        Gradebook
+                      </span>
                     </div>
-                    <div className="space-y-2 text-xs text-slate-600">
-                      <div className="flex items-start gap-2">
-                        <span className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0" />
-                        <span>Prof. Sharma finalized Attendance for Section 4B</span>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
-                        <span>8 Parent SMS alerts delivered for absent roll numbers</span>
-                      </div>
+                    <div>
+                      <h4 className="text-base font-bold text-slate-900">Continuous Assessment</h4>
+                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                        Input Test 1, Test 2, assignment, and lab marks. System automatically computes weighted 20-scale aggregates and grade tiers.
+                      </p>
+                    </div>
+                    <div className="pt-2 border-t border-slate-100 flex items-center gap-2 text-xs font-semibold text-indigo-600">
+                      <BookOpen className="w-4 h-4" /> University schema compliant
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700">Audit &amp; Compliance</span>
+                      <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">
+                        Automated
+                      </span>
+                    </div>
+                    <div>
+                      <h4 className="text-base font-bold text-slate-900">Pattern Verification</h4>
+                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                        Monitors consecutive session patterns, post-lunch departures, and generates immutable logs for accreditation audits.
+                      </p>
+                    </div>
+                    <div className="pt-2 border-t border-slate-100 flex items-center gap-2 text-xs font-semibold text-emerald-600">
+                      <ShieldCheck className="w-4 h-4" /> Tamper-proof verification
                     </div>
                   </div>
                 </div>
@@ -304,51 +318,68 @@ export default function LandingPage() {
               >
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
                   <div>
-                    <h3 className="text-lg font-bold text-slate-900">Student Progress & Marks Dashboard</h3>
-                    <p className="text-xs text-slate-500">Attendance percentages, Continuous Assessment scores & eligibility radar</p>
+                    <h3 className="text-lg font-bold text-slate-900">Student Academic Portal</h3>
+                    <p className="text-xs text-slate-500">Attendance percentages, Continuous Assessment scores &amp; exam eligibility radar</p>
                   </div>
-                  <Link 
-                    href="/student/dashboard"
-                    onClick={() => { document.cookie = "attendex_demo_session=STUDENT; path=/; max-age=86400; SameSite=Lax"; }}
-                  >
+                  <Link href={isLoggedIn ? "/student/dashboard" : "/login?role=student"}>
                     <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg">
-                      Open Student Portal →
+                      {isLoggedIn ? "Open Student Portal →" : "Sign In to Student View →"}
                     </Button>
                   </Link>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <p className="text-xs font-bold text-slate-500 uppercase">Overall Attendance</p>
-                    <h4 className="text-3xl font-extrabold text-slate-900 mt-2">88.5%</h4>
-                    <p className="text-xs text-emerald-600 font-medium mt-1">✓ Safe: Above 75% Exam Criterion</p>
-                    <div className="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 flex justify-between">
-                      <span>Classes Attended</span>
-                      <span className="font-semibold text-slate-800">142 / 160</span>
+                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700">Attendance Safety Radar</span>
+                      <span className="text-[10px] font-bold bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">
+                        75% Policy
+                      </span>
+                    </div>
+                    <div>
+                      <h4 className="text-base font-bold text-slate-900">Safe Margin Calculator</h4>
+                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                        Interactive simulator calculates exactly how many classes you can afford to skip or must attend to maintain semester exam eligibility.
+                      </p>
+                    </div>
+                    <div className="pt-2 border-t border-slate-100 flex items-center gap-2 text-xs font-semibold text-blue-600">
+                      <ShieldCheck className="w-4 h-4" /> Instant debarment avoidance
                     </div>
                   </div>
 
-                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <p className="text-xs font-bold text-slate-500 uppercase">CIA Grade Estimate</p>
-                    <h4 className="text-3xl font-extrabold text-slate-900 mt-2">A+ (91.2%)</h4>
-                    <p className="text-xs text-blue-600 font-medium mt-1">Top 5% in Department</p>
-                    <div className="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 flex justify-between">
-                      <span>Internal Credit Points</span>
-                      <span className="font-semibold text-slate-800">48.5 / 50</span>
+                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700">Evaluation Records</span>
+                      <span className="text-[10px] font-bold bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded border border-indigo-200">
+                        Marks Digest
+                      </span>
+                    </div>
+                    <div>
+                      <h4 className="text-base font-bold text-slate-900">Continuous CIA Ledger</h4>
+                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                        Transparent, itemized breakdown of internal assessment marks, assignments, and test weightages for each enrolled subject.
+                      </p>
+                    </div>
+                    <div className="pt-2 border-t border-slate-100 flex items-center gap-2 text-xs font-semibold text-indigo-600">
+                      <BookOpen className="w-4 h-4" /> Downloadable PDF report
                     </div>
                   </div>
 
-                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <p className="text-xs font-bold text-slate-500 uppercase">Class Schedule Today</p>
-                    <div className="mt-2 space-y-2 text-xs">
-                      <div className="p-2 bg-slate-50 rounded-lg border border-slate-100 flex justify-between items-center">
-                        <span className="font-medium text-slate-800">10:00 AM • Data Structures</span>
-                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">Present</span>
-                      </div>
-                      <div className="p-2 bg-slate-50 rounded-lg border border-slate-100 flex justify-between items-center">
-                        <span className="font-medium text-slate-800">02:00 PM • Computer Networks</span>
-                        <span className="text-[10px] font-medium text-slate-500">Upcoming</span>
-                      </div>
+                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700">Campus Entry &amp; Exit</span>
+                      <span className="text-[10px] font-bold bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">
+                        Digital Nonce
+                      </span>
+                    </div>
+                    <div>
+                      <h4 className="text-base font-bold text-slate-900">QR Gatepass &amp; Hall Ticket</h4>
+                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                        Request official out-pass slips with cryptographic nonces for security gate scans, and download university exam hall passes.
+                      </p>
+                    </div>
+                    <div className="pt-2 border-t border-slate-100 flex items-center gap-2 text-xs font-semibold text-purple-600">
+                      <CheckCircle2 className="w-4 h-4" /> Paperless digital verification
                     </div>
                   </div>
                 </div>
@@ -366,49 +397,67 @@ export default function LandingPage() {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
                   <div>
                     <h3 className="text-lg font-bold text-slate-900">Guardian Transparency Portal</h3>
-                    <p className="text-xs text-slate-500">Instant notification history, attendance status, and risk analysis</p>
+                    <p className="text-xs text-slate-500">Direct absence notifications, attendance verification, and faculty advisory</p>
                   </div>
-                  <Link 
-                    href="/parent/dashboard"
-                    onClick={() => { document.cookie = "attendex_demo_session=PARENT; path=/; max-age=86400; SameSite=Lax"; }}
-                  >
+                  <Link href={isLoggedIn ? "/parent/dashboard" : "/login?role=parent"}>
                     <Button size="sm" className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg">
-                      Open Parent View →
+                      {isLoggedIn ? "Open Parent View →" : "Sign In to Guardian Portal →"}
                     </Button>
                   </Link>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <span className="text-xs font-bold text-slate-500 uppercase">Student Standing</span>
-                    <h4 className="text-lg font-bold text-slate-900 mt-2">Rahul Deshmukh (Roll #21)</h4>
-                    <p className="text-xs text-slate-500 mt-0.5">B.Tech CS • Semester 4</p>
-                    <div className="mt-4 p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium">
-                      ✓ Good Standing: No academic deficiency detected.
+                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700">Academic Standing</span>
+                      <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">
+                        Real-Time
+                      </span>
+                    </div>
+                    <div>
+                      <h4 className="text-base font-bold text-slate-900">Ward Attendance History</h4>
+                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                        Detailed session-by-session ledger tracking every attended and missed lecture, cross-verified with institutional timekeeping.
+                      </p>
+                    </div>
+                    <div className="pt-2 border-t border-slate-100 flex items-center gap-2 text-xs font-semibold text-emerald-600">
+                      <CheckCircle2 className="w-4 h-4" /> Daily SMS and push relays
                     </div>
                   </div>
 
-                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <span className="text-xs font-bold text-slate-500 uppercase">Attendance Record</span>
-                    <h4 className="text-2xl font-bold text-slate-900 mt-2">89.2%</h4>
-                    <p className="text-xs text-slate-500 mt-1">2 Absences recorded this month</p>
-                    <div className="mt-3 text-xs text-slate-600 space-y-1">
-                      <p>• Aug 28: Absent (Sick Leave Approved)</p>
-                      <p>• Aug 14: Absent (Sports Duty)</p>
+                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700">Faculty Communication</span>
+                      <span className="text-[10px] font-bold bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">
+                        Advisory Hub
+                      </span>
+                    </div>
+                    <div>
+                      <h4 className="text-base font-bold text-slate-900">Proctor Consultations</h4>
+                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                        Schedule direct advisory sessions with your child's assigned faculty proctor, track remarks, and monitor developmental progress.
+                      </p>
+                    </div>
+                    <div className="pt-2 border-t border-slate-100 flex items-center gap-2 text-xs font-semibold text-blue-600">
+                      <Users className="w-4 h-4" /> Collaborative student care
                     </div>
                   </div>
 
-                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <span className="text-xs font-bold text-slate-500 uppercase">Message Log</span>
-                    <div className="mt-2 space-y-2 text-xs">
-                      <div className="p-2 bg-slate-50 rounded border border-slate-100">
-                        <span className="font-semibold text-slate-900">SMS Notice:</span> Mid-Term Exam Marks Published.
-                        <p className="text-[10px] text-slate-400 mt-0.5">Sent yesterday at 4:30 PM</p>
-                      </div>
-                      <div className="p-2 bg-slate-50 rounded border border-slate-100">
-                        <span className="font-semibold text-slate-900">Parent-Teacher Meeting:</span> Scheduled for Sept 15.
-                        <p className="text-[10px] text-slate-400 mt-0.5">Sent on Aug 25</p>
-                      </div>
+                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700">Administrative Desk</span>
+                      <span className="text-[10px] font-bold bg-amber-50 text-amber-700 px-2 py-0.5 rounded border border-amber-200">
+                        Financial &amp; Medical
+                      </span>
+                    </div>
+                    <div>
+                      <h4 className="text-base font-bold text-slate-900">Fees &amp; Leave Ledger</h4>
+                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                        Submit medical exemption requests with documentation, view tuition fee receipts, and download certified academic progress digests.
+                      </p>
+                    </div>
+                    <div className="pt-2 border-t border-slate-100 flex items-center gap-2 text-xs font-semibold text-amber-600">
+                      <ShieldCheck className="w-4 h-4" /> Direct administrative routing
                     </div>
                   </div>
                 </div>
