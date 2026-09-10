@@ -502,9 +502,7 @@ export async function authenticateStudentCredentials(
   const isDobMatch = (
     normalizedPassword === expectedDob || 
     passwordOrDob.trim() === expectedDob ||
-    passwordOrDob.trim() === matchedStudent.formatted_dob ||
-    passwordOrDob.trim() === "attendex2026" || // Standard emergency admin/testing override
-    passwordOrDob.trim() === "student123"
+    passwordOrDob.trim() === matchedStudent.formatted_dob
   );
 
   if (!isDobMatch) {

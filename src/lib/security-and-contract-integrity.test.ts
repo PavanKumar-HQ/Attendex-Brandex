@@ -133,3 +133,112 @@ test("TELEMETRY: Pulse route calculates absenteesToday and shortageAlerts indepe
   assert.ok(typeof json.absenteesToday === "number");
   assert.ok(typeof json.shortageAlerts === "number");
 });
+
+test("SECURITY: Backdoor passwords must be rejected for student authentication", async () => {
+  const { POST: studentLoginPOST } = await import("@/app/api/auth/student-login/route");
+
+  // Attempting with removed testing backdoors
+  const reqBackdoor1 = new NextRequest("http://localhost:3000/api/auth/student-login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ identifier: "CS-11", password: "attendex2026" })
+  });
+  const resBackdoor1 = await studentLoginPOST(reqBackdoor1);
+  assert.strictEqual(resBackdoor1.status, 401, "attendex2026 backdoor must be rejected");
+
+  const reqBackdoor2 = new NextRequest("http://localhost:3000/api/auth/student-login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ identifier: "CS-11", password: "student123" })
+  });
+  const resBackdoor2 = await studentLoginPOST(reqBackdoor2);
+  assert.strictEqual(resBackdoor2.status, 401, "student123 backdoor must be rejected");
+});
+
+test("SECURITY: Account recovery generates 6-digit PIN and allows secure password reset", async () => {
+  const { POST: recoverPOST } = await import("@/app/api/auth/recover/route");
+  const { POST: resetPasswordPOST } = await import("@/app/api/auth/reset-password/route");
+
+  // 1. Initiate recovery for student CS-11
+  const recReq = new NextRequest("http://localhost:3000/api/auth/recover", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      role: "STUDENT",
+      identifier: "CS-11",
+      registered_contact: "aarav.sharma@attendex.edu"
+    })
+  });
+  const recRes = await recoverPOST(recReq);
+  const recJson = await recRes.json();
+
+  assert.strictEqual(recRes.status, 200);
+  assert.strictEqual(recJson.success, true);
+  assert.ok(recJson.pin && recJson.pin.length === 6, "Must generate a 6-digit PIN");
+
+  // 2. Commit new password / DOB
+  const resetReq = new NextRequest("http://localhost:3000/api/auth/reset-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      identifier: "CS-11",
+      pin: recJson.pin,
+      new_password: "20082004"
+    })
+  });
+  const resetRes = await resetPasswordPOST(resetReq);
+  const resetJson = await resetRes.json();
+
+  assert.strictEqual(resetRes.status, 200);
+  assert.strictEqual(resetJson.success, true);
+});
+
+test("MARKS PIPELINE: Real-time sync reflects teacher submission directly into student marks query", async () => {
+  const { POST: marksPOST, GET: marksGET } = await import("@/app/api/marks/route");
+
+  // Teacher submits continuous assessment marks
+  const postReq = new NextRequest("http://localhost:3000/api/marks", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      class_id: "cls-csa",
+      subject_id: "sub-cs401",
+      records: [{
+        student_id: "stud-cs-011",
+        roll_number: "CS-11",
+        cia1: 9,
+        cia2: 10,
+        test1: 24,
+        test2: 25,
+        attendancePercentage: 94
+      }]
+    })
+  });
+  const postRes = await marksPOST(postReq);
+  const postJson = await postRes.json();
+
+  assert.strictEqual(postRes.status, 200);
+  assert.strictEqual(postJson.success, true);
+
+  // Student / Parent queries marks for CS-11
+  const getReq = new NextRequest("http://localhost:3000/api/marks?roll_number=CS-11");
+  const getRes = await marksGET(getReq);
+  const getJson = await getRes.json();
+
+  assert.strictEqual(getRes.status, 200);
+  assert.strictEqual(getJson.success, true);
+  assert.ok(Array.isArray(getJson.data));
+
+  const cs401Record = getJson.data.find((s: any) => s.subject_id === "sub-cs401" || s.subject_code === "CS401");
+  assert.ok(cs401Record, "Must return CS401 record for student");
+  assert.strictEqual(cs401Record.cia1, 9);
+  assert.strictEqual(cs401Record.cia2, 10);
+  assert.strictEqual(cs401Record.test1, 24);
+  assert.strictEqual(cs401Record.test2, 25);
+  // Attendance is 94% -> 5 marks, CIA capped at 5, Tests (24+25)/80*10 = 6.1 -> Total is 16.1 / 20
+  assert.strictEqual(cs401Record.attendanceMarks, 5);
+  assert.strictEqual(cs401Record.ciaTotal, 5);
+  assert.ok(cs401Record.final_marks >= 16.0, `Expected final marks >= 16.0, got ${cs401Record.final_marks}`);
+  assert.strictEqual(cs401Record.grade, "A+");
+});
+

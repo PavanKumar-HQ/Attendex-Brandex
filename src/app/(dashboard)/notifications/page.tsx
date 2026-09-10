@@ -13,39 +13,8 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { isSupabaseConfigured } from "@/lib/supabase";
 
-const DEFAULT_NOTIFICATIONS = [
-  {
-    id: "notif-1",
-    title: "End-Semester Examination Schedule Published",
-    message: "Final timetable for 4th and 6th Semester Engineering courses is now available in the Timetable section.",
-    type: "broadcast",
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString()
-  },
-  {
-    id: "notif-2",
-    title: "Faculty Submission of CIA-2 Marks",
-    message: "All departmental faculty are requested to upload and verify CIA-2 evaluation ledgers by Sept 22nd.",
-    type: "broadcast",
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString()
-  },
-  {
-    id: "notif-3",
-    title: "National Technical Symposium Registration Open",
-    message: "Annual tech fest registrations are open for Computer Science, AI, and Electronics batches.",
-    type: "broadcast",
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString()
-  },
-  {
-    id: "notif-4",
-    title: "Classroom & Lab Maintenance Notice",
-    message: "Hall 302 and AI Lab will undergo scheduled hardware maintenance on Saturday from 08:00 AM to 12:00 PM.",
-    type: "alert",
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString()
-  }
-];
-
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<any[]>(DEFAULT_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -59,21 +28,16 @@ export default function NotificationsPage() {
   };
 
   const loadNotifications = async () => {
-    if (!isSupabaseConfigured) {
-      setNotifications(DEFAULT_NOTIFICATIONS);
-      return;
-    }
-
     try {
       setLoading(true);
-      const data = await academicService.getNotifications();
-      if (!data || data.length === 0) {
-        setNotifications(DEFAULT_NOTIFICATIONS);
+      if (isSupabaseConfigured) {
+        const data = await academicService.getNotifications();
+        setNotifications(data || []);
       } else {
-        setNotifications(data);
+        setNotifications([]);
       }
     } catch {
-      setNotifications(DEFAULT_NOTIFICATIONS);
+      setNotifications([]);
     } finally {
       setLoading(false);
     }
@@ -235,37 +199,51 @@ export default function NotificationsPage() {
             </div>
 
             <div className="space-y-3">
-              <AnimatePresence mode="popLayout">
-                {notifications.map((notif, idx) => (
-                  <motion.div
-                    key={notif.id}
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.04 }}
-                  >
-                    <Card className="p-4 border-slate-200 shadow-sm rounded-xl bg-white flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <div className="flex items-start gap-3 flex-1">
-                        <div className={cn(
-                          "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border mt-0.5",
-                          notif.type === 'broadcast' ? "bg-blue-50 border-blue-200 text-blue-700" : "bg-slate-100 border-slate-200 text-slate-700"
-                        )}>
-                          <Bell className="w-4 h-4" />
+              {notifications.length === 0 ? (
+                <Card className="p-10 border-dashed border-slate-200 bg-slate-50/50 rounded-2xl flex flex-col items-center justify-center text-center space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-400">
+                    <Bell className="w-6 h-6" />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-bold text-slate-800">No Dispatched Announcements</h4>
+                    <p className="text-xs text-slate-500 max-w-sm">
+                      Institutional notifications broadcasted from the dispatch console above will be recorded and delivered here in real time.
+                    </p>
+                  </div>
+                </Card>
+              ) : (
+                <AnimatePresence mode="popLayout">
+                  {notifications.map((notif, idx) => (
+                    <motion.div
+                      key={notif.id}
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.04 }}
+                    >
+                      <Card className="p-4 border-slate-200 shadow-sm rounded-xl bg-white flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="flex items-start gap-3 flex-1">
+                          <div className={cn(
+                            "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border mt-0.5",
+                            notif.type === 'broadcast' ? "bg-blue-50 border-blue-200 text-blue-700" : "bg-slate-100 border-slate-200 text-slate-700"
+                          )}>
+                            <Bell className="w-4 h-4" />
+                          </div>
+                          
+                          <div className="space-y-1">
+                            <h4 className="text-sm font-bold text-slate-900">{notif.title}</h4>
+                            <p className="text-xs text-slate-600 font-medium leading-relaxed">{notif.message || notif.description}</p>
+                          </div>
                         </div>
-                        
-                        <div className="space-y-1">
-                          <h4 className="text-sm font-bold text-slate-900">{notif.title}</h4>
-                          <p className="text-xs text-slate-600 font-medium leading-relaxed">{notif.message || notif.description}</p>
-                        </div>
-                      </div>
 
-                      <div className="text-left md:text-right shrink-0 border-t md:border-t-0 pt-2 md:pt-0 border-slate-100">
-                        <p className="text-xs font-semibold text-slate-700">{new Date(notif.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
-                        <span className="inline-block text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 mt-1">Delivered</span>
-                      </div>
-                    </Card>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
+                        <div className="text-left md:text-right shrink-0 border-t md:border-t-0 pt-2 md:pt-0 border-slate-100">
+                          <p className="text-xs font-semibold text-slate-700">{new Date(notif.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                          <span className="inline-block text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 mt-1">Delivered</span>
+                        </div>
+                      </Card>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              )}
             </div>
           </div>
         </div>

@@ -15,78 +15,14 @@ import { format } from "date-fns";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-// Realistic Academic Default Data for Demo
-const DEFAULT_ACADEMIC_RESULTS = [
-  {
-    class_id: "cls-1",
-    class_name: "B.Tech Computer Science",
-    section: "4A",
-    student_count: 62,
-    average_score: 91.4,
-    status: "Published",
-    semester: "Sem 8",
-    top_scorer: "Aarav Sharma (98.5%)"
-  },
-  {
-    class_id: "cls-2",
-    class_name: "B.Tech Artificial Intelligence",
-    section: "3B",
-    student_count: 58,
-    average_score: 88.6,
-    status: "Published",
-    semester: "Sem 6",
-    top_scorer: "Priya Patel (96.8%)"
-  },
-  {
-    class_id: "cls-3",
-    class_name: "B.Tech Electronics & Comm",
-    section: "4B",
-    student_count: 64,
-    average_score: 84.2,
-    status: "Published",
-    semester: "Sem 8",
-    top_scorer: "Rohan Varma (94.0%)"
-  },
-  {
-    class_id: "cls-4",
-    class_name: "B.Tech Information Technology",
-    section: "2A",
-    student_count: 60,
-    average_score: 86.5,
-    status: "Published",
-    semester: "Sem 4",
-    top_scorer: "Ananya Iyer (97.2%)"
-  },
-  {
-    class_id: "cls-5",
-    class_name: "B.Tech Mechanical Engineering",
-    section: "3A",
-    student_count: 54,
-    average_score: 79.8,
-    status: "Review",
-    semester: "Sem 6",
-    top_scorer: "Karthik Nair (91.5%)"
-  },
-  {
-    class_id: "cls-6",
-    class_name: "B.Tech Civil Engineering",
-    section: "2B",
-    student_count: 48,
-    average_score: 82.1,
-    status: "Published",
-    semester: "Sem 4",
-    top_scorer: "Sneha Kulkarni (93.4%)"
-  }
-];
-
 export default function ResultsPage() {
   const [search, setSearch] = useState("");
-  const [results, setResults] = useState<any[]>(DEFAULT_ACADEMIC_RESULTS);
-  const [loading, setLoading] = useState(false);
+  const [results, setResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
-    high: 98.5,
-    avg: 85.4,
-    count: 6
+    high: 0,
+    avg: 0,
+    count: 0
   });
 
   const loadResults = async () => {
@@ -135,18 +71,18 @@ export default function ResultsPage() {
         return;
       }
 
-      setResults(DEFAULT_ACADEMIC_RESULTS);
+      setResults([]);
       setStats({
-        high: 98.5,
-        avg: 85.4,
-        count: DEFAULT_ACADEMIC_RESULTS.length
+        high: 0,
+        avg: 0,
+        count: 0
       });
     } catch {
-      setResults(DEFAULT_ACADEMIC_RESULTS);
+      setResults([]);
       setStats({
-        high: 98.5,
-        avg: 85.4,
-        count: DEFAULT_ACADEMIC_RESULTS.length
+        high: 0,
+        avg: 0,
+        count: 0
       });
     } finally {
       setLoading(false);

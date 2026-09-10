@@ -10,40 +10,9 @@ import { academicService } from "@/services/academic";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
-const DEFAULT_ANOMALIES = [
-  {
-    student_id: "st-1",
-    student_name: "Aarav Sharma",
-    roll_number: "21CS001",
-    pattern_type: "Period 1 Irregularity",
-    detail: "Recorded absent for Period 1 (09:00 AM) but marked present for Period 2 & 3.",
-    incident_count: 3,
-    last_detected: "2026-08-28"
-  },
-  {
-    student_id: "st-5",
-    student_name: "Rohan Varma",
-    roll_number: "21CS005",
-    pattern_type: "Post-Lunch Departure",
-    detail: "Recorded present for morning sessions but absent for afternoon practicals.",
-    incident_count: 2,
-    last_detected: "2026-08-29"
-  },
-  {
-    student_id: "st-8",
-    student_name: "Neha Gupta",
-    roll_number: "22CS019",
-    pattern_type: "Consecutive Friday Lab Absence",
-    detail: "Absent for 2 consecutive Friday laboratory blocks.",
-    incident_count: 2,
-    last_detected: "2026-08-22"
-  }
-];
-
 export default function ProxyAuditPage() {
-  const [loading, setLoading] = useState(false);
-  const [anomalies, setAnomalies] = useState<any[]>(DEFAULT_ANOMALIES);
-
+  const [loading, setLoading] = useState(true);
+  const [anomalies, setAnomalies] = useState<any[]>([]);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
 
   useEffect(() => {
@@ -51,7 +20,7 @@ export default function ProxyAuditPage() {
       .then(res => res.json())
       .then(json => {
         if (json.success) {
-          if (json.anomalies && json.anomalies.length > 0) {
+          if (json.anomalies) {
             setAnomalies(json.anomalies);
           }
           if (json.auditLogs) {

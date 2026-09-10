@@ -28,17 +28,20 @@ export default function MarksManagementPage() {
     try {
       setLoading(true);
       const [classRes, subjectRes] = await Promise.all([
-        supabase.from('classes').select('*').order('name'),
-        supabase.from('subjects').select('*').order('name')
+        fetch("/api/classes").then(r => r.json()).catch(() => null),
+        fetch("/api/subjects").then(r => r.json()).catch(() => null)
       ]);
 
-      if (classRes.data && classRes.data.length > 0) {
-        setClasses(classRes.data);
-        setSelectedClass(classRes.data[0].id);
+      const classList = classRes?.data || [];
+      const subjectList = subjectRes?.data || [];
+
+      if (classList.length > 0) {
+        setClasses(classList);
+        setSelectedClass(classList[0].id || classList[0].section);
       }
-      if (subjectRes.data && subjectRes.data.length > 0) {
-        setSubjects(subjectRes.data);
-        setSelectedSubject(subjectRes.data[0].id);
+      if (subjectList.length > 0) {
+        setSubjects(subjectList);
+        setSelectedSubject(subjectList[0].id || subjectList[0].code);
       }
     } catch (err) {
       console.error("Error fetching classes/subjects:", err);
@@ -48,23 +51,28 @@ export default function MarksManagementPage() {
   };
 
   const fetchStudents = async () => {
+    if (!selectedClass || !selectedSubject) return;
     try {
       setLoading(true);
-      const data = await registryService.getStudentsByClassWithMarks(selectedClass, selectedSubject);
+      const res = await fetch(`/api/marks?class_id=${encodeURIComponent(selectedClass)}&subject_id=${encodeURIComponent(selectedSubject)}`, { cache: "no-store" });
+      const json = await res.json();
       
-      const studentsWithMarks = (data || []).map((s: any) => {
-        const m = s.marks || {};
-        return {
-          ...s,
-          cia1: Number(m.cia1) || 8,
-          cia2: Number(m.cia2) || 9,
-          test1: Number(m.test1) || 22,
-          test2: Number(m.test2) || 24,
-          attendancePercentage: s.attendance || 92
-        };
-      });
-
-      setStudents(studentsWithMarks);
+      if (json.success && Array.isArray(json.data)) {
+        const mapped = json.data.map((s: any) => ({
+          id: s.student_id || s.id,
+          student_id: s.student_id || s.id,
+          roll_number: s.roll_number,
+          name: s.name,
+          cia1: Number(s.cia1) || 0,
+          cia2: Number(s.cia2) || 0,
+          test1: Number(s.test1) || 0,
+          test2: Number(s.test2) || 0,
+          attendancePercentage: Number(s.attendancePercentage) || 90,
+          final_marks: s.final_marks,
+          grade: s.grade
+        }));
+        setStudents(mapped);
+      }
     } catch {
       toast.error("Failed to load student registry");
     } finally {
@@ -82,40 +90,46 @@ export default function MarksManagementPage() {
 
   const updateMark = (studentId: string, field: string, value: number) => {
     setStudents(prev => prev.map(s => 
-      s.id === studentId ? { ...s, [field]: value } : s
+      (s.id === studentId || s.student_id === studentId) ? { ...s, [field]: value } : s
     ));
   };
 
   const saveMarks = async () => {
     try {
       setSaving(true);
-      if (isSupabaseConfigured) {
-        const promises = students.map(s => {
-          const attendanceMarks = calculateAttendanceMarks(s.attendancePercentage);
-          const ciaTotal = calculateCIAMarks(s.cia1, s.cia2);
-          const testScore = calculateTestMarks(s.test1, s.test2);
-          const finalMarks = calculateFinalMarks(attendanceMarks, ciaTotal, testScore);
+      const res = await fetch("/api/marks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          class_id: selectedClass,
+          subject_id: selectedSubject,
+          records: students.map(s => ({
+            student_id: s.student_id || s.id,
+            roll_number: s.roll_number,
+            cia1: Number(s.cia1) || 0,
+            cia2: Number(s.cia2) || 0,
+            test1: Number(s.test1) || 0,
+            test2: Number(s.test2) || 0,
+            attendancePercentage: s.attendancePercentage || 90
+          }))
+        })
+      });
 
-          return registryService.updateStudentMarks(s.id, selectedSubject, {
-            cia1: s.cia1,
-            cia2: s.cia2,
-            test1: s.test1,
-            test2: s.test2,
-            attendance_marks: attendanceMarks,
-            cia_total: ciaTotal,
-            test_marks: testScore,
-            final_marks: finalMarks,
-            attendance_percentage: s.attendancePercentage
-          });
-        });
-        await Promise.all(promises);
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || "Failed to save marks");
       }
       
       toast.success("Institutional records updated", {
-        description: "All CIA and test marks have been synchronized with the main registry."
+        description: `All CIA and test marks (${students.length} students) synchronized with the main registry.`
       });
-    } catch {
-      toast.error("Failed to synchronize marks");
+
+      // Refresh marks list with newly computed totals
+      await fetchStudents();
+    } catch (err: any) {
+      toast.error("Failed to synchronize marks", {
+        description: err.message || "Please check network connection and try again."
+      });
     } finally {
       setSaving(false);
     }

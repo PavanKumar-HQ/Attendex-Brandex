@@ -53,45 +53,12 @@ interface TimetableProps {
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] as const;
 type Day = typeof DAYS[number];
 
-const DEFAULT_TIMETABLE: Record<string, TimetableSlot[]> = {
-  Monday: [
-    { id: "tt-1", day_of_week: "Monday", subject: "Distributed Systems & Cloud", teacher_name: "Prof. R. Sharma", room_number: "Hall 401", start_time: "09:00", end_time: "10:30", color_code: "blue", class_id: "cls-1" },
-    { id: "tt-2", day_of_week: "Monday", subject: "Database Architecture & SQL Lab", teacher_name: "Dr. P. Patel", room_number: "Lab 2", start_time: "11:00", end_time: "12:30", color_code: "indigo", class_id: "cls-1" },
-    { id: "tt-3", day_of_week: "Monday", subject: "Computer Networks & Security", teacher_name: "Prof. A. Iyer", room_number: "Hall 302", start_time: "14:00", end_time: "15:30", color_code: "emerald", class_id: "cls-1" }
-  ],
-  Tuesday: [
-    { id: "tt-4", day_of_week: "Tuesday", subject: "Artificial Intelligence & Robotics", teacher_name: "Dr. K. Nair", room_number: "Hall 201", start_time: "09:00", end_time: "10:30", color_code: "amber", class_id: "cls-1" },
-    { id: "tt-5", day_of_week: "Tuesday", subject: "Deep Learning & Neural Nets Lab", teacher_name: "Dr. K. Nair", room_number: "AI Lab Block B", start_time: "11:00", end_time: "13:00", color_code: "rose", class_id: "cls-1" }
-  ],
-  Wednesday: [
-    { id: "tt-6", day_of_week: "Wednesday", subject: "Operating Systems & Kernel Dev", teacher_name: "Prof. R. Sharma", room_number: "Hall 401", start_time: "09:00", end_time: "10:30", color_code: "blue", class_id: "cls-1" },
-    { id: "tt-7", day_of_week: "Wednesday", subject: "VLSI Design & Architecture", teacher_name: "Dr. S. Kulkarni", room_number: "Lab 1", start_time: "11:00", end_time: "12:30", color_code: "indigo", class_id: "cls-1" }
-  ],
-  Thursday: [
-    { id: "tt-8", day_of_week: "Thursday", subject: "Algorithms & Computational Complexity", teacher_name: "Dr. P. Patel", room_number: "Hall 302", start_time: "10:00", end_time: "11:30", color_code: "emerald", class_id: "cls-1" },
-    { id: "tt-9", day_of_week: "Thursday", subject: "Engineering Capstone Practicum", teacher_name: "Faculty Panel", room_number: "Innovation Hub", start_time: "14:00", end_time: "16:00", color_code: "amber", class_id: "cls-1" }
-  ],
-  Friday: [
-    { id: "tt-10", day_of_week: "Friday", subject: "Applied Cryptography & Web3", teacher_name: "Prof. A. Iyer", room_number: "Hall 401", start_time: "09:00", end_time: "10:30", color_code: "rose", class_id: "cls-1" },
-    { id: "tt-11", day_of_week: "Friday", subject: "Department Colloquium Seminar", teacher_name: "Dean of Academics", room_number: "Auditorium", start_time: "14:00", end_time: "15:30", color_code: "blue", class_id: "cls-1" }
-  ],
-  Saturday: [
-    { id: "tt-12", day_of_week: "Saturday", subject: "Industry Mentorship & Guest Lecture", teacher_name: "Industry Experts", room_number: "Hall 201", start_time: "10:00", end_time: "12:00", color_code: "emerald", class_id: "cls-1" }
-  ]
-};
-
-// ───────────────────────────────────────────────────────────────────
 export default function StudentTimetable({ isParentView = false, isTeacherView = false }: TimetableProps) {
     const [selectedDay, setSelectedDay] = useState<Day>("Monday");
-    const [schedule, setSchedule] = useState<TimetableSlot[]>(DEFAULT_TIMETABLE.Monday);
-    const [loading, setLoading] = useState(false);
-    const [exams, setExams] = useState<Exam[]>([
-      { id: "ex-1", subject: "Distributed Systems & Cloud Computing", exam_date: "Oct 18, 2026", room_number: "Hall 401" }
-    ]);
-    const [alerts, setAlerts] = useState<Notification[]>([
-      { id: "not-1", title: "Continuous Assessment CIA-2 dates published", created_at: new Date().toISOString() },
-      { id: "not-2", title: "AI Lab shifted to Computing Hub Block B", created_at: new Date(Date.now() - 3600000 * 4).toISOString() }
-    ]);
+    const [schedule, setSchedule] = useState<TimetableSlot[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [exams, setExams] = useState<Exam[]>([]);
+    const [alerts, setAlerts] = useState<Notification[]>([]);
 
     // ── Sidebar data ──────────────────────────────────────────────
     useEffect(() => {
@@ -104,7 +71,7 @@ export default function StudentTimetable({ isParentView = false, isTeacherView =
                 if (examRes?.data && examRes.data.length > 0) setExams(examRes.data as Exam[]);
                 if (noteRes?.data && noteRes.data.length > 0) setAlerts(noteRes.data as Notification[]);
             } catch {
-                // Keep default state
+                // Keep clean state
             }
         };
         fetchSidebar();
@@ -116,13 +83,13 @@ export default function StudentTimetable({ isParentView = false, isTeacherView =
             setLoading(true);
             const res = await fetch(`/api/timetable?day=${selectedDay}`, { cache: "no-store" });
             const json = await res.json();
-            if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+            if (json.success && Array.isArray(json.data)) {
                 setSchedule(json.data);
             } else {
-                setSchedule(DEFAULT_TIMETABLE[selectedDay] || DEFAULT_TIMETABLE.Monday);
+                setSchedule([]);
             }
         } catch {
-            setSchedule(DEFAULT_TIMETABLE[selectedDay] || DEFAULT_TIMETABLE.Monday);
+            setSchedule([]);
         } finally {
             setLoading(false);
         }

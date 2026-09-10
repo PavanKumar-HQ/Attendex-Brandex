@@ -20,59 +20,36 @@ interface LeaderboardEntry {
   roll_number: string;
 }
 
-const DEFAULT_LEADERBOARD: LeaderboardEntry[] = [
-  { rank: 1, student_name: "Aarav Sharma", section_name: "B.Tech CS 4A", total_marks: 19.5, points: 985, roll_number: "21CS001" },
-  { rank: 2, student_name: "Ananya Iyer", section_name: "B.Tech CS 4A", total_marks: 19.2, points: 968, roll_number: "21CS004" },
-  { rank: 3, student_name: "Priya Patel", section_name: "B.Tech AI 3B", total_marks: 18.8, points: 942, roll_number: "21CS002" },
-  { rank: 4, student_name: "Rahul Deshmukh", section_name: "B.Tech CS 4A", total_marks: 18.5, points: 925, roll_number: "21CS003" },
-  { rank: 5, student_name: "Sneha Kulkarni", section_name: "B.Tech EC 4B", total_marks: 18.1, points: 890, roll_number: "21CS006" },
-  { rank: 6, student_name: "Rohan Varma", section_name: "B.Tech IT 2A", total_marks: 17.8, points: 865, roll_number: "21CS005" },
-  { rank: 7, student_name: "Karthik Nair", section_name: "B.Tech ME 3A", total_marks: 17.4, points: 840, roll_number: "21ME012" },
-  { rank: 8, student_name: "Neha Gupta", section_name: "B.Tech CS 2A", total_marks: 17.0, points: 815, roll_number: "22CS019" }
-];
-
 export default function LeaderboardPage() {
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [entries, setEntries] = useState<LeaderboardEntry[]>(DEFAULT_LEADERBOARD);
+  const [loading, setLoading] = useState(true);
+  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [filter, setFilter] = useState("Academic");
 
   const fetchLeaderboard = async () => {
-    if (!isSupabaseConfigured) {
-      setEntries(DEFAULT_LEADERBOARD);
-      return;
-    }
-
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('students')
-        .select(`
-          id,
-          name,
-          roll_number,
-          cgpa,
-          attendance_percentage,
-          class:classes(name, section)
-        `)
-        .order('cgpa', { ascending: false })
-        .limit(25);
+      const res = await fetch("/api/students?pageSize=50", { cache: "no-store" });
+      const json = await res.json();
+      const list = json?.data || [];
 
-      if (error || !data || data.length === 0) {
-        setEntries(DEFAULT_LEADERBOARD);
-      } else {
-        const liveEntries: LeaderboardEntry[] = data.map((s: any, i: number) => ({
+      if (Array.isArray(list) && list.length > 0) {
+        const sorted = [...list].sort((a: any, b: any) => (b.cgpa || 0) - (a.cgpa || 0));
+        const liveEntries: LeaderboardEntry[] = sorted.slice(0, 25).map((s: any, i: number) => ({
           rank: i + 1,
           student_name: s.name,
-          section_name: `${s.class?.name || 'Class'} ${s.class?.section || 'A'}`,
-          total_marks: Number((s.cgpa * 2).toFixed(1)),
-          points: Math.round((s.cgpa || 9.0) * 100),
+          section_name: s.class_name || "B.Tech Computer Science",
+          total_marks: Number(((s.cgpa || 8.5) * 2).toFixed(1)),
+          points: Math.round((s.cgpa || 8.5) * 100),
           roll_number: s.roll_number
         }));
         setEntries(liveEntries);
+        return;
       }
+
+      setEntries([]);
     } catch {
-      setEntries(DEFAULT_LEADERBOARD);
+      setEntries([]);
     } finally {
       setLoading(false);
     }

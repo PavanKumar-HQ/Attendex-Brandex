@@ -150,26 +150,26 @@ export function HallTicketModal({
           {/* Subjects Table */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Authorized Exam Schedule</h4>
-            <div className="rounded-xl border border-slate-200 overflow-hidden">
-              <table className="w-full text-left text-xs">
+            <div className="rounded-xl border border-slate-200 overflow-x-auto custom-scrollbar">
+              <table className="w-full min-w-[480px] text-left text-xs">
                 <thead className="bg-slate-50 text-[11px] font-semibold text-slate-500 border-b border-slate-200">
                   <tr>
-                    <th className="py-2.5 px-3">Subject</th>
-                    <th className="py-2.5 px-3">Date</th>
-                    <th className="py-2.5 px-3">Session</th>
-                    <th className="py-2.5 px-3 text-right">Venue</th>
+                    <th className="py-2.5 px-3 min-w-[150px]">Subject</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Date</th>
+                    <th className="py-2.5 px-3 whitespace-nowrap">Session</th>
+                    <th className="py-2.5 px-3 text-right whitespace-nowrap">Venue</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
                   {examSubjects.map((sub) => (
                     <tr key={sub.code} className="hover:bg-slate-50/50">
-                      <td className="py-2.5 px-3">
+                      <td className="py-2.5 px-3 min-w-[150px]">
                         <span className="font-bold text-slate-900">{sub.code}</span>
                         <p className="text-[11px] text-slate-500 line-clamp-1">{sub.name}</p>
                       </td>
                       <td className="py-2.5 px-3 font-semibold text-slate-700 whitespace-nowrap">{sub.date}</td>
-                      <td className="py-2.5 px-3 text-slate-500 text-[11px]">{sub.time}</td>
-                      <td className="py-2.5 px-3 text-right font-bold text-blue-600">{sub.room}</td>
+                      <td className="py-2.5 px-3 text-slate-500 text-[11px] whitespace-nowrap">{sub.time}</td>
+                      <td className="py-2.5 px-3 text-right font-bold text-blue-600 whitespace-nowrap">{sub.room}</td>
                     </tr>
                   ))}
                 </tbody>
