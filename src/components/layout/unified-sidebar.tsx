@@ -48,6 +48,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { useBranding } from "@/context/branding-context";
+import { PoweredByBrandex } from "@/components/ui/powered-by-brandex";
 
 interface SidebarLink {
   name: string;
@@ -312,10 +313,14 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
 
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="w-full h-8 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors hidden xl:flex text-xs font-medium"
+          className="w-full h-8 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors hidden xl:flex text-xs font-medium mb-1"
         >
           {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
         </button>
+
+        <div className="pt-2 border-t border-slate-100 flex justify-center">
+          <PoweredByBrandex variant={isCollapsed ? "compact" : "sidebar"} />
+        </div>
       </div>
     </div>
   );

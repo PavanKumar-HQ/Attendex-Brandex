@@ -7,6 +7,7 @@ import { LogoutButton } from "@/components/auth/logout-button";
 import { cn } from "@/lib/utils";
 
 import { cookies } from "next/headers";
+import { PoweredByBrandex } from "@/components/ui/powered-by-brandex";
 
 export default async function DashboardLayout({
   children,
@@ -48,12 +49,15 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className="flex h-screen bg-slate-50 overflow-hidden w-full max-w-full">
       <CommandMenu />
       <UnifiedSidebar variant={role as any} />
-      <main className="flex-1 md:pl-20 xl:pl-64 flex flex-col pt-14 md:pt-0 transition-all duration-300">
-        <div className="flex-1 w-full max-w-7xl mx-auto p-4 md:p-10 overflow-y-auto custom-scrollbar">
-          {children}
+      <main className="flex-1 md:pl-20 xl:pl-64 flex flex-col pt-14 md:pt-0 transition-all duration-300 min-w-0 max-w-full overflow-x-hidden">
+        <div className="flex-1 w-full max-w-7xl mx-auto p-3.5 sm:p-4 md:p-10 overflow-y-auto custom-scrollbar min-w-0 flex flex-col justify-between">
+          <div className="w-full min-w-0">{children}</div>
+          <div className="hidden md:flex justify-center pt-8 pb-4 border-t border-slate-200/60 mt-8">
+            <PoweredByBrandex variant="footer" />
+          </div>
         </div>
       </main>
     </div>

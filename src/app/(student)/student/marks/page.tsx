@@ -200,18 +200,18 @@ export default function StudentMarksPage() {
                         transition={{ delay: i * 0.1 }}
                     >
                         <Card className="p-5 border-slate-200 hover:border-blue-200 transition-all group rounded-2xl bg-white shadow-sm overflow-hidden border">
-                            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                                <div className="flex items-center gap-4 min-w-[240px]">
-                                    <div className="w-11 h-11 rounded-xl bg-slate-50 flex flex-col items-center justify-center text-[10px] font-bold text-slate-500 border border-slate-200">
+                            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-6 w-full">
+                                <div className="flex items-center gap-3.5 w-full md:w-auto md:min-w-[240px]">
+                                    <div className="w-10 h-10 rounded-xl bg-slate-50 flex flex-col items-center justify-center text-[10px] font-bold text-slate-500 border border-slate-200 shrink-0">
                                         {sub.code}
                                     </div>
-                                    <div>
-                                        <h4 className="font-bold text-sm text-slate-900 leading-tight">{sub.name}</h4>
+                                    <div className="min-w-0 flex-1">
+                                        <h4 className="font-bold text-sm text-slate-900 leading-tight truncate">{sub.name}</h4>
                                         <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">{sub.credits} Credits • Core Subject</p>
                                     </div>
                                 </div>
                                 
-                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 flex-1">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-6 w-full flex-1 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
                                     <MarkItem label="CIA (5)" val={sub.displayMarks.cia} />
                                     <MarkItem label="Test Wt. (10)" val={sub.displayMarks.tests} />
                                     <MarkItem label="Attendance (5)" val={sub.displayMarks.attendance} />
@@ -221,9 +221,10 @@ export default function StudentMarksPage() {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-3 pl-4 border-l border-slate-100 md:min-w-[80px] justify-end">
+                                <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto pt-2 md:pt-0 border-t md:border-t-0 md:pl-4 md:border-l border-slate-100">
+                                    <span className="md:hidden text-xs text-slate-400 font-medium">Grade Standing</span>
                                     <div className={cn(
-                                        "w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm",
+                                        "w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm shrink-0",
                                         sub.grade === 'O' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 
                                         sub.grade === 'A+' ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'bg-slate-50 text-slate-600 border border-slate-200'
                                     )}>

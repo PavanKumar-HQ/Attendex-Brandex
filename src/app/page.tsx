@@ -24,6 +24,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { MobileAppShowcase } from "@/components/mobile/mobile-app-showcase";
+import { PoweredByBrandex } from "@/components/ui/powered-by-brandex";
 
 export default function LandingPage() {
   const [activeTab, setActiveTab] = useState<"faculty" | "student" | "parent">("faculty");
@@ -34,9 +36,16 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 selection:bg-blue-100 selection:text-blue-900 flex flex-col font-sans">
-      {/* Institutional Top Notification Bar */}
-      <div className="bg-slate-900 text-slate-300 text-xs py-2 px-4 text-center font-medium border-b border-slate-800 flex items-center justify-center gap-2">
+    <>
+      {/* ─── Mobile View: Fully-Fledged Native App Experience (Zero Overflow) ─── */}
+      <div className="block md:hidden w-full max-w-full overflow-x-hidden">
+        <MobileAppShowcase />
+      </div>
+
+      {/* ─── Desktop View: Institutional Portal ─── */}
+      <div className="hidden md:flex min-h-screen bg-slate-50 text-slate-900 selection:bg-blue-100 selection:text-blue-900 flex-col font-sans overflow-x-hidden max-w-full">
+        {/* Institutional Top Notification Bar */}
+        <div className="bg-slate-900 text-slate-300 text-xs py-2 px-4 text-center font-medium border-b border-slate-800 flex items-center justify-center gap-2">
         <span className="inline-flex items-center justify-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-400/30">
           v2.4 Academic Release
         </span>
@@ -535,7 +544,7 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-slate-200 py-12 px-6 text-slate-600 text-xs">
+      <footer className="bg-white border-t border-slate-200 py-10 px-6 text-slate-600 text-xs">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
             <div className="w-7 h-7 bg-slate-900 text-white rounded-lg flex items-center justify-center">
@@ -547,6 +556,9 @@ export default function LandingPage() {
             </div>
           </div>
 
+          {/* Desktop Footer: Powered by Brandex with exact logo image */}
+          <PoweredByBrandex variant="footer" />
+
           <div className="flex items-center gap-6 font-medium text-slate-600">
             <Link href="/dashboard" className="hover:text-slate-900 transition-colors">Admin Portal</Link>
             <Link href="/student/dashboard" className="hover:text-slate-900 transition-colors">Student View</Link>
@@ -556,5 +568,6 @@ export default function LandingPage() {
         </div>
       </footer>
     </div>
-  );
+  </>
+);
 }

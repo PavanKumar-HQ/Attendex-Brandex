@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { IosInstallPrompt } from "@/components/layout/ios-install-prompt";
 import { Providers } from "@/components/providers";
 import { AppLoader } from "@/components/ui/app-loader";
+import { BrandexSplash } from "@/components/ui/brandex-splash";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 
 const outfit = Outfit({ 
@@ -51,7 +52,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full bg-slate-50 antialiased overflow-x-hidden">
-      <body className={`${outfit.className} min-h-full flex flex-col text-slate-900 pb-16 md:pb-0`}>
+      <body className={`${outfit.className} min-h-full flex flex-col text-slate-900 pb-16 md:pb-0 overflow-x-hidden w-full max-w-full`}>
+        <BrandexSplash />
         <Suspense fallback={null}>
           <AppLoader />
         </Suspense>
