@@ -16,42 +16,60 @@ export function PoweredByBrandex({
 }: PoweredByBrandexProps) {
   if (variant === "compact") {
     return (
-      <div className={cn("inline-flex items-center gap-1.5 text-xs text-slate-500", className)}>
-        <span className="text-[10px] tracking-wider uppercase font-semibold text-slate-400">Powered by</span>
+      <a
+        href="https://brandex.co.in"
+        target="_blank"
+        rel="noopener noreferrer"
+        className={cn("inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-blue-600 transition-colors group cursor-pointer", className)}
+        title="Powered by Brandex • brandex.co.in"
+      >
+        <span className="text-[10px] tracking-wider uppercase font-semibold text-slate-400 group-hover:text-blue-600 transition-colors">Powered by</span>
         <img
           src="/brandex-logo.png"
           alt="Brandex"
-          className="h-4 w-auto object-contain brightness-95 hover:brightness-105 transition-all"
+          className="h-4 w-auto object-contain brightness-95 group-hover:brightness-105 group-hover:scale-105 transition-all"
         />
-      </div>
+      </a>
     );
   }
 
   if (variant === "sidebar") {
     return (
-      <div className={cn("px-3 py-2 border-t border-slate-100 flex flex-col items-center justify-center gap-1", className)}>
-        <span className="text-[9px] uppercase tracking-widest font-semibold text-slate-400">
+      <a
+        href="https://brandex.co.in"
+        target="_blank"
+        rel="noopener noreferrer"
+        className={cn("px-3 py-2 border-t border-slate-100 flex flex-col items-center justify-center gap-1 group hover:bg-slate-50/80 transition-all cursor-pointer", className)}
+        title="Powered by Brandex • brandex.co.in"
+      >
+        <span className="text-[9px] uppercase tracking-widest font-semibold text-slate-400 group-hover:text-blue-600 transition-colors">
           Powered by
         </span>
         <img
           src="/brandex-logo.png"
           alt="Brandex"
-          className="h-5 w-auto max-w-[120px] object-contain transition-transform hover:scale-105"
+          className="h-5 w-auto max-w-[120px] object-contain transition-transform group-hover:scale-105"
         />
-      </div>
+      </a>
     );
   }
 
   if (variant === "badge") {
     return (
-      <div className={cn("inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/90 text-white shadow-sm border border-slate-800", className)}>
-        <span className="text-[10px] tracking-wider uppercase font-medium text-slate-400">Powered by</span>
+      <a
+        href="https://brandex.co.in"
+        target="_blank"
+        rel="noopener noreferrer"
+        className={cn("inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/90 text-white shadow-sm border border-slate-800 hover:bg-slate-800 transition-colors cursor-pointer group", className)}
+        title="Powered by Brandex • brandex.co.in"
+      >
+        <span className="text-[10px] tracking-wider uppercase font-medium text-slate-400 group-hover:text-white transition-colors">Powered by</span>
         <img
           src="/brandex-logo.png"
           alt="Brandex"
-          className="h-5 w-auto object-contain invert brightness-200"
+          className="h-5 w-auto object-contain invert brightness-200 group-hover:scale-105 transition-transform"
         />
-      </div>
+      </a>
     );
   }
 
@@ -62,11 +80,11 @@ export function PoweredByBrandex({
         Powered by
       </span>
       <a 
-        href="https://github.com/PavanKumar-HQ/Attendex-Brandex" 
+        href="https://brandex.co.in" 
         target="_blank" 
         rel="noopener noreferrer"
-        className="inline-flex items-center hover:opacity-90 transition-opacity"
-        title="Brandex Academic Operating System"
+        className="inline-flex items-center hover:opacity-90 transition-opacity cursor-pointer group"
+        title="Powered by Brandex • brandex.co.in"
       >
         <img
           src="/brandex-logo.png"

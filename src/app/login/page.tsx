@@ -26,8 +26,10 @@ import {
   Users,
   BookOpen,
   Crown,
-  School
+  School,
+  UserPlus
 } from "lucide-react";
+import { PoweredByBrandex } from "@/components/ui/powered-by-brandex";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -275,118 +277,24 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            <div className="relative py-1">
+            <div className="relative py-2">
               <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-200" /></div>
-              <div className="relative flex justify-center text-[11px]"><span className="bg-white px-2 text-slate-400 font-semibold uppercase tracking-wider">or test real student profiles</span></div>
+              <div className="relative flex justify-center text-[11px]"><span className="bg-white px-3 text-slate-400 font-semibold uppercase tracking-wider">New Institutional Member?</span></div>
             </div>
 
-            {/* Quick 1-Click Real Student Profile Selectors */}
-            <div className="space-y-1.5">
-              <div className="text-[11px] font-bold text-slate-600 flex items-center justify-between">
-                <span>Select Real Student Profile:</span>
-                <span className="text-[10px] text-slate-400 font-normal">Loads live student data</span>
-              </div>
-              <div className="grid grid-cols-2 gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => launchDemoRole("STUDENT", "/student/dashboard", "CS-11")}
-                  className="p-2 rounded-lg border border-slate-200 hover:border-blue-400 hover:bg-blue-50/50 text-left transition-all group"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-900 group-hover:text-blue-700">Aarav Sharma</span>
-                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1 py-0.5 rounded">94%</span>
-                  </div>
-                  <span className="text-[10px] text-slate-500 font-mono block">Reg: CS-11 • CSE-A</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => launchDemoRole("STUDENT", "/student/dashboard", "CS-12")}
-                  className="p-2 rounded-lg border border-slate-200 hover:border-blue-400 hover:bg-blue-50/50 text-left transition-all group"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-900 group-hover:text-blue-700">Ishani Patel</span>
-                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1 py-0.5 rounded">87%</span>
-                  </div>
-                  <span className="text-[10px] text-slate-500 font-mono block">Reg: CS-12 • CSE-A</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => launchDemoRole("STUDENT", "/student/dashboard", "CS-23")}
-                  className="p-2 rounded-lg border border-red-200 hover:border-red-400 hover:bg-red-50/50 text-left transition-all group"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-900 group-hover:text-red-700">Ayush Tiwari</span>
-                    <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1 py-0.5 rounded">66%</span>
-                  </div>
-                  <span className="text-[10px] text-red-500 font-mono block">Reg: CS-23 • Shortage</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => launchDemoRole("STUDENT", "/student/dashboard", "21CS042")}
-                  className="p-2 rounded-lg border border-slate-200 hover:border-blue-400 hover:bg-blue-50/50 text-left transition-all group"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-900 group-hover:text-blue-700">Rahul Deshmukh</span>
-                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1 py-0.5 rounded">91.4%</span>
-                  </div>
-                  <span className="text-[10px] text-slate-500 font-mono block">Reg: 21CS042 • 4A</span>
-                </button>
-              </div>
-            </div>
-
-            <div className="relative py-1">
-              <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-200" /></div>
-              <div className="relative flex justify-center text-[11px]"><span className="bg-white px-2 text-slate-400 font-semibold uppercase tracking-wider">or faculty &amp; admin roles</span></div>
-            </div>
-
-            {/* Quick Staff Demo Launcher */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-              <button
-                type="button"
-                onClick={() => launchDemoRole("SUPER_ADMIN", "/super-admin")}
-                className="p-2 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-left transition-all"
+            {/* Direct Account Registration Action */}
+            <div className="space-y-2">
+              <Link
+                href="/signup"
+                className="w-full h-11 rounded-lg border-2 border-slate-900 bg-white hover:bg-slate-900 hover:text-white text-slate-900 font-bold text-sm shadow-sm flex items-center justify-center gap-2 transition-all group"
               >
-                <div className="flex items-center gap-1 text-xs font-bold text-slate-900">
-                  <Crown className="w-3 h-3 text-amber-500" />
-                  <span>Admin</span>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => launchDemoRole("PRINCIPAL", "/principal")}
-                className="p-2 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-left transition-all"
-              >
-                <div className="flex items-center gap-1 text-xs font-bold text-slate-900">
-                  <School className="w-3 h-3 text-blue-600" />
-                  <span>Principal</span>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => launchDemoRole("TEACHER", "/dashboard")}
-                className="p-2 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-left transition-all"
-              >
-                <div className="flex items-center gap-1 text-xs font-bold text-slate-900">
-                  <GraduationCap className="w-3 h-3 text-indigo-600" />
-                  <span>Faculty</span>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => launchDemoRole("PARENT", "/parent/dashboard")}
-                className="p-2 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-left transition-all"
-              >
-                <div className="flex items-center gap-1 text-xs font-bold text-slate-900">
-                  <Users className="w-3 h-3 text-purple-600" />
-                  <span>Parent</span>
-                </div>
-              </button>
+                <UserPlus className="w-4 h-4 text-blue-600 group-hover:text-blue-400" />
+                <span>Create Institutional Account</span>
+                <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-white transition-transform group-hover:translate-x-0.5" />
+              </Link>
+              <p className="text-[11px] text-center text-slate-400">
+                Enroll as Faculty, Student, Principal, Admin, or Guardian
+              </p>
             </div>
           </Card>
         </div>
@@ -480,8 +388,11 @@ export default function LoginPage() {
         )}
 
         {/* Footer */}
-        <div className="max-w-7xl mx-auto w-full text-center text-xs text-slate-500 font-medium py-2">
-          Attendex OS • Multi-Tenant Institutional Governance • Secured with PostgreSQL Row Level Security
+        <div className="max-w-7xl mx-auto w-full flex flex-col items-center justify-center gap-2 py-3">
+          <PoweredByBrandex variant="footer" />
+          <p className="text-[11px] text-slate-400 font-medium">
+            Attendex OS • Multi-Tenant Institutional Governance • Secured with PostgreSQL Row Level Security
+          </p>
         </div>
       </div>
     </PageTransition>

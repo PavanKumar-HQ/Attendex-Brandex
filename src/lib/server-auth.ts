@@ -156,7 +156,7 @@ export async function verifyStaffServerAuth(
   const cleanId = identifier.trim().toLowerCase();
   const candidateHash = computePasswordHash(rawPassword);
 
-  // 1. Attempt PostgreSQL user_profiles query
+  // 1. Authoritative PostgreSQL user_profiles query
   if (isSupabaseConfigured) {
     try {
       const { data: profile, error } = await supabase
@@ -170,7 +170,7 @@ export async function verifyStaffServerAuth(
         const isMatch = storedHash ? (storedHash === candidateHash) : false;
 
         if (isMatch) {
-          const role = profile.role as "TEACHER" | "PRINCIPAL" | "SUPER_ADMIN" | "PARENT";
+          const role = profile.role as "TEACHER" | "PRINCIPAL" | "SUPER_ADMIN" | "PARENT" | "ADMIN";
           return {
             success: true,
             role,
@@ -190,101 +190,13 @@ export async function verifyStaffServerAuth(
           };
         }
       }
-    } catch {
-      // Fall through to canonical staff profiles
+    } catch (err: any) {
+      console.error("[server-auth] profile query error:", err);
     }
   }
-
-  // 2. Canonical Staff & Faculty Profiles with Salted Hashes
-  const canonicalProfiles: Array<{
-    id: string;
-    email: string;
-    name: string;
-    role: "TEACHER" | "PRINCIPAL" | "SUPER_ADMIN" | "PARENT";
-    empId?: string;
-    passwordHash: string;
-  }> = [
-    {
-      id: "aa000000-0000-0000-0000-000000000001",
-      email: "admin@attendex.institution.edu",
-      name: "Dr. Ramesh Sundaram (Dean)",
-      role: "SUPER_ADMIN",
-      empId: "ADMIN-01",
-      passwordHash: computePasswordHash("Admin@Attendex2026")
-    },
-    {
-      id: "aa000000-0000-0000-0000-000000000002",
-      email: "faculty.cs@attendex.institution.edu",
-      name: "Prof. Arvind Sharma",
-      role: "TEACHER",
-      empId: "EMP-CS-101",
-      passwordHash: computePasswordHash("Faculty@Attendex2026")
-    },
-    {
-      id: "aa000000-0000-0000-0000-000000000003",
-      email: "principal@attendex.edu",
-      name: "Dr. K. S. Prabhakar (Principal)",
-      role: "PRINCIPAL",
-      empId: "PRIN-01",
-      passwordHash: computePasswordHash("Principal@Attendex2026")
-    },
-    {
-      id: "aa000000-0000-0000-0000-000000000005",
-      email: "parent.deshmukh@attendex.institution.edu",
-      name: "Sanjay Deshmukh",
-      role: "PARENT",
-      passwordHash: computePasswordHash("Parent@Attendex2026")
-    }
-  ];
-
-  const matched = canonicalProfiles.find(p =>
-    p.email.toLowerCase() === cleanId ||
-    (p.empId && p.empId.toLowerCase() === cleanId)
-  );
-
-  if (matched) {
-    const isStandardMatch = (
-      candidateHash === matched.passwordHash ||
-      candidateHash === computePasswordHash("attendex_default_key")
-    );
-
-    if (isStandardMatch) {
-      return {
-        success: true,
-        role: matched.role,
-        user: {
-          id: matched.id,
-          name: matched.name,
-          email: matched.email,
-          role: matched.role,
-          identifier: matched.email
-        },
-        message: `Welcome, ${matched.name}!`
-      };
-    }
-
-    return {
-      success: false,
-      message: "Invalid password for institutional account."
-    };
-  }
-
-  // Generic fallback if credentials match standard pattern
-  let inferredRole: "TEACHER" | "PRINCIPAL" | "SUPER_ADMIN" | "PARENT" = "TEACHER";
-  if (cleanId.includes("admin") || cleanId.includes("dean")) inferredRole = "SUPER_ADMIN";
-  else if (cleanId.includes("principal")) inferredRole = "PRINCIPAL";
-  else if (cleanId.includes("parent")) inferredRole = "PARENT";
 
   return {
-    success: true,
-    role: inferredRole,
-    user: {
-      id: "staff-generic-01",
-      name: cleanId.includes("admin") ? "Institutional Administrator" : "Faculty Member",
-      email: cleanId.includes("@") ? cleanId : `${cleanId}@attendex.edu`,
-      role: inferredRole,
-      identifier: cleanId
-    },
-    message: `Authenticated as ${inferredRole}.`
+    success: false,
+    message: "No institutional account found with this identifier. Please register for a new account."
   };
 }

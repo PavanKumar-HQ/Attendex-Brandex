@@ -35,7 +35,7 @@ import { AttendanceCalculator } from "@/components/student/attendance-calculator
 import { HallTicketModal } from "@/components/student/hall-ticket-modal";
 import { AssignmentTracker } from "@/components/student/assignment-tracker";
 
-import { resolveActiveStudent, InstitutionalStudent } from "@/lib/student-auth";
+import { resolveActiveStudentAsync, InstitutionalStudent } from "@/lib/student-auth";
 
 export default function StudentDashboard() {
   const [loading, setLoading] = useState(true);
@@ -63,7 +63,7 @@ export default function StudentDashboard() {
           if (cookieMatch) rollNumber = decodeURIComponent(cookieMatch[1]);
         }
 
-        const activeStudent: InstitutionalStudent = resolveActiveStudent(rollNumber);
+        const activeStudent: InstitutionalStudent = await resolveActiveStudentAsync(rollNumber);
 
         const totalConducted = activeStudent.total_sessions || 60;
         const totalPresent = activeStudent.attended_sessions || Math.round((activeStudent.attendance_percentage / 100) * totalConducted);

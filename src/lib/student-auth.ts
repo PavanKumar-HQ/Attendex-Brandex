@@ -520,29 +520,115 @@ export async function authenticateStudentCredentials(
 }
 
 /**
- * Resolves the currently authenticated student from cookie, localStorage, or fallback
+ * Resolves the currently authenticated student from cookie, localStorage, or dynamic session
  */
 export function resolveActiveStudent(rollNumber?: string | null): InstitutionalStudent {
-  if (rollNumber) {
-    const cleaned = rollNumber.trim().toUpperCase();
+  let activeRoll = rollNumber;
+
+  // Check client cookie if in browser
+  if (!activeRoll && typeof document !== "undefined") {
+    const cookies = document.cookie.split(";").map(c => c.trim());
+    const rollCookie = cookies.find(c => c.startsWith("attendex_student_roll="));
+    if (rollCookie) {
+      activeRoll = decodeURIComponent(rollCookie.split("=")[1]);
+    }
+  }
+
+  if (activeRoll) {
+    const cleaned = activeRoll.trim().toUpperCase();
     const found = INSTITUTIONAL_STUDENTS.find(s => 
       s.roll_number.toUpperCase() === cleaned || 
       s.register_number.toUpperCase() === cleaned
     );
     if (found) return found;
+
+    // Check cookie for registered student name
+    let studentName = `Student (${cleaned})`;
+    if (typeof document !== "undefined") {
+      const matchName = document.cookie.match(/attendex_student_name=([^;]+)/);
+      if (matchName) {
+        studentName = decodeURIComponent(matchName[1]);
+      }
+    }
+
+    return {
+      id: "stu-dynamic-" + cleaned.toLowerCase(),
+      name: studentName,
+      roll_number: cleaned,
+      register_number: `REG2026${cleaned.replace(/[^A-Z0-9]/g, "")}`,
+      email: `${cleaned.toLowerCase()}@attendex.edu`,
+      dob: "15082004",
+      formatted_dob: "15/08/2004",
+      class_name: "B.Tech Computer Science (CS-A)",
+      section: "CS-A",
+      year: 2,
+      semester: 4,
+      attendance_percentage: 100.0,
+      cgpa: 9.0,
+      total_sessions: 60,
+      attended_sessions: 60,
+      phone: "+91 98450 00000",
+      parent_name: "Guardian",
+      parent_email: "parent@attendex.edu",
+      parent_phone: "+91 98450 99999",
+      hostel: "Campus Residence",
+      status: "ACTIVE"
+    };
   }
 
-  // Check client cookie if in browser
-  if (typeof document !== "undefined") {
-    const cookies = document.cookie.split(";").map(c => c.trim());
-    const rollCookie = cookies.find(c => c.startsWith("attendex_student_roll="));
-    if (rollCookie) {
-      const rollVal = decodeURIComponent(rollCookie.split("=")[1]);
-      const found = INSTITUTIONAL_STUDENTS.find(s => s.roll_number.toUpperCase() === rollVal.toUpperCase());
-      if (found) return found;
+  // Default to first active student from roster
+  return INSTITUTIONAL_STUDENTS[0];
+}
+
+/**
+ * Asynchronously resolves student directly from Supabase PostgreSQL database
+ */
+export async function resolveActiveStudentAsync(rollNumber?: string | null): Promise<InstitutionalStudent> {
+  if (isSupabaseConfigured) {
+    try {
+      let targetRoll = rollNumber;
+      if (!targetRoll && typeof document !== "undefined") {
+        const cookieMatch = document.cookie.match(/attendex_student_roll=([^;]+)/);
+        if (cookieMatch) targetRoll = decodeURIComponent(cookieMatch[1]);
+      }
+      if (targetRoll) {
+        const cleanId = targetRoll.trim();
+        const { data: dbStudent } = await supabase
+          .from("students")
+          .select("*, classes(*)")
+          .or(`roll_number.ilike.%${cleanId}%,register_number.ilike.%${cleanId}%,email.ilike.%${cleanId}%`)
+          .maybeSingle();
+
+        if (dbStudent) {
+          return {
+            id: dbStudent.id,
+            name: dbStudent.name,
+            roll_number: dbStudent.roll_number,
+            register_number: dbStudent.register_number || `REG-${dbStudent.roll_number}`,
+            email: dbStudent.email || `${dbStudent.roll_number.toLowerCase()}@attendex.edu`,
+            dob: dbStudent.dob || "15082004",
+            formatted_dob: "15/08/2004",
+            class_name: dbStudent.classes?.name || "B.Tech Computer Science",
+            section: dbStudent.classes?.section || "A",
+            year: dbStudent.classes?.year || 2,
+            semester: dbStudent.classes?.semester || 4,
+            attendance_percentage: Number(dbStudent.attendance_percentage || 100),
+            cgpa: Number(dbStudent.cgpa || 9.0),
+            total_sessions: dbStudent.total_sessions || 60,
+            attended_sessions: dbStudent.attended_sessions || 60,
+            phone: dbStudent.phone || "+91 98450 00000",
+            parent_name: "Guardian",
+            parent_email: "parent@attendex.edu",
+            parent_phone: "+91 98450 99999",
+            hostel: "Campus Residence",
+            status: "ACTIVE"
+          };
+        }
+      }
+    } catch (err) {
+      console.error("[student-auth] async resolve error:", err);
     }
   }
 
-  // Default to first active student (Aarav Sharma - CS-11)
-  return INSTITUTIONAL_STUDENTS[0];
+  return resolveActiveStudent(rollNumber);
 }
