@@ -77,16 +77,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [role, setRole] = useState<CoreRole>("TEACHER");
+  const [customUser, setCustomUser] = useState<{ name: string; email: string } | null>(null);
 
   useEffect(() => {
-    // Determine initial role from path or storage
+    // Determine initial role and custom name from cookies/path/storage
     if (typeof window !== "undefined") {
+      // 1. Check cookies for real user name, roll, and email
+      const cookies = document.cookie.split(";").map(c => c.trim());
+      const nameCookie = cookies.find(c => c.startsWith("attendex_user_name=") || c.startsWith("attendex_student_name="));
+      const emailCookie = cookies.find(c => c.startsWith("attendex_user_email="));
+      const sessionRoleCookie = cookies.find(c => c.startsWith("attendex_demo_session="));
+
+      let resolvedName = "";
+      if (nameCookie) {
+        try {
+          resolvedName = decodeURIComponent(nameCookie.split("=")[1]).trim();
+        } catch {
+          // ignore
+        }
+      }
+      if (!resolvedName) {
+        resolvedName = localStorage.getItem("attendex_user_name") || "";
+      }
+
+      let resolvedEmail = "";
+      if (emailCookie) {
+        try {
+          resolvedEmail = decodeURIComponent(emailCookie.split("=")[1]).trim();
+        } catch {
+          // ignore
+        }
+      }
+
+      if (resolvedName || resolvedEmail) {
+        setCustomUser({
+          name: resolvedName || "Authorized User",
+          email: resolvedEmail || "user@attendex.edu"
+        });
+      }
+
+      // 2. Resolve Role
       if (pathname.startsWith("/principal") || pathname.startsWith("/super-admin")) {
         setRole("ADMIN");
       } else if (pathname.startsWith("/student")) {
         setRole("STUDENT");
       } else if (pathname.startsWith("/parent")) {
         setRole("PARENT");
+      } else if (sessionRoleCookie) {
+        const raw = sessionRoleCookie.split("=")[1]?.toUpperCase();
+        if (raw === "ADMIN" || raw === "SUPER_ADMIN" || raw === "PRINCIPAL") setRole("ADMIN");
+        else if (raw === "STUDENT") setRole("STUDENT");
+        else if (raw === "PARENT") setRole("PARENT");
+        else setRole("TEACHER");
       } else {
         const stored = localStorage.getItem(ROLE_STORAGE_KEY) as CoreRole;
         if (stored && PRESET_USERS[stored]) {
@@ -100,14 +142,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setRole(newRole);
     if (typeof window !== "undefined") {
       localStorage.setItem(ROLE_STORAGE_KEY, newRole);
-      // Set demo cookie for server router
       document.cookie = `attendex_demo_session=${newRole.toLowerCase()}; path=/; max-age=604800; SameSite=Lax`;
     }
     const target = PRESET_USERS[newRole].homePath;
     router.push(target);
   };
 
-  const currentUser = PRESET_USERS[role];
+  const preset = PRESET_USERS[role];
+  const displayName = customUser?.name || preset.name;
+  const displayEmail = customUser?.email || preset.email;
+
+  // Compute initials from real name
+  const initials = displayName
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(w => w[0]?.toUpperCase())
+    .join("") || preset.avatar;
+
+  const currentUser: UserSession = {
+    ...preset,
+    name: displayName,
+    email: displayEmail,
+    avatar: initials,
+  };
 
   return (
     <AuthContext.Provider value={{ currentUser, role, switchRole }}>

@@ -51,8 +51,13 @@ export default function SignupPage() {
         throw new Error(data.message || "Registration failed. Please check your details.");
       }
 
+      const registeredName = data.user?.name || formData.fullName.trim();
+      try {
+        localStorage.setItem("attendex_user_name", registeredName);
+      } catch {}
+
       toast.success("Institutional Account Created", {
-        description: `Welcome aboard, ${data.user?.name || formData.fullName}! Redirecting to workspace...`
+        description: `Welcome aboard, ${registeredName}! Redirecting to workspace...`
       });
 
       const redirectPath = 

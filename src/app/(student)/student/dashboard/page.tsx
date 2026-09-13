@@ -144,8 +144,12 @@ export default function StudentDashboard() {
                     <GraduationCap className="w-6 h-6" />
                 </div>
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Student Dashboard</h1>
-                    <p className="text-slate-500 font-medium text-xs mt-0.5">Logged in as {student?.name}</p>
+                    <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+                      Welcome back, {student?.name || "Student"}! 👋
+                    </h1>
+                    <p className="text-slate-500 font-medium text-xs mt-0.5">
+                      Institutional Academic Portal • {student?.className || "Enrolled Student"}
+                    </p>
                 </div>
             </div>
             <div className="flex items-center gap-3">
@@ -194,8 +198,11 @@ export default function StudentDashboard() {
                                 </h2>
                                 <p className="text-sm text-slate-300 max-w-xs leading-relaxed">
                                     {isEligible 
-                                        ? `You are on track. Safe buffer: You can afford to miss up to ${projection?.safeBuffer || 0} more lectures.` 
-                                        : `Critical shortage. You MUST attend at least ${projection?.targetRemaining || 0} more lectures to reach 75% eligibility.`
+                                        ? (projection?.safeBuffer === 0 
+                                            ? "You are currently meeting the 75% threshold. Maintain regular attendance to keep your hall ticket active."
+                                            : `You are on track. Safe buffer: You can miss up to ${projection?.safeBuffer || 1} lecture${(projection?.safeBuffer || 1) > 1 ? 's' : ''} while maintaining eligibility.`
+                                          )
+                                        : `Critical shortage. You must attend at least ${projection?.targetRemaining || 1} more lecture${(projection?.targetRemaining || 1) > 1 ? 's' : ''} to reach 75% eligibility.`
                                     }
                                 </p>
                             </div>

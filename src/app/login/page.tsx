@@ -85,6 +85,9 @@ export default function LoginPage() {
           const studentJson = await studentRes.json();
 
           if (studentJson.success && studentJson.student) {
+            try {
+              localStorage.setItem("attendex_user_name", studentJson.student.name);
+            } catch {}
             toast.success(`Welcome, ${studentJson.student.name}!`, {
               description: `Authenticated with Register #${studentJson.student.roll_number}.`
             });
@@ -120,9 +123,13 @@ export default function LoginPage() {
       }
 
       const role = staffJson.role || "TEACHER";
+      const facultyName = staffJson.user?.name || "User";
+      try {
+        localStorage.setItem("attendex_user_name", facultyName);
+      } catch {}
 
       toast.success("Authentication Verified", {
-        description: `Welcome back, ${staffJson.user?.name || "User"}! Redirecting to workspace...`
+        description: `Welcome back, ${facultyName}! Redirecting to workspace...`
       });
 
       const redirectPath = 
@@ -171,8 +178,13 @@ export default function LoginPage() {
         throw new Error(data.message || "Registration failed. Please check your details.");
       }
 
+      const registeredName = data.user?.name || signupForm.fullName.trim();
+      try {
+        localStorage.setItem("attendex_user_name", registeredName);
+      } catch {}
+
       toast.success("Institutional Account Created", {
-        description: `Welcome aboard, ${data.user?.name || signupForm.fullName}! Redirecting to workspace...`
+        description: `Welcome aboard, ${registeredName}! Redirecting to workspace...`
       });
 
       const redirectPath = 

@@ -4,14 +4,20 @@ import { format } from "date-fns";
 import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { RoleSwitcher } from "@/components/layout/role-switcher";
 import { UserMenu } from "@/components/layout/user-menu";
+import { useAuth } from "@/lib/auth-context";
 
 export function Header({ title = "Overview", showBack = false }: { title?: React.ReactNode, showBack?: boolean }) {
   const router = useRouter();
+  const { role } = useAuth();
+
+  const roleLabel = 
+    role === "ADMIN" ? "Administrator" :
+    role === "TEACHER" ? "Faculty" :
+    role === "STUDENT" ? "Student" : "Guardian";
 
   return (
-    <header className="w-full max-w-full overflow-x-hidden pt-[env(safe-area-inset-top)] md:pt-0 min-h-14 md:h-16 px-3 sm:px-4 md:px-8 flex items-center justify-between gap-2.5 border-b border-slate-200/80 bg-white/95 backdrop-blur-sm sticky top-0 z-40">
+    <header className="w-full max-w-full min-h-14 md:h-16 px-3 sm:px-4 md:px-8 flex items-center justify-between gap-2.5 border-b border-slate-200/80 bg-white/95 backdrop-blur-md relative md:sticky md:top-0 z-30 transition-all">
       <div className="flex items-center gap-2 sm:gap-3 py-2 md:py-0 min-w-0 flex-1 overflow-hidden">
         {showBack && (
           <Button 
@@ -31,8 +37,13 @@ export function Header({ title = "Overview", showBack = false }: { title?: React
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3 md:gap-4 shrink-0">
-        {/* 4-Role Unified Switcher */}
-        <RoleSwitcher />
+        {/* Read-Only Verified Institutional Role Indicator */}
+        <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100/90 border border-slate-200 text-xs font-semibold text-slate-700 select-none">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+          <span className="text-[11px] font-bold text-slate-700 capitalize">
+            {roleLabel}
+          </span>
+        </div>
 
         <div className="text-xs font-semibold text-slate-400 hidden lg:block">
           {format(new Date(), "EEE, MMM d, yyyy")}

@@ -235,22 +235,37 @@ export function resolveActiveStudent(rollNumber?: string | null): InstitutionalS
     }
   }
 
+  // Check cookie or storage for user-provided name during account creation
+  let registeredName = "";
+  if (typeof document !== "undefined") {
+    const matchName = document.cookie.match(/(?:attendex_student_name|attendex_user_name)=([^;]+)/);
+    if (matchName) {
+      try {
+        registeredName = decodeURIComponent(matchName[1]).trim();
+      } catch {
+        // ignore
+      }
+    }
+    if (!registeredName) {
+      registeredName = localStorage.getItem("attendex_user_name") || "";
+    }
+  }
+
   if (activeRoll) {
     const cleaned = activeRoll.trim().toUpperCase();
     const found = INSTITUTIONAL_STUDENTS.find(s => 
       s.roll_number.toUpperCase() === cleaned || 
       s.register_number.toUpperCase() === cleaned
     );
-    if (found) return found;
+    if (found) {
+      return {
+        ...found,
+        name: registeredName || found.name
+      };
+    }
 
     // Check cookie for registered student name
-    let studentName = `Student (${cleaned})`;
-    if (typeof document !== "undefined") {
-      const matchName = document.cookie.match(/attendex_student_name=([^;]+)/);
-      if (matchName) {
-        studentName = decodeURIComponent(matchName[1]);
-      }
-    }
+    const studentName = registeredName || `Student (${cleaned})`;
 
     return {
       id: "stu-dynamic-" + cleaned.toLowerCase(),
@@ -277,10 +292,21 @@ export function resolveActiveStudent(rollNumber?: string | null): InstitutionalS
     };
   }
 
+  // If no roll number is found, but a registered student name exists:
+  if (registeredName) {
+    const base = INSTITUTIONAL_STUDENTS[0];
+    return {
+      ...base,
+      name: registeredName,
+      roll_number: "CS-01",
+      email: `${registeredName.toLowerCase().replace(/[^a-z0-9]/g, "")}@attendex.edu`
+    };
+  }
+
   // Default to first active student from roster or initial student
   return INSTITUTIONAL_STUDENTS[0] || {
     id: "stu-init",
-    name: "Student",
+    name: registeredName || "Student",
     roll_number: "STUDENT",
     register_number: "REG-STUDENT",
     email: "student@attendex.edu",

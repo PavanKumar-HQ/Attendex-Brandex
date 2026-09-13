@@ -284,13 +284,21 @@ export async function POST(req: NextRequest) {
       httpOnly: false
     });
 
-    if (cleanRole === "STUDENT" && roleSpecificId) {
-      response.cookies.set("attendex_student_roll", roleSpecificId.trim().toUpperCase(), {
+    if (cleanRole === "STUDENT") {
+      response.cookies.set("attendex_student_name", encodeURIComponent(fullName.trim()), {
         path: "/",
         maxAge: 86400 * 7,
         sameSite: "lax",
         httpOnly: false
       });
+      if (roleSpecificId) {
+        response.cookies.set("attendex_student_roll", roleSpecificId.trim().toUpperCase(), {
+          path: "/",
+          maxAge: 86400 * 7,
+          sameSite: "lax",
+          httpOnly: false
+        });
+      }
     }
 
     return response;

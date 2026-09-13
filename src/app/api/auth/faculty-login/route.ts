@@ -44,6 +44,13 @@ export async function POST(req: NextRequest) {
       httpOnly: false
     });
 
+    response.cookies.set("attendex_user_name", encodeURIComponent(result.user.name), {
+      path: "/",
+      maxAge: 86400 * 7,
+      sameSite: "lax",
+      httpOnly: false
+    });
+
     return response;
   } catch (err: any) {
     return NextResponse.json(

@@ -21,6 +21,7 @@ import { TeacherActionQueue } from "@/components/dashboard/teacher-action-queue"
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
+import { useAuth } from "@/lib/auth-context";
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -76,6 +77,7 @@ const StatCard = ({ title, value, label, icon: Icon, delay = 0, color = "blue", 
 export default function DashboardPage() {
   const router = useRouter();
   const [isGenerating, setIsGenerating] = useState<string | null>(null);
+  const { currentUser } = useAuth();
   const [timeframe, setTimeframe] = useState<'week' | 'month'>('week');
   const [isMounted, setIsMounted] = useState(false);
 
@@ -170,6 +172,22 @@ export default function DashboardPage() {
     <PageTransition>
       <div className="flex flex-col min-h-full space-y-6">
         <Header title="Command Center" />
+
+        {/* Institutional Welcome & Status Banner */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-blue-50/80 via-indigo-50/30 to-slate-50 border border-blue-100/80 rounded-2xl p-4 sm:p-5 shadow-2xs">
+          <div>
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
+              Welcome back, {currentUser?.name || userProfile?.full_name || "Faculty Member"}! 👋
+            </h2>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Faculty Command Center • Real-Time Attendance &amp; Operations Registry
+            </p>
+          </div>
+          <div className="flex items-center gap-2 text-xs font-semibold text-blue-700 bg-white border border-blue-200/80 px-3 py-1.5 rounded-xl shadow-2xs shrink-0 self-start sm:self-center">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Academic Session Active</span>
+          </div>
+        </div>
         
         <div className="space-y-6">
           {/* Top 3 Executive Metrics */}
