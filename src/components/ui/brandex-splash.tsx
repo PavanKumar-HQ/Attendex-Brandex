@@ -41,33 +41,24 @@ export function BrandexSplash() {
           </div>
 
           <div className="relative z-10 flex flex-col items-center text-center px-6">
-            {/* Brandex Official Logo */}
+            {/* Sleek Brandex Identity Emblem (No yellow raster image) */}
             <motion.div
-              initial={{ scale: 0.85, opacity: 0, y: 12 }}
+              initial={{ scale: 0.85, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              className="relative p-3.5 sm:p-4 rounded-2xl bg-white shadow-xl shadow-blue-600/10 border border-slate-200/80"
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className="flex flex-col items-center gap-2"
             >
-              <img
-                src="/brandex-logo.png"
-                alt="Brandex Logo"
-                className="h-12 sm:h-14 w-auto object-contain"
-              />
-            </motion.div>
-
-            {/* Subtitle animation */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-              className="mt-5 flex flex-col items-center gap-1.5"
-            >
-              <span className="text-xs uppercase tracking-[0.25em] text-blue-600 font-bold">
-                Powered by Brandex
-              </span>
-              <p className="text-[12px] text-slate-500 font-medium">
-                Next-Generation Academic Operating System
-              </p>
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-500 flex items-center justify-center text-white shadow-xl shadow-blue-500/25">
+                <span className="font-black text-2xl tracking-tighter font-sans">B</span>
+              </div>
+              <div className="text-center mt-1">
+                <h1 className="text-2xl sm:text-3xl font-black tracking-[0.22em] text-slate-900 uppercase">
+                  Brandex
+                </h1>
+                <span className="text-[10px] uppercase tracking-[0.25em] text-blue-600 font-extrabold block mt-0.5">
+                  Academic Operating System
+                </span>
+              </div>
             </motion.div>
 
             {/* Original Micro Loading Track */}
