@@ -27,9 +27,11 @@ import {
   User,
   Mail,
   Phone,
-  ShieldCheck
+  ShieldCheck,
+  Fingerprint
 } from "lucide-react";
 import { PoweredByBrandex } from "@/components/ui/powered-by-brandex";
+import { useWebAuthn } from "@/hooks/use-webauthn";
 
 type AuthTab = "signin" | "signup";
 type SignupRole = "STUDENT" | "PARENT";
@@ -54,6 +56,31 @@ export default function LoginPage() {
     password: "",
     roleSpecificId: ""
   });
+
+  // Biometric Authentication Hook (Cross-platform for Android, iOS, Windows, Mac)
+  const { authenticateWithPasskey, device } = useWebAuthn();
+  const [isAuthenticatingBiometric, setIsAuthenticatingBiometric] = useState(false);
+
+  const handleBiometricLogin = async () => {
+    setIsAuthenticatingBiometric(true);
+    try {
+      const result = await authenticateWithPasskey();
+      if (result.success && result.user) {
+        const role = (result.user.userRole || "STUDENT").toUpperCase();
+        const redirectPath = 
+          role === "SUPER_ADMIN" || role === "ADMIN" ? "/super-admin" :
+          role === "PRINCIPAL" ? "/principal" :
+          role === "STUDENT" ? "/student/dashboard" :
+          role === "PARENT" ? "/parent/dashboard" : "/dashboard";
+
+        setTimeout(() => {
+          window.location.href = redirectPath;
+        }, 500);
+      }
+    } finally {
+      setIsAuthenticatingBiometric(false);
+    }
+  };
 
   // ─── Sign In Submission ───
   const handleSignIn = async (e: React.FormEvent) => {
@@ -85,11 +112,24 @@ export default function LoginPage() {
           const studentJson = await studentRes.json();
 
           if (studentJson.success && studentJson.student) {
+            const std = studentJson.student;
             try {
-              localStorage.setItem("attendex_user_name", studentJson.student.name);
+              localStorage.setItem("attendex_user_name", std.name);
+              if (std.phone) {
+                localStorage.setItem("attendex_user_phone", std.phone);
+                document.cookie = `attendex_user_phone=${encodeURIComponent(std.phone)}; path=/; max-age=31536000`;
+              }
+              if (std.email) {
+                localStorage.setItem("attendex_user_email", std.email);
+                document.cookie = `attendex_user_email=${encodeURIComponent(std.email)}; path=/; max-age=31536000`;
+              }
+              if (std.roll_number) {
+                localStorage.setItem("attendex_student_roll", std.roll_number);
+                document.cookie = `attendex_student_roll=${encodeURIComponent(std.roll_number)}; path=/; max-age=31536000`;
+              }
             } catch {}
-            toast.success(`Welcome, ${studentJson.student.name}!`, {
-              description: `Authenticated with Register #${studentJson.student.roll_number}.`
+            toast.success(`Welcome, ${std.name}!`, {
+              description: `Authenticated with Register #${std.roll_number}.`
             });
             window.location.href = "/student/dashboard";
             return;
@@ -126,6 +166,14 @@ export default function LoginPage() {
       const facultyName = staffJson.user?.name || "User";
       try {
         localStorage.setItem("attendex_user_name", facultyName);
+        if (staffJson.user?.phone) {
+          localStorage.setItem("attendex_user_phone", staffJson.user.phone);
+          document.cookie = `attendex_user_phone=${encodeURIComponent(staffJson.user.phone)}; path=/; max-age=31536000`;
+        }
+        if (staffJson.user?.email) {
+          localStorage.setItem("attendex_user_email", staffJson.user.email);
+          document.cookie = `attendex_user_email=${encodeURIComponent(staffJson.user.email)}; path=/; max-age=31536000`;
+        }
       } catch {}
 
       toast.success("Authentication Verified", {
@@ -151,8 +199,13 @@ export default function LoginPage() {
   // ─── Sign Up Submission ───
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!signupForm.fullName.trim() || !signupForm.password.trim()) {
-      toast.error("Required Fields Missing", { description: "Full Name and Password are required." });
+    if (!signupForm.fullName.trim() || !signupForm.password.trim() || !signupForm.email.trim() || !signupForm.roleSpecificId.trim()) {
+      toast.error("Required Fields Missing", { description: "Full Name, Email, Roll Number, and Password are required." });
+      return;
+    }
+
+    if (!signupForm.phone.trim() || signupForm.phone.trim().length < 8) {
+      toast.error("Mobile Number Required", { description: "Please enter a valid mobile number for identity verification and account recovery." });
       return;
     }
 
@@ -163,12 +216,12 @@ export default function LoginPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          fullName: signupForm.fullName,
-          email: signupForm.email,
-          phone: signupForm.phone,
+          fullName: signupForm.fullName.trim(),
+          email: signupForm.email.trim(),
+          phone: signupForm.phone.trim(),
           password: signupForm.password,
           role: signupRole,
-          roleSpecificId: signupForm.roleSpecificId
+          roleSpecificId: signupForm.roleSpecificId.trim()
         })
       });
 
@@ -179,8 +232,18 @@ export default function LoginPage() {
       }
 
       const registeredName = data.user?.name || signupForm.fullName.trim();
+      const registeredPhone = signupForm.phone.trim();
+      const registeredEmail = signupForm.email.trim();
+      const registeredRoll = signupForm.roleSpecificId.trim().toUpperCase();
+
       try {
         localStorage.setItem("attendex_user_name", registeredName);
+        localStorage.setItem("attendex_user_phone", registeredPhone);
+        localStorage.setItem("attendex_user_email", registeredEmail);
+        localStorage.setItem("attendex_student_roll", registeredRoll);
+        document.cookie = `attendex_user_phone=${encodeURIComponent(registeredPhone)}; path=/; max-age=31536000`;
+        document.cookie = `attendex_user_email=${encodeURIComponent(registeredEmail)}; path=/; max-age=31536000`;
+        document.cookie = `attendex_student_roll=${encodeURIComponent(registeredRoll)}; path=/; max-age=31536000`;
       } catch {}
 
       toast.success("Institutional Account Created", {
@@ -192,7 +255,7 @@ export default function LoginPage() {
 
       setTimeout(() => {
         window.location.href = redirectPath;
-      }, 1000);
+      }, 800);
     } catch (err: any) {
       toast.error("Registration Failed", {
         description: err.message || "Unable to create account. Contact administrator."
@@ -331,6 +394,33 @@ export default function LoginPage() {
                   )}
                 </Button>
 
+                {/* Biometric Quick Sign-In (Cross-platform Android / iOS / Desktop) */}
+                <div className="relative flex py-1 items-center">
+                  <div className="flex-grow border-t border-slate-200"></div>
+                  <span className="flex-shrink mx-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">or passwordless</span>
+                  <div className="flex-grow border-t border-slate-200"></div>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleBiometricLogin}
+                  disabled={isAuthenticatingBiometric || isSigningIn}
+                  className="w-full h-11 rounded-xl border-slate-200 bg-slate-50/80 hover:bg-blue-50/70 hover:border-blue-300 text-slate-700 font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-2xs"
+                >
+                  {isAuthenticatingBiometric ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                      <span>Scanning Biometrics...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Fingerprint className="w-4 h-4 text-blue-600" />
+                      <span>Sign in with {device.label}</span>
+                    </>
+                  )}
+                </Button>
+
                 {/* Prompt to create account */}
                 <div className="pt-2 text-center">
                   <p className="text-xs text-slate-500">
@@ -433,19 +523,28 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                {/* Phone */}
+                {/* Phone (Required for Recovery) */}
                 <div className="space-y-1">
-                  <Label className="text-xs font-bold text-slate-700">Mobile Number (Optional)</Label>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-bold text-slate-700">Mobile Phone Number</Label>
+                    <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200/60 px-2 py-0.5 rounded-md">
+                      Required for Recovery
+                    </span>
+                  </div>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <Input
                       type="tel"
                       value={signupForm.phone}
                       onChange={(e) => setSignupForm({ ...signupForm, phone: e.target.value })}
-                      placeholder="+91 98450 00000"
+                      placeholder="+91 98450 12345"
                       className="h-10 pl-9 rounded-xl border-slate-200 text-sm font-medium"
+                      required
                     />
                   </div>
+                  <p className="text-[10px] text-slate-500 font-medium">
+                    Saved directly to your institutional profile for security &amp; password recovery PINs.
+                  </p>
                 </div>
 
                 {/* Password */}

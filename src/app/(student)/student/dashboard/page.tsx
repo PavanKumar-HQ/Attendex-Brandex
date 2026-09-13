@@ -19,7 +19,8 @@ import {
   ChevronRight,
   AlertTriangle,
   CalendarDays,
-  CreditCard
+  CreditCard,
+  Sparkles
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -152,8 +153,9 @@ export default function StudentDashboard() {
                     <GraduationCap className="w-6 h-6" />
                 </div>
                 <div className="min-w-0 flex-1">
-                    <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight leading-snug">
-                      Welcome back, <span className="text-blue-600">{activeName}</span>! 👋
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight leading-snug flex items-center flex-wrap gap-1.5">
+                      <span>Welcome back, <span className="text-blue-600">{activeName}</span>!</span>
+                      <Sparkles className="w-5 h-5 text-amber-500 shrink-0 inline-block" />
                     </h1>
                     <p className="text-slate-500 font-medium text-xs sm:text-sm mt-0.5 truncate">
                       Institutional Academic Portal • {student?.className || "Computer Science & Engineering"}

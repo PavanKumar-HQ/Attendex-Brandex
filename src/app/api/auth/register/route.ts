@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { computePasswordHash } from "@/lib/server-auth";
+import { serverState } from "@/lib/server-state";
 import { randomUUID } from "node:crypto";
 
 const DEFAULT_INSTITUTION_ID = "00000000-0000-0000-0000-000000000001";
@@ -174,22 +175,30 @@ export async function POST(req: NextRequest) {
         await supabase
           .from("students")
           .update({
+            name: fullName.trim(),
             user_id: userId,
             email: cleanEmail,
             password_hash: passwordHash,
             phone: phone.trim() || undefined
           })
           .eq("id", existingStudent.id);
+
+        serverState.updateStudent(existingStudent.id, {
+          name: fullName.trim(),
+          phone: phone.trim() || undefined,
+          email: cleanEmail
+        });
       } else {
         // Create new student record
         const studentId = randomUUID();
+        const studentRegNo = `REG${new Date().getFullYear()}${rollNumber.replace(/[^A-Z0-9]/g, "")}`;
         await supabase.from("students").insert({
           id: studentId,
           user_id: userId,
           institution_id: DEFAULT_INSTITUTION_ID,
           class_id: classId || DEFAULT_CLASS_ID,
           roll_number: rollNumber,
-          register_number: `REG${new Date().getFullYear()}${rollNumber.replace(/[^A-Z0-9]/g, "")}`,
+          register_number: studentRegNo,
           name: fullName.trim(),
           email: cleanEmail,
           phone: phone.trim() || "+91 98450 00000",
@@ -199,6 +208,30 @@ export async function POST(req: NextRequest) {
           cgpa: 9.0,
           total_sessions: 60,
           attended_sessions: 60,
+          status: "ACTIVE"
+        });
+
+        serverState.addStudent({
+          id: studentId,
+          name: fullName.trim(),
+          roll_number: rollNumber,
+          register_number: studentRegNo,
+          email: cleanEmail,
+          dob: password.length === 8 && /^\d+$/.test(password) ? password : "15082004",
+          formatted_dob: "15/08/2004",
+          class_name: "B.Tech Computer Science (CS-A)",
+          section: "A",
+          year: 2,
+          semester: 4,
+          attendance_percentage: 100.0,
+          cgpa: 9.0,
+          total_sessions: 60,
+          attended_sessions: 60,
+          phone: phone.trim() || "+91 98450 00000",
+          parent_name: "Guardian",
+          parent_email: "parent@attendex.edu",
+          parent_phone: "+91 98450 99999",
+          hostel: "Campus Residence",
           status: "ACTIVE"
         });
       }

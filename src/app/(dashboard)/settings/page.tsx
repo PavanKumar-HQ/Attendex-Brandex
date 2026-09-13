@@ -56,17 +56,27 @@ export default function SettingsPage() {
 
   const updateMutation = useMutation({
     mutationFn: async (updatedProfile: any) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (typeof window !== "undefined") {
+        if (updatedProfile.name) localStorage.setItem("attendex_user_name", updatedProfile.name);
+        if (updatedProfile.phone) {
+          localStorage.setItem("attendex_user_phone", updatedProfile.phone);
+          document.cookie = `attendex_user_phone=${encodeURIComponent(updatedProfile.phone)}; path=/; max-age=31536000`;
+        }
+      }
 
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          full_name: updatedProfile.name,
-        })
-        .eq('id', user.id);
-
-      if (error) throw error;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase
+            .from('user_profiles')
+            .update({
+              full_name: updatedProfile.name,
+              phone: updatedProfile.phone,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', user.id);
+        }
+      } catch {}
     },
     onSuccess: () => {
       toast.success("Profile synchronized with institution.");

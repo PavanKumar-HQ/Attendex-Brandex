@@ -237,6 +237,8 @@ export function resolveActiveStudent(rollNumber?: string | null): InstitutionalS
 
   // Check cookie or storage for user-provided name during account creation
   let registeredName = "";
+  let registeredPhone = "";
+  let registeredEmail = "";
   if (typeof document !== "undefined") {
     const matchName = document.cookie.match(/(?:attendex_student_name|attendex_user_name)=([^;]+)/);
     if (matchName) {
@@ -246,8 +248,27 @@ export function resolveActiveStudent(rollNumber?: string | null): InstitutionalS
         // ignore
       }
     }
+    const matchPhone = document.cookie.match(/(?:attendex_student_phone|attendex_user_phone)=([^;]+)/);
+    if (matchPhone) {
+      try {
+        registeredPhone = decodeURIComponent(matchPhone[1]).trim();
+      } catch {}
+    }
+    const matchEmail = document.cookie.match(/(?:attendex_student_email|attendex_user_email)=([^;]+)/);
+    if (matchEmail) {
+      try {
+        registeredEmail = decodeURIComponent(matchEmail[1]).trim();
+      } catch {}
+    }
+
     if (!registeredName) {
       registeredName = localStorage.getItem("attendex_user_name") || "";
+    }
+    if (!registeredPhone) {
+      registeredPhone = localStorage.getItem("attendex_user_phone") || "";
+    }
+    if (!registeredEmail) {
+      registeredEmail = localStorage.getItem("attendex_user_email") || "";
     }
   }
 
@@ -260,7 +281,9 @@ export function resolveActiveStudent(rollNumber?: string | null): InstitutionalS
     if (found) {
       return {
         ...found,
-        name: registeredName || found.name
+        name: registeredName || found.name,
+        phone: registeredPhone || found.phone,
+        email: registeredEmail || found.email
       };
     }
 
@@ -272,7 +295,7 @@ export function resolveActiveStudent(rollNumber?: string | null): InstitutionalS
       name: studentName,
       roll_number: cleaned,
       register_number: `REG2026${cleaned.replace(/[^A-Z0-9]/g, "")}`,
-      email: `${cleaned.toLowerCase()}@attendex.edu`,
+      email: registeredEmail || `${cleaned.toLowerCase()}@attendex.edu`,
       dob: "15082004",
       formatted_dob: "15/08/2004",
       class_name: "B.Tech Computer Science (CS-A)",
@@ -283,7 +306,7 @@ export function resolveActiveStudent(rollNumber?: string | null): InstitutionalS
       cgpa: 9.0,
       total_sessions: 60,
       attended_sessions: 60,
-      phone: "+91 98450 00000",
+      phone: registeredPhone || "+91 98450 00000",
       parent_name: "Guardian",
       parent_email: "parent@attendex.edu",
       parent_phone: "+91 98450 99999",
@@ -298,8 +321,9 @@ export function resolveActiveStudent(rollNumber?: string | null): InstitutionalS
     return {
       ...base,
       name: registeredName,
-      roll_number: "CS-01",
-      email: `${registeredName.toLowerCase().replace(/[^a-z0-9]/g, "")}@attendex.edu`
+      phone: registeredPhone || base.phone,
+      email: registeredEmail || base.email,
+      roll_number: "CS-01"
     };
   }
 
@@ -349,12 +373,23 @@ export async function resolveActiveStudentAsync(rollNumber?: string | null): Pro
           .maybeSingle();
 
         if (dbStudent) {
+          let regName = "";
+          let regPhone = "";
+          let regEmail = "";
+          try {
+            if (typeof window !== "undefined") {
+              regName = localStorage.getItem("attendex_user_name") || "";
+              regPhone = localStorage.getItem("attendex_user_phone") || "";
+              regEmail = localStorage.getItem("attendex_user_email") || "";
+            }
+          } catch {}
+
           return {
             id: dbStudent.id,
-            name: dbStudent.name,
+            name: regName || dbStudent.name,
             roll_number: dbStudent.roll_number,
             register_number: dbStudent.register_number || `REG-${dbStudent.roll_number}`,
-            email: dbStudent.email || `${dbStudent.roll_number.toLowerCase()}@attendex.edu`,
+            email: regEmail || dbStudent.email || `${dbStudent.roll_number.toLowerCase()}@attendex.edu`,
             dob: dbStudent.dob || "15082004",
             formatted_dob: "15/08/2004",
             class_name: dbStudent.classes?.name || "B.Tech Computer Science",
@@ -365,7 +400,7 @@ export async function resolveActiveStudentAsync(rollNumber?: string | null): Pro
             cgpa: Number(dbStudent.cgpa || 9.0),
             total_sessions: dbStudent.total_sessions || 60,
             attended_sessions: dbStudent.attended_sessions || 60,
-            phone: dbStudent.phone || "+91 98450 00000",
+            phone: regPhone || dbStudent.phone || "+91 98450 00000",
             parent_name: "Guardian",
             parent_email: "parent@attendex.edu",
             parent_phone: "+91 98450 99999",

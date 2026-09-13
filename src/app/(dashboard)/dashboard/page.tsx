@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Header } from "@/components/layout/header";
 import { PageTransition } from "@/components/ui/page-transition";
 import { Card } from "@/components/ui/card";
-import { Users, UserX, TrendingUp, FileText, FileSpreadsheet, ArrowRight, AlertCircle, Loader2, Shield, Bell, BookOpen, Trophy, Award as AwardIcon, Medal, Activity, CheckCircle, RefreshCcw } from "lucide-react";
+import { Users, UserX, TrendingUp, FileText, FileSpreadsheet, ArrowRight, AlertCircle, Loader2, Shield, Bell, BookOpen, Trophy, Award as AwardIcon, Medal, Activity, CheckCircle, RefreshCcw, Sparkles } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -177,7 +177,8 @@ export default function DashboardPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-blue-50/80 via-indigo-50/30 to-slate-50 border border-blue-100/80 rounded-2xl p-4 sm:p-5 shadow-2xs">
           <div>
             <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
-              Welcome back, {currentUser?.name || userProfile?.full_name || "Faculty Member"}! 👋
+              <span>Welcome back, {currentUser?.name || userProfile?.full_name || "Faculty Member"}!</span>
+              <Sparkles className="w-4 h-4 text-amber-500 shrink-0 inline-block" />
             </h2>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
               Faculty Dashboard • Attendance &amp; Class Management

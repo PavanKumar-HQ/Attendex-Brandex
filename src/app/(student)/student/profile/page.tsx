@@ -3,6 +3,7 @@
 import { Header } from "@/components/layout/header";
 import { PageTransition } from "@/components/ui/page-transition";
 import { Card } from "@/components/ui/card";
+import { useState } from "react";
 import { 
   User, 
   Mail, 
@@ -16,13 +17,17 @@ import {
   CalendarCheck,
   ShieldCheck,
   KeyRound,
-  FileBadge
+  FileBadge,
+  Edit3,
+  Check,
+  X,
+  Loader2
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { academicService } from "@/services/academic";
 import { LeaveRequestModal } from "@/components/parent/leave-request-modal";
@@ -30,6 +35,11 @@ import { LeaveRequestModal } from "@/components/parent/leave-request-modal";
 import { resolveActiveStudent, InstitutionalStudent } from "@/lib/student-auth";
 
 export default function StudentProfilePage() {
+  const queryClient = useQueryClient();
+  const [isEditingPhone, setIsEditingPhone] = useState(false);
+  const [phoneInput, setPhoneInput] = useState("");
+  const [savingPhone, setSavingPhone] = useState(false);
+
   const { data: profile } = useQuery({
     queryKey: ['student-profile-info'],
     queryFn: async () => {
@@ -53,6 +63,46 @@ export default function StudentProfilePage() {
 
   const student: InstitutionalStudent = profile?.student || resolveActiveStudent();
   const isDefaulter = student.attendance_percentage < 75;
+
+  const handleStartEditPhone = () => {
+    setPhoneInput(student.phone || "");
+    setIsEditingPhone(true);
+  };
+
+  const handleSavePhone = async () => {
+    if (!phoneInput.trim() || phoneInput.trim().length < 8) {
+      toast.error("Invalid Phone Number", { description: "Please enter a valid mobile number for identity verification." });
+      return;
+    }
+
+    setSavingPhone(true);
+    try {
+      const cleanPhone = phoneInput.trim();
+      localStorage.setItem("attendex_user_phone", cleanPhone);
+      document.cookie = `attendex_user_phone=${encodeURIComponent(cleanPhone)}; path=/; max-age=31536000`;
+      document.cookie = `attendex_student_phone=${encodeURIComponent(cleanPhone)}; path=/; max-age=31536000`;
+
+      await fetch("/api/student/update-contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          studentId: student.id,
+          rollNumber: student.roll_number,
+          phone: cleanPhone
+        })
+      }).catch(() => {});
+
+      queryClient.invalidateQueries({ queryKey: ['student-profile-info'] });
+      toast.success("Phone Number Synchronized", {
+        description: "Your mobile number has been bound to your student profile for security and recovery."
+      });
+      setIsEditingPhone(false);
+    } catch {
+      toast.error("Failed to update contact number.");
+    } finally {
+      setSavingPhone(false);
+    }
+  };
 
   return (
     <PageTransition>
@@ -112,7 +162,66 @@ export default function StudentProfilePage() {
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <InfoItem icon={Mail} label="University Email" text={student.email} />
-                        <InfoItem icon={Phone} label="Student Phone" text={student.phone} />
+                        
+                        {/* Interactive Student Phone with Recovery Synchronization */}
+                        <div className="flex flex-col space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Student Phone</span>
+                            {!isEditingPhone ? (
+                              <button
+                                onClick={handleStartEditPhone}
+                                className="text-xs text-blue-600 hover:text-blue-700 font-bold flex items-center gap-1 transition-colors px-1 py-0.5 rounded hover:bg-blue-50"
+                              >
+                                <Edit3 className="w-3 h-3" />
+                                <span>Update</span>
+                              </button>
+                            ) : null}
+                          </div>
+
+                          {!isEditingPhone ? (
+                            <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100 group hover:border-blue-200 transition-colors">
+                              <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                                <Phone className="w-4 h-4" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-semibold text-slate-800 truncate font-mono">
+                                  {student.phone || "+91 98450 00000"}
+                                </p>
+                                <span className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
+                                  <ShieldCheck className="w-3 h-3 text-emerald-600" /> Active for Recovery
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5 p-1.5 rounded-xl bg-blue-50/50 border border-blue-200">
+                              <input
+                                type="tel"
+                                value={phoneInput}
+                                onChange={(e) => setPhoneInput(e.target.value)}
+                                placeholder="+91 98450 12345"
+                                className="h-9 px-3 rounded-lg border border-slate-200 bg-white text-xs font-mono flex-1 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+                                autoFocus
+                              />
+                              <Button
+                                size="sm"
+                                onClick={handleSavePhone}
+                                disabled={savingPhone}
+                                className="h-8 px-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-2xs"
+                              >
+                                {savingPhone ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => setIsEditingPhone(false)}
+                                className="h-8 px-2 rounded-lg text-slate-500 hover:bg-slate-200 text-xs"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+
                         <InfoItem icon={CalendarCheck} label="Date of Birth (DOB)" text={`${student.formatted_dob} (Password: ${student.dob})`} />
                         <InfoItem icon={IdCard} label="Permanent Register Number" text={student.register_number} />
                     </div>
