@@ -41,21 +41,18 @@ export function BrandexSplash() {
           </div>
 
           <div className="relative z-10 flex flex-col items-center text-center px-6">
-            {/* Sleek Brandex Identity Emblem (No yellow raster image) */}
+            {/* Official Brandex Brandmark */}
             <motion.div
-              initial={{ scale: 0.85, opacity: 0, y: 10 }}
+              initial={{ scale: 0.88, opacity: 0, y: 8 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              className="flex flex-col items-center gap-2"
+              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+              className="relative flex items-center justify-center"
             >
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-500 flex items-center justify-center text-white shadow-xl shadow-blue-500/25">
-                <span className="font-black text-2xl tracking-tighter font-sans">B</span>
-              </div>
-              <div className="text-center mt-1">
-                <h1 className="text-2xl sm:text-3xl font-black tracking-[0.22em] text-slate-900 uppercase">
-                  Brandex
-                </h1>
-              </div>
+              <img
+                src="/brandex-logo.png"
+                alt="Brandex"
+                className="h-12 sm:h-16 w-auto object-contain"
+              />
             </motion.div>
 
             {/* Original Micro Loading Track */}
