@@ -43,8 +43,10 @@ export function RoleSwitcher() {
       >
         <span className={cn("w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full", colors.badge)} />
         <Icon className="w-3.5 h-3.5 shrink-0" />
-        <span className="hidden sm:inline font-bold truncate max-w-[100px]">{currentUser.name}</span>
-        <span className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0.2 rounded bg-white/80 border border-current font-bold uppercase">
+        <span className="hidden sm:inline font-bold">
+          {role === "ADMIN" ? "Admin View" : role === "TEACHER" ? "Faculty View" : role === "STUDENT" ? "Student View" : "Parent View"}
+        </span>
+        <span className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-md bg-white/80 border border-current font-bold uppercase tracking-wider sm:hidden">
           {role}
         </span>
         <ChevronDown className="w-3 h-3 opacity-60 ml-0.5 shrink-0" />

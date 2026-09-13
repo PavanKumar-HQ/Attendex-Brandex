@@ -313,23 +313,23 @@ export default function AttendancePage() {
         />
 
         {/* 1. Executive Filter Toolbar */}
-        <Card className="p-4 md:p-5 bg-white border-slate-200/90 shadow-sm rounded-xl space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
+        <Card className="p-4 sm:p-5 bg-white border-slate-200/90 shadow-xs rounded-2xl">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 text-xs">
             {/* Class Selector */}
-            <div className="space-y-1">
-              <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px] flex items-center gap-1">
-                <GraduationCap className="w-3 h-3 text-blue-600" />
+            <div className="space-y-1.5">
+              <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px] flex items-center gap-1.5 select-none">
+                <GraduationCap className="w-3.5 h-3.5 text-blue-600 shrink-0" />
                 <span>Academic Cohort</span>
               </label>
               <Select value={selectedClassId} onValueChange={(val) => val && setSelectedClassId(val)}>
-                <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-slate-50 text-slate-800 font-semibold text-xs focus:ring-slate-900">
+                <SelectTrigger className="h-10 w-full rounded-xl border border-slate-200/90 bg-slate-50/70 hover:bg-slate-100/90 focus:bg-white text-slate-800 font-semibold text-xs transition-all outline-none focus-visible:ring-2 focus-visible:ring-slate-900/15 focus-visible:border-slate-800 cursor-pointer px-3 shadow-2xs">
                   <SelectValue placeholder="Select Class">
-                    {currentClassName}
+                    <span className="truncate">{currentClassName}</span>
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent className="rounded-xl border-slate-200">
+                <SelectContent className="rounded-xl border-slate-200 max-h-64 shadow-xl">
                   {filteredClasses.map((cls: any) => (
-                    <SelectItem key={cls.id} value={cls.id} className="text-xs font-medium">
+                    <SelectItem key={cls.id} value={cls.id} className="text-xs font-medium cursor-pointer">
                       {cls.name} ({cls.section || 'Sec A'})
                     </SelectItem>
                   ))}
@@ -338,58 +338,70 @@ export default function AttendancePage() {
             </div>
 
             {/* Batch Selector */}
-            <div className="space-y-1">
-              <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px] flex items-center gap-1">
-                <Layers className="w-3 h-3 text-indigo-600" />
+            <div className="space-y-1.5">
+              <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px] flex items-center gap-1.5 select-none">
+                <Layers className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
                 <span>Batch Division</span>
               </label>
               <Select value={selectedBatch} onValueChange={(val) => val && setSelectedBatch(val)}>
-                <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-slate-50 text-slate-800 font-semibold text-xs focus:ring-slate-900">
-                  <SelectValue placeholder="Batch" />
+                <SelectTrigger className="h-10 w-full rounded-xl border border-slate-200/90 bg-slate-50/70 hover:bg-slate-100/90 focus:bg-white text-slate-800 font-semibold text-xs transition-all outline-none focus-visible:ring-2 focus-visible:ring-slate-900/15 focus-visible:border-slate-800 cursor-pointer px-3 shadow-2xs">
+                  <SelectValue placeholder="Batch">
+                    <span className="truncate">
+                      {selectedBatch === "all" ? "All Batches (Full)" : `Batch ${selectedBatch}`}
+                    </span>
+                  </SelectValue>
                 </SelectTrigger>
-                <SelectContent className="rounded-xl border-slate-200">
-                  <SelectItem value="all" className="text-xs">All Batches (Full Cohort)</SelectItem>
-                  <SelectItem value="A" className="text-xs">Batch A (Roll 1-30)</SelectItem>
-                  <SelectItem value="B" className="text-xs">Batch B (Roll 31-60)</SelectItem>
+                <SelectContent className="rounded-xl border-slate-200 shadow-xl">
+                  <SelectItem value="all" className="text-xs font-medium cursor-pointer">All Batches (Full Cohort)</SelectItem>
+                  <SelectItem value="A" className="text-xs font-medium cursor-pointer">Batch A (Roll 1-30)</SelectItem>
+                  <SelectItem value="B" className="text-xs font-medium cursor-pointer">Batch B (Roll 31-60)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {/* Lecture / Period */}
-            <div className="space-y-1">
-              <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px] flex items-center gap-1">
-                <Zap className="w-3 h-3 text-amber-600" />
+            <div className="space-y-1.5">
+              <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px] flex items-center gap-1.5 select-none">
+                <Zap className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                 <span>Lecture Slot</span>
               </label>
               <Select value={selectedLecture} onValueChange={(val) => val && setSelectedLecture(val)}>
-                <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-slate-50 text-slate-800 font-semibold text-xs focus:ring-slate-900">
-                  <SelectValue placeholder="Lecture" />
+                <SelectTrigger className="h-10 w-full rounded-xl border border-slate-200/90 bg-slate-50/70 hover:bg-slate-100/90 focus:bg-white text-slate-800 font-semibold text-xs transition-all outline-none focus-visible:ring-2 focus-visible:ring-slate-900/15 focus-visible:border-slate-800 cursor-pointer px-3 shadow-2xs">
+                  <SelectValue placeholder="Lecture">
+                    <span className="truncate">
+                      {selectedLecture === "L1" ? "Period 1 (09:00 AM)" :
+                       selectedLecture === "L2" ? "Period 2 (10:00 AM)" :
+                       selectedLecture === "L3" ? "Period 3 (11:15 AM)" :
+                       selectedLecture === "DP1" ? "Lab Block 1 (P1+P2)" :
+                       selectedLecture === "DP2" ? "Lab Block 2 (P3+P4)" : selectedLecture}
+                    </span>
+                  </SelectValue>
                 </SelectTrigger>
-                <SelectContent className="rounded-xl border-slate-200">
-                  <SelectItem value="L1" className="text-xs">Period 1 (09:00 - 10:00 AM)</SelectItem>
-                  <SelectItem value="L2" className="text-xs">Period 2 (10:00 - 11:00 AM)</SelectItem>
-                  <SelectItem value="L3" className="text-xs">Period 3 (11:15 - 12:15 PM)</SelectItem>
-                  <SelectItem value="DP1" className="text-xs">Lab Block (Period 1 + 2)</SelectItem>
-                  <SelectItem value="DP2" className="text-xs">Lab Block (Period 3 + 4)</SelectItem>
+                <SelectContent className="rounded-xl border-slate-200 shadow-xl">
+                  <SelectItem value="L1" className="text-xs font-medium cursor-pointer">Period 1 (09:00 - 10:00 AM)</SelectItem>
+                  <SelectItem value="L2" className="text-xs font-medium cursor-pointer">Period 2 (10:00 - 11:00 AM)</SelectItem>
+                  <SelectItem value="L3" className="text-xs font-medium cursor-pointer">Period 3 (11:15 - 12:15 PM)</SelectItem>
+                  <SelectItem value="DP1" className="text-xs font-medium cursor-pointer">Lab Block 1 (Period 1 + 2)</SelectItem>
+                  <SelectItem value="DP2" className="text-xs font-medium cursor-pointer">Lab Block 2 (Period 3 + 4)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {/* Subject */}
-            <div className="space-y-1">
-              <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px] flex items-center gap-1">
-                <BookOpen className="w-3 h-3 text-emerald-600" />
+            <div className="space-y-1.5">
+              <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px] flex items-center gap-1.5 select-none">
+                <BookOpen className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                 <span>Mapped Subject</span>
               </label>
               <Select value={selectedSubjectId} onValueChange={(val) => val && setSelectedSubjectId(val)}>
-                <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-slate-50 text-slate-800 font-semibold text-xs focus:ring-slate-900">
-                  <SelectValue>
+                <SelectTrigger className="h-10 w-full rounded-xl border border-slate-200/90 bg-slate-50/70 hover:bg-slate-100/90 focus:bg-white text-slate-800 font-semibold text-xs transition-all outline-none focus-visible:ring-2 focus-visible:ring-slate-900/15 focus-visible:border-slate-800 cursor-pointer px-3 shadow-2xs">
+                  <SelectValue placeholder="Select Subject">
                     <span className="truncate">{currentSubjectName}</span>
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent className="rounded-xl border-slate-200">
+                <SelectContent className="rounded-xl border-slate-200 max-h-64 shadow-xl">
                   {filteredSubjects.map(s => (
-                    <SelectItem key={s.id} value={s.id} className="text-xs">
+                    <SelectItem key={s.id} value={s.id} className="text-xs font-medium cursor-pointer">
                       {s.name} ({s.code})
                     </SelectItem>
                   ))}
@@ -398,19 +410,19 @@ export default function AttendancePage() {
             </div>
 
             {/* Date */}
-            <div className="space-y-1">
-              <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px] flex items-center gap-1">
-                <CalendarIcon className="w-3 h-3 text-purple-600" />
+            <div className="space-y-1.5">
+              <label className="font-bold text-slate-500 uppercase tracking-wider text-[10px] flex items-center gap-1.5 select-none">
+                <CalendarIcon className="w-3.5 h-3.5 text-purple-600 shrink-0" />
                 <span>Session Date</span>
               </label>
               <Popover>
                 <PopoverTrigger
-                  className="h-10 border border-slate-200 bg-slate-50 hover:bg-white text-slate-800 font-semibold rounded-lg px-3 w-full text-xs flex items-center justify-between transition-all"
+                  className="h-10 w-full rounded-xl border border-slate-200/90 bg-slate-50/70 hover:bg-slate-100/90 focus:bg-white text-slate-800 font-semibold text-xs transition-all outline-none focus-visible:ring-2 focus-visible:ring-slate-900/15 focus-visible:border-slate-800 cursor-pointer px-3 flex items-center justify-between shadow-2xs group"
                 >
                   <span className="truncate">{date ? format(date, "MMM d, yyyy") : "Today"}</span>
-                  <CalendarIcon className="w-3.5 h-3.5 text-slate-400" />
+                  <CalendarIcon className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 shrink-0 ml-1.5 transition-colors" />
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 rounded-xl shadow-xl border-slate-200" align="end">
+                <PopoverContent className="w-auto p-0 rounded-2xl shadow-xl border-slate-200 bg-white" align="end">
                   <Calendar mode="single" selected={date} onSelect={(d) => d && setDate(d)} initialFocus />
                 </PopoverContent>
               </Popover>

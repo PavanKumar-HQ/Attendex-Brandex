@@ -1,16 +1,14 @@
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from "date-fns";
 import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { RoleSwitcher } from "@/components/layout/role-switcher";
-import { useAuth } from "@/lib/auth-context";
+import { UserMenu } from "@/components/layout/user-menu";
 
 export function Header({ title = "Overview", showBack = false }: { title?: React.ReactNode, showBack?: boolean }) {
   const router = useRouter();
-  const { currentUser } = useAuth();
 
   return (
     <header className="w-full max-w-full overflow-x-hidden pt-[env(safe-area-inset-top)] md:pt-0 min-h-14 md:h-16 px-3 sm:px-4 md:px-8 flex items-center justify-between gap-2.5 border-b border-slate-200/80 bg-white/95 backdrop-blur-sm sticky top-0 z-40">
@@ -40,15 +38,8 @@ export function Header({ title = "Overview", showBack = false }: { title?: React
           {format(new Date(), "EEE, MMM d, yyyy")}
         </div>
 
-        <div className="flex items-center gap-2 border-l border-slate-200 pl-2 sm:pl-3 md:pl-4 shrink-0">
-          <Avatar className="h-7 w-7 sm:h-8 sm:w-8 border border-slate-200 shrink-0">
-            <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${currentUser.name}`} alt={currentUser.name} />
-            <AvatarFallback className="text-[11px] font-bold">{currentUser.avatar}</AvatarFallback>
-          </Avatar>
-          <div className="hidden md:flex flex-col text-left">
-            <span className="text-xs font-bold text-slate-900 leading-tight">{currentUser.name}</span>
-            <span className="text-[10px] text-slate-500 leading-tight">{currentUser.roleLabel}</span>
-          </div>
+        <div className="border-l border-slate-200 pl-2 sm:pl-3 md:pl-4 shrink-0">
+          <UserMenu />
         </div>
       </div>
     </header>
