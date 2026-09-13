@@ -63,9 +63,12 @@ export async function POST(req: NextRequest) {
       // Memory state is active
     }
 
+    const isApproved = validated.decision === "APPROVED";
     return NextResponse.json({
       success: true,
-      message: `Gatepass ${validated.decision.toLowerCase()} and single-use security QR code generated.`
+      message: isApproved
+        ? "Gatepass approved and single-use security QR code generated."
+        : "Gatepass request rejected. Campus exit authorization denied."
     });
   } catch (err: any) {
     return NextResponse.json(

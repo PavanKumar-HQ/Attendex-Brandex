@@ -148,12 +148,12 @@ export default function MarksManagementPage() {
         <div className="space-y-6">
           {/* Top Controls Toolbar */}
           <Card className="p-4 border-slate-200 bg-white shadow-2xs rounded-xl">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-2.5 flex-1 min-w-0">
-                <div className="flex items-center gap-2 border border-slate-200 rounded-lg px-2.5 h-10 bg-slate-50 flex-1 sm:flex-initial">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 flex-1 min-w-0">
+                <div className="flex items-center gap-2 border border-slate-200 rounded-lg px-2.5 h-10 bg-slate-50 min-w-0">
                   <GraduationCap className="w-4 h-4 text-slate-500 shrink-0" />
                   <select 
-                    className="bg-transparent border-none text-slate-900 font-semibold text-xs focus:ring-0 cursor-pointer outline-none w-full"
+                    className="bg-transparent border-none text-slate-900 font-semibold text-xs focus:ring-0 cursor-pointer outline-none w-full truncate"
                     value={selectedClass}
                     onChange={(e) => setSelectedClass(e.target.value)}
                   >
@@ -161,10 +161,10 @@ export default function MarksManagementPage() {
                   </select>
                 </div>
 
-                <div className="flex items-center gap-2 border border-slate-200 rounded-lg px-2.5 h-10 bg-slate-50 flex-1 sm:flex-initial">
+                <div className="flex items-center gap-2 border border-slate-200 rounded-lg px-2.5 h-10 bg-slate-50 min-w-0">
                   <BookOpen className="w-4 h-4 text-slate-500 shrink-0" />
                   <select 
-                    className="bg-transparent border-none text-slate-900 font-semibold text-xs focus:ring-0 cursor-pointer outline-none w-full"
+                    className="bg-transparent border-none text-slate-900 font-semibold text-xs focus:ring-0 cursor-pointer outline-none w-full truncate"
                     value={selectedSubject}
                     onChange={(e) => setSelectedSubject(e.target.value)}
                   >
@@ -172,7 +172,7 @@ export default function MarksManagementPage() {
                   </select>
                 </div>
 
-                <div className="relative flex-1 min-w-[140px]">
+                <div className="relative min-w-0">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                   <Input 
                     placeholder="Search student..."
@@ -187,10 +187,10 @@ export default function MarksManagementPage() {
                 disabled={students.length === 0 || saving}
                 onClick={saveMarks}
                 size="sm"
-                className="h-10 px-5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-xs shrink-0 w-full sm:w-auto"
+                className="h-10 px-5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-xs shrink-0 w-full lg:w-auto"
               >
                 {saving ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                {saving ? "Saving..." : "Save Evaluation"}
+                <span>{saving ? "Saving..." : "Save Evaluation"}</span>
               </Button>
             </div>
           </Card>
@@ -198,16 +198,16 @@ export default function MarksManagementPage() {
           {/* Marks Entry Grid */}
           <Card className="rounded-xl shadow-sm border border-slate-200 bg-white overflow-hidden">
              <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left">
+                <table className="w-full min-w-[680px] text-xs text-left">
                    <thead className="text-[11px] uppercase text-slate-500 bg-slate-50/80 border-b border-slate-100 font-semibold">
                       <tr>
-                         <th className="py-3 px-5">Student Details</th>
-                         <th className="py-3 px-3">Attendance %</th>
-                         <th className="py-3 px-3 text-center">CIA 1 (10)</th>
-                         <th className="py-3 px-3 text-center">CIA 2 (10)</th>
-                         <th className="py-3 px-3 text-center">Test 1 (25)</th>
-                         <th className="py-3 px-3 text-center">Test 2 (25)</th>
-                         <th className="py-3 px-5 text-right">Computed Final</th>
+                         <th className="py-3 px-4">Student</th>
+                         <th className="py-3 px-2 text-center">Attendance</th>
+                         <th className="py-3 px-2 text-center">CIA 1</th>
+                         <th className="py-3 px-2 text-center">CIA 2</th>
+                         <th className="py-3 px-2 text-center">Test 1</th>
+                         <th className="py-3 px-2 text-center">Test 2</th>
+                         <th className="py-3 px-4 text-right">Final</th>
                       </tr>
                    </thead>
                    <tbody className="divide-y divide-slate-100 font-medium">

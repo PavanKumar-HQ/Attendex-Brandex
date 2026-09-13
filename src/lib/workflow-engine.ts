@@ -472,9 +472,12 @@ export const universalWorkflow = {
 
     dispatchRealtimeEvent({ type: "GATEPASS_DECIDED", gpId, decision });
 
+    const isApproved = decision === "APPROVED";
     return {
       success: true,
-      message: `Gatepass ${decision.toLowerCase()} and single-use security QR code generated.`
+      message: isApproved
+        ? "Gatepass approved and single-use security QR code generated."
+        : "Gatepass request rejected. Campus exit authorization denied."
     };
   },
 

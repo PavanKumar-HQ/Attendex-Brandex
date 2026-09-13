@@ -30,6 +30,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 import { resolveActiveStudent, InstitutionalStudent } from "@/lib/student-auth";
+import { cn } from "@/lib/utils";
 
 export default function StudentGatepassPage() {
   const [passType, setPassType] = useState("Weekend Hostel Pass (Hometown)");
@@ -99,7 +100,8 @@ export default function StudentGatepassPage() {
     loadGatepassHistory();
   }, []);
 
-  const activePass = gatepasses.find(g => g.status === 'APPROVED' || g.status === 'PENDING') || null;
+  const activePass = gatepasses.find(g => g.status === 'APPROVED') || null;
+  const pendingPass = !activePass ? (gatepasses.find(g => g.status === 'PENDING') || null) : null;
 
   const handleApplyGatepass = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -237,14 +239,14 @@ export default function StudentGatepassPage() {
             </div>
           </div>
 
-          {/* Active Verified Pass Showcase Card */}
+          {/* Active Verified Pass Showcase Card (APPROVED ONLY) */}
           {activePass ? (
             <Card className="p-6 md:p-8 rounded-2xl bg-slate-900 text-white shadow-xl overflow-hidden relative">
               <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8">
                 <div className="space-y-4 flex-1 text-center lg:text-left">
                   <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2">
                     <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/30 flex items-center gap-1.5">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> {activePass.status}
+                      <CheckCircle2 className="w-3.5 h-3.5" /> APPROVED EXIT
                     </span>
                     <span className="px-3 py-1 rounded-full bg-white/10 text-slate-300 text-xs font-mono font-semibold">
                       Pass #{String(activePass.id).slice(0, 8)}
@@ -291,13 +293,35 @@ export default function StudentGatepassPage() {
                 </div>
               </div>
             </Card>
+          ) : pendingPass ? (
+            <Card className="p-6 rounded-2xl bg-amber-50/70 border border-amber-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-amber-100 text-amber-700">
+                  <Clock className="w-5 h-5 animate-pulse" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-bold text-slate-900">Gatepass Request Pending Review</h4>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 uppercase">
+                      Under Review
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 mt-0.5">
+                    Your exit request to <span className="font-semibold text-slate-800">{pendingPass.destination || "destination"}</span> is awaiting Warden/Faculty approval.
+                  </p>
+                  <p className="text-[11px] text-amber-700 font-medium mt-1">
+                    🔒 Single-use security exit QR code will ONLY be issued once approved.
+                  </p>
+                </div>
+              </div>
+            </Card>
           ) : (
             <Card className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <Ticket className="w-6 h-6 text-slate-400" />
                 <div>
                   <h4 className="text-sm font-bold text-slate-800">No Active Gatepass</h4>
-                  <p className="text-xs text-slate-500">Apply below to generate a digital QR outpass for campus exit.</p>
+                  <p className="text-xs text-slate-500">Apply below to generate a digital QR outpass for campus exit upon approval.</p>
                 </div>
               </div>
             </Card>
@@ -430,8 +454,13 @@ export default function StudentGatepassPage() {
                             <span className="text-[10px] font-bold text-slate-400 uppercase">#{String(gp.id).slice(0, 8)}</span>
                             <h4 className="text-xs font-bold text-slate-900">{gp.category || "Hostel Pass"}</h4>
                           </div>
-                          <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
-                            {gp.status}
+                          <span className={cn(
+                            "px-2 py-0.5 rounded-md text-[10px] font-bold border uppercase",
+                            gp.status === "APPROVED" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                            gp.status === "REJECTED" ? "bg-rose-50 text-rose-700 border-rose-200" :
+                            "bg-amber-50 text-amber-700 border-amber-200"
+                          )}>
+                            {gp.status === "REJECTED" ? "DENIED" : gp.status}
                           </span>
                         </div>
 

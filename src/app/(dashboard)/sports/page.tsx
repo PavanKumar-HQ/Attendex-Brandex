@@ -198,12 +198,12 @@ export default function SportsEntryPage() {
 
                   <div className="p-4">
                      <div className="overflow-x-auto">
-                        <table className="w-full text-xs text-left">
+                        <table className="w-full min-w-[540px] text-xs text-left">
                            <thead className="text-[11px] uppercase text-slate-500 bg-slate-50 font-semibold">
                               <tr>
-                                 <th className="py-2.5 px-3">Sport / Event</th>
-                                 <th className="py-2.5 px-3">Class / Batch</th>
-                                 <th className="py-2.5 px-3">Placement</th>
+                                 <th className="py-2.5 px-3">Sport</th>
+                                 <th className="py-2.5 px-3">Class</th>
+                                 <th className="py-2.5 px-3">Rank</th>
                                  <th className="py-2.5 px-3">Points</th>
                                  <th className="py-2.5 px-3 text-right">Action</th>
                               </tr>

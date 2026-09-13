@@ -181,3 +181,44 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* High-Contrast Bulletproof Sonner Toast Styles */
+[data-sonner-toast] {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.08) !important;
+  opacity: 1 !important;
+}
+
+[data-sonner-toast] [data-title] {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+  font-size: 0.875rem !important;
+  line-height: 1.25rem !important;
+  opacity: 1 !important;
+}
+
+[data-sonner-toast] [data-description] {
+  color: #475569 !important;
+  font-weight: 500 !important;
+  font-size: 0.75rem !important;
+  line-height: 1.1rem !important;
+  opacity: 1 !important;
+}
+
+[data-sonner-toast][data-type="success"] [data-title] {
+  color: #047857 !important;
+}
+
+[data-sonner-toast][data-type="error"] [data-title] {
+  color: #b91c1c !important;
+}
+
+[data-sonner-toast][data-type="warning"] [data-title] {
+  color: #b45309 !important;
+}
+
+[data-sonner-toast][data-type="info"] [data-title] {
+  color: #1d4ed8 !important;
+}

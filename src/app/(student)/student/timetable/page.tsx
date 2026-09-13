@@ -68,8 +68,12 @@ export default function StudentTimetable({ isParentView = false, isTeacherView =
                     supabase.from('exams').select('*').limit(1).order('exam_date', { ascending: true }),
                     supabase.from('notifications').select('*').limit(3).order('created_at', { ascending: false })
                 ]);
-                if (examRes?.data && examRes.data.length > 0) setExams(examRes.data as Exam[]);
-                if (noteRes?.data && noteRes.data.length > 0) setAlerts(noteRes.data as Notification[]);
+                if (!examRes?.error && examRes?.data && examRes.data.length > 0) {
+                    setExams(examRes.data as Exam[]);
+                }
+                if (!noteRes?.error && noteRes?.data && noteRes.data.length > 0) {
+                    setAlerts(noteRes.data as Notification[]);
+                }
             } catch {
                 // Keep clean state
             }
