@@ -35,7 +35,7 @@ import { AttendanceCalculator } from "@/components/student/attendance-calculator
 import { HallTicketModal } from "@/components/student/hall-ticket-modal";
 import { AssignmentTracker } from "@/components/student/assignment-tracker";
 
-import { resolveActiveStudentAsync, InstitutionalStudent } from "@/lib/student-auth";
+import { resolveActiveStudentAsync, resolveActiveStudent, InstitutionalStudent } from "@/lib/student-auth";
 
 export default function StudentDashboard() {
   const [loading, setLoading] = useState(true);

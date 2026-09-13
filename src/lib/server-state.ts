@@ -254,7 +254,7 @@ const INITIAL_SUBJECTS: ServerSubject[] = [
   { id: "sub-ec601", code: "EC601", name: "VLSI Design & Embedded Systems", department: "ECE", credits: 4, semester: 6, year: 3, is_lab: true }
 ];
 
-const INITIAL_ASSIGNMENTS: ServerAssignment[] = [
+const TEST_ASSIGNMENTS: ServerAssignment[] = [
   {
     id: "asg-1",
     title: "Distributed Consensus Algorithm (Raft Implementation)",
@@ -303,14 +303,14 @@ const INITIAL_ASSIGNMENTS: ServerAssignment[] = [
   }
 ];
 
-const INITIAL_SPORTS: ServerSportsEntry[] = [
+const TEST_SPORTS: ServerSportsEntry[] = [
   { id: "sp-1", category: "100m Sprint", class_id: "cls-csa", class_name: "B.Tech CS-A", position: "1st", points: 10, recorded_at: "2026-08-20T10:00:00Z" },
   { id: "sp-2", category: "Cricket Championship", class_id: "cls-csb", class_name: "B.Tech CS-B", position: "1st", points: 15, recorded_at: "2026-08-22T14:30:00Z" },
   { id: "sp-3", category: "Inter-Department Chess", class_id: "cls-csa", class_name: "B.Tech CS-A", position: "2nd", points: 7, recorded_at: "2026-08-25T11:00:00Z" },
   { id: "sp-4", category: "Volleyball Tournament", class_id: "cls-ece", class_name: "B.Tech ECE-A", position: "1st", points: 12, recorded_at: "2026-08-27T16:00:00Z" }
 ];
 
-const INITIAL_AUDIT_LOGS: ServerAuditLog[] = [
+const TEST_AUDIT_LOGS: ServerAuditLog[] = [
   {
     id: "aud-001",
     action: "INSTITUTION_PROVISION",
@@ -337,6 +337,10 @@ const INITIAL_AUDIT_LOGS: ServerAuditLog[] = [
     timestamp: "2026-08-10T11:15:00Z"
   }
 ];
+
+const INITIAL_ASSIGNMENTS: ServerAssignment[] = process.env.NODE_ENV === "test" ? TEST_ASSIGNMENTS : [];
+const INITIAL_SPORTS: ServerSportsEntry[] = process.env.NODE_ENV === "test" ? TEST_SPORTS : [];
+const INITIAL_AUDIT_LOGS: ServerAuditLog[] = process.env.NODE_ENV === "test" ? TEST_AUDIT_LOGS : [];
 
 const STORE_DIR = join(tmpdir(), "attendex-state");
 const STORE_FILE = join(STORE_DIR, "workflow-state.json");

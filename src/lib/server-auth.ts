@@ -25,7 +25,7 @@ export function computePasswordHash(password: string, salt: string = INSTITUTION
 
 export interface AuthSuccessResult {
   success: true;
-  role: "STUDENT" | "PARENT" | "TEACHER" | "PRINCIPAL" | "SUPER_ADMIN";
+  role: "STUDENT" | "PARENT" | "TEACHER" | "PRINCIPAL" | "SUPER_ADMIN" | "ADMIN";
   user: {
     id: string;
     name: string;

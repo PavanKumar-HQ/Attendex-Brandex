@@ -153,16 +153,6 @@ export async function POST(req: NextRequest) {
     }
 
     if (!staffFound) {
-      const canonicalStaff = [
-        { email: "admin@attendex.institution.edu", name: "Dr. Ramesh Sundaram", phone: "+91 98765 00001", role: "SUPER_ADMIN" },
-        { email: "faculty.cs@attendex.institution.edu", name: "Prof. Arvind Sharma", phone: "+91 98765 00002", role: "TEACHER" },
-        { email: "principal@attendex.edu", name: "Dr. K. S. Prabhakar", phone: "+91 98765 00005", role: "PRINCIPAL" },
-        { email: "parent.deshmukh@attendex.institution.edu", name: "Sanjay Deshmukh", phone: "+91 98765 99999", role: "PARENT" }
-      ];
-      staffFound = canonicalStaff.find(s => s.email.toLowerCase() === cleanId || s.phone.replace(/\D/g, "") === cleanContact.replace(/\D/g, ""));
-    }
-
-    if (!staffFound) {
       return NextResponse.json(
         { success: false, message: `No institutional staff or parent account found matching "${identifier}".` },
         { status: 404 }

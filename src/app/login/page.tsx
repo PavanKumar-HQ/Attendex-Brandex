@@ -8,12 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { PageTransition } from "@/components/ui/page-transition";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema, LoginFormValues } from "@/lib/schemas";
 import { 
   Eye, 
   EyeOff, 
@@ -24,31 +20,46 @@ import {
   Lock, 
   Building2,
   Users,
-  BookOpen,
   Crown,
   School,
-  UserPlus
+  UserPlus,
+  LogIn,
+  User,
+  Mail,
+  Phone,
+  ShieldCheck
 } from "lucide-react";
 import { PoweredByBrandex } from "@/components/ui/powered-by-brandex";
 
+type AuthTab = "signin" | "signup";
+type SignupRole = "TEACHER" | "STUDENT" | "PRINCIPAL" | "ADMIN" | "PARENT";
+
 export default function LoginPage() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [activeTab, setActiveTab] = useState<AuthTab>("signin");
 
+  // Sign In state
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
+
+  // Sign Up state
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [signupRole, setSignupRole] = useState<SignupRole>("TEACHER");
+  const [signupForm, setSignupForm] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    password: "",
+    roleSpecificId: ""
+  });
+
+  // Credential helper state
   const [showDobHelper, setShowDobHelper] = useState(false);
   const [lookupQuery, setLookupQuery] = useState("");
   const [lookupResults, setLookupResults] = useState<any[]>([]);
   const [isLookingUp, setIsLookingUp] = useState(false);
-
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    formState: { errors },
-  } = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
-  });
 
   const handleLookup = async (q: string) => {
     setLookupQuery(q);
@@ -70,18 +81,24 @@ export default function LoginPage() {
     }
   };
 
-  const onSubmit = async (values: LoginFormValues) => {
-    setIsLoading(true);
+  // ─── Sign In Submission ───
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!identifier.trim() || !password.trim()) {
+      toast.error("Required Fields Missing", { description: "Please enter your identifier and password." });
+      return;
+    }
+
+    setIsSigningIn(true);
+    const rawId = identifier.trim();
+    const rawPass = password.trim();
 
     try {
-      const rawIdentifier = values.identifier.trim();
-      const rawPassword = values.password.trim();
-
       // 1. Check if user is logging in as a student using Register Number / Roll No & DOB
       const isLikelyStudent = (
-        !rawIdentifier.includes("@") ||
-        rawIdentifier.toLowerCase().endsWith("@attendex.edu") ||
-        /^(cs|reg|21cs|\d+)/i.test(rawIdentifier)
+        !rawId.includes("@") ||
+        rawId.toLowerCase().endsWith("@attendex.edu") ||
+        /^(cs|reg|21cs|\d+)/i.test(rawId)
       );
 
       if (isLikelyStudent) {
@@ -89,26 +106,25 @@ export default function LoginPage() {
           const studentRes = await fetch("/api/auth/student-login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ identifier: rawIdentifier, password: rawPassword })
+            body: JSON.stringify({ identifier: rawId, password: rawPass })
           });
           const studentJson = await studentRes.json();
 
           if (studentJson.success && studentJson.student) {
             toast.success(`Welcome, ${studentJson.student.name}!`, {
-              description: `Authenticated with Register #${studentJson.student.roll_number} (${studentJson.student.class_name}).`
+              description: `Authenticated with Register #${studentJson.student.roll_number}.`
             });
             window.location.href = "/student/dashboard";
             return;
-          } else if (studentRes.status === 401 && !rawIdentifier.includes("@")) {
-            // Identifier was clearly a student register number but password/DOB failed
+          } else if (studentRes.status === 401 && !rawId.includes("@")) {
             toast.error("Authentication Failed", {
-              description: studentJson.message || "Invalid credentials. Password is your Date of Birth (DDMMYYYY)."
+              description: studentJson.message || "Invalid credentials."
             });
-            setIsLoading(false);
+            setIsSigningIn(false);
             return;
           }
         } catch {
-          // Fall through to general institutional sign-in
+          // Fall through to general staff sign-in
         }
       }
 
@@ -116,27 +132,27 @@ export default function LoginPage() {
       const staffRes = await fetch("/api/auth/faculty-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier: rawIdentifier, password: rawPassword })
+        body: JSON.stringify({ identifier: rawId, password: rawPass })
       });
 
       const staffJson = await staffRes.json();
 
       if (!staffRes.ok || !staffJson.success) {
         toast.error("Authentication Failed", {
-          description: staffJson.message || "Invalid credentials. Please check your identifier and password."
+          description: staffJson.message || "Invalid credentials. If you do not have an account, please switch to Create Account."
         });
-        setIsLoading(false);
+        setIsSigningIn(false);
         return;
       }
 
       const role = staffJson.role || "TEACHER";
 
-      toast.success("Institutional Authentication Verified", {
-        description: `Welcome back, ${staffJson.user?.name || "User"}! Redirecting to ${role.replace("_", " ").toLowerCase()} workspace...`
+      toast.success("Authentication Verified", {
+        description: `Welcome back, ${staffJson.user?.name || "User"}! Redirecting to workspace...`
       });
 
       const redirectPath = 
-        role === "SUPER_ADMIN" ? "/super-admin" :
+        role === "SUPER_ADMIN" || role === "ADMIN" ? "/super-admin" :
         role === "PRINCIPAL" ? "/principal" :
         role === "STUDENT" ? "/student/dashboard" :
         role === "PARENT" ? "/parent/dashboard" : "/dashboard";
@@ -147,155 +163,378 @@ export default function LoginPage() {
         description: err?.message || "An unexpected error occurred during authentication."
       });
     } finally {
-      setIsLoading(false);
+      setIsSigningIn(false);
     }
   };
 
-  const launchDemoRole = (role: string, targetPath: string, studentRoll?: string) => {
-    document.cookie = `attendex_demo_session=${role}; path=/; max-age=86400; SameSite=Lax`;
-    if (studentRoll) {
-      document.cookie = `attendex_student_roll=${studentRoll}; path=/; max-age=86400; SameSite=Lax`;
+  // ─── Sign Up Submission ───
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!signupForm.fullName.trim() || !signupForm.password.trim()) {
+      toast.error("Required Fields Missing", { description: "Full Name and Password are required." });
+      return;
     }
-    toast.success(`Access Granted: ${role.replace("_", " ")} Workspace`);
-    window.location.href = targetPath;
+
+    setIsRegistering(true);
+
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: signupForm.fullName,
+          email: signupForm.email,
+          phone: signupForm.phone,
+          password: signupForm.password,
+          role: signupRole === "ADMIN" ? "SUPER_ADMIN" : signupRole,
+          roleSpecificId: signupForm.roleSpecificId
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Registration failed. Please check your details.");
+      }
+
+      toast.success("Institutional Account Created", {
+        description: `Welcome aboard, ${data.user?.name || signupForm.fullName}! Redirecting to workspace...`
+      });
+
+      const redirectPath = 
+        signupRole === "ADMIN" ? "/super-admin" :
+        signupRole === "PRINCIPAL" ? "/principal" :
+        signupRole === "TEACHER" ? "/dashboard" :
+        signupRole === "STUDENT" ? "/student/dashboard" :
+        signupRole === "PARENT" ? "/parent/dashboard" : "/dashboard";
+
+      setTimeout(() => {
+        window.location.href = redirectPath;
+      }, 1000);
+    } catch (err: any) {
+      toast.error("Registration Failed", {
+        description: err.message || "Unable to create account. Contact administrator."
+      });
+      setIsRegistering(false);
+    }
   };
+
+  const roleButtons: { id: SignupRole; label: string; icon: any }[] = [
+    { id: "TEACHER", label: "Faculty", icon: GraduationCap },
+    { id: "STUDENT", label: "Student", icon: User },
+    { id: "PRINCIPAL", label: "Principal", icon: Building2 },
+    { id: "ADMIN", label: "Admin", icon: Crown },
+    { id: "PARENT", label: "Guardian", icon: Users },
+  ];
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-slate-50 flex flex-col justify-between p-6">
+      <div className="min-h-screen bg-slate-50 flex flex-col justify-between p-4 sm:p-6 relative overflow-hidden">
+        {/* Background ambient lighting */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/40 rounded-full blur-[120px] -mr-64 -mt-64 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-100/40 rounded-full blur-[120px] -ml-64 -mb-64 pointer-events-none" />
+
         {/* Top Header */}
-        <div className="max-w-7xl mx-auto w-full flex items-center justify-between py-2">
-          <Link href="/" className="flex items-center gap-2.5 text-slate-900 font-bold tracking-tight">
+        <div className="max-w-7xl mx-auto w-full flex items-center justify-between py-2 z-10">
+          <div className="flex items-center gap-2.5 text-slate-900 font-bold tracking-tight">
             <div className="w-8 h-8 bg-slate-900 text-white rounded-lg flex items-center justify-center shadow-sm">
               <GraduationCap className="w-4 h-4 text-blue-400" />
             </div>
-            <span>Attendex <span className="text-xs font-semibold text-slate-500">Academic Cloud</span></span>
-          </Link>
-          <Link href="/" className="text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors">
-            ← Back to Overview
-          </Link>
+            <span>Attendex <span className="text-xs font-semibold text-slate-500">Academic Operating System</span></span>
+          </div>
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200/80 px-3 py-1.5 rounded-full shadow-sm">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Multi-Tenant Institutional Cloud</span>
+          </div>
         </div>
 
-        {/* Center Auth Card */}
-        <div className="w-full max-w-[420px] mx-auto my-6">
-          <div className="text-center mb-6 space-y-1.5">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-200/80 text-blue-800 text-[11px] font-semibold mb-1">
-              <Building2 className="w-3.5 h-3.5 text-blue-600" />
-              <span>Unified Institutional Sign-In</span>
-            </div>
-            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Access Your Portal</h1>
-            <p className="text-xs text-slate-500 font-medium">Enter your university ID or email. Your role is determined automatically.</p>
-          </div>
-
-          <Card className="p-6 md:p-8 border-slate-200/90 bg-white shadow-sm rounded-2xl space-y-5">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="identifier" className="text-xs font-bold text-slate-700">
-                  Email / Institutional ID
-                </Label>
-                <Input
-                  id="identifier"
-                  type="text"
-                  {...register("identifier")}
-                  placeholder="e.g. principal@college.edu or 21CS042"
-                  autoComplete="username"
-                  className={cn(
-                    "h-11 rounded-lg border-slate-200 bg-white text-slate-900 text-sm focus-visible:ring-slate-900",
-                    errors.identifier && "border-red-500"
-                  )}
-                />
-                {errors.identifier && <p className="text-xs text-red-500">{errors.identifier.message}</p>}
-              </div>
-
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-xs font-bold text-slate-700">Password</Label>
-                  <Link href="/forgot-password" title="Recover Access" className="text-xs font-semibold text-blue-600 hover:underline">Forgot?</Link>
-                </div>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    {...register("password")}
-                    placeholder="••••••••"
-                    autoComplete="current-password"
-                    className={cn(
-                      "h-11 rounded-lg border-slate-200 bg-white text-slate-900 text-sm focus-visible:ring-slate-900 pr-10",
-                      errors.password && "border-red-500"
-                    )}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
-              </div>
-
-              <div className="p-3 bg-blue-50/80 border border-blue-200/80 rounded-xl text-[11px] text-blue-900 space-y-1.5 shadow-sm">
-                <div className="font-bold flex items-center justify-between text-blue-950">
-                  <span className="flex items-center gap-1.5">
-                    <GraduationCap className="w-3.5 h-3.5 text-blue-600" />
-                    Student Default Credentials:
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowDobHelper(true);
-                      handleLookup("CS");
-                    }}
-                    className="text-blue-700 underline font-semibold hover:text-blue-950 text-[11px]"
-                  >
-                    Forgot DOB?
-                  </button>
-                </div>
-                <div className="text-slate-600 space-y-0.5 font-medium leading-relaxed">
-                  <div>• <strong>Username:</strong> Your Register / Roll Number (e.g. <code className="bg-white px-1 py-0.5 rounded text-blue-800 font-mono text-[10px]">CS-11</code>, <code className="bg-white px-1 py-0.5 rounded text-blue-800 font-mono text-[10px]">CS-12</code>, <code className="bg-white px-1 py-0.5 rounded text-blue-800 font-mono text-[10px]">21CS042</code>)</div>
-                  <div>• <strong>Password:</strong> Your Date of Birth in DDMMYYYY format (e.g. <code className="bg-white px-1 py-0.5 rounded text-blue-800 font-mono text-[10px]">15082004</code> for 15-Aug-2004)</div>
-                </div>
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full h-11 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow-sm flex items-center justify-center gap-2"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Verifying Credentials...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Sign In to Workspace</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
+        {/* Center Auth Portal */}
+        <div className="w-full max-w-[440px] mx-auto my-4 z-10">
+          <Card className="p-6 sm:p-8 border-slate-200/90 bg-white shadow-xl shadow-slate-200/50 rounded-3xl space-y-5">
+            {/* Dual Tab Switcher: Sign In vs Create Account */}
+            <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-2xl gap-1">
+              <button
+                type="button"
+                onClick={() => setActiveTab("signin")}
+                className={cn(
+                  "py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5",
+                  activeTab === "signin"
+                    ? "bg-white text-slate-900 shadow-sm font-black"
+                    : "text-slate-500 hover:text-slate-800"
                 )}
-              </Button>
-            </form>
-
-            <div className="relative py-2">
-              <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-200" /></div>
-              <div className="relative flex justify-center text-[11px]"><span className="bg-white px-3 text-slate-400 font-semibold uppercase tracking-wider">New Institutional Member?</span></div>
-            </div>
-
-            {/* Direct Account Registration Action */}
-            <div className="space-y-2">
-              <Link
-                href="/signup"
-                className="w-full h-11 rounded-lg border-2 border-slate-900 bg-white hover:bg-slate-900 hover:text-white text-slate-900 font-bold text-sm shadow-sm flex items-center justify-center gap-2 transition-all group"
               >
-                <UserPlus className="w-4 h-4 text-blue-600 group-hover:text-blue-400" />
-                <span>Create Institutional Account</span>
-                <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-white transition-transform group-hover:translate-x-0.5" />
-              </Link>
-              <p className="text-[11px] text-center text-slate-400">
-                Enroll as Faculty, Student, Principal, Admin, or Guardian
-              </p>
+                <LogIn className="w-3.5 h-3.5 text-blue-600" />
+                <span>Sign In</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("signup")}
+                className={cn(
+                  "py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5",
+                  activeTab === "signup"
+                    ? "bg-white text-slate-900 shadow-sm font-black"
+                    : "text-slate-500 hover:text-slate-800"
+                )}
+              >
+                <UserPlus className="w-3.5 h-3.5 text-blue-600" />
+                <span>Create Account</span>
+              </button>
             </div>
+
+            {/* ═════════════════ SIGN IN TAB ═════════════════ */}
+            {activeTab === "signin" && (
+              <form onSubmit={handleSignIn} className="space-y-4">
+                <div className="space-y-1">
+                  <Label htmlFor="identifier" className="text-xs font-bold text-slate-700">
+                    Institutional Email / Roll Number
+                  </Label>
+                  <Input
+                    id="identifier"
+                    type="text"
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
+                    placeholder="e.g. principal@college.edu or CS-101"
+                    autoComplete="username"
+                    className="h-11 rounded-xl border-slate-200 bg-white text-slate-900 text-sm focus-visible:ring-slate-900"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password" className="text-xs font-bold text-slate-700">Password</Label>
+                    <Link href="/forgot-password" title="Recover Access" className="text-xs font-semibold text-blue-600 hover:underline">
+                      Forgot?
+                    </Link>
+                  </div>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      autoComplete="current-password"
+                      className="h-11 rounded-xl border-slate-200 bg-white text-slate-900 text-sm focus-visible:ring-slate-900 pr-10"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-blue-50/70 border border-blue-200/60 rounded-xl text-[11px] text-blue-900 space-y-1">
+                  <div className="font-bold flex items-center justify-between text-blue-950">
+                    <span className="flex items-center gap-1.5">
+                      <GraduationCap className="w-3.5 h-3.5 text-blue-600" />
+                      Student Sign-In Tip:
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowDobHelper(true);
+                        handleLookup("");
+                      }}
+                      className="text-blue-700 underline font-semibold hover:text-blue-950 text-[11px]"
+                    >
+                      Search Roster
+                    </button>
+                  </div>
+                  <p className="text-slate-600 text-[10px] leading-relaxed">
+                    Use your Roll Number (e.g. <code className="bg-white px-1 py-0.5 rounded text-blue-800 font-mono">CS-101</code>) and Date of Birth in DDMMYYYY format.
+                  </p>
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full h-12 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow-md flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
+                  disabled={isSigningIn}
+                >
+                  {isSigningIn ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Verifying Credentials...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Sign In to Workspace</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </Button>
+
+                {/* Prompt to create account */}
+                <div className="pt-2 text-center">
+                  <p className="text-xs text-slate-500">
+                    Don't have an account yet?{" "}
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("signup")}
+                      className="text-blue-600 font-bold hover:underline"
+                    >
+                      Create one now
+                    </button>
+                  </p>
+                </div>
+              </form>
+            )}
+
+            {/* ═════════════════ CREATE ACCOUNT TAB ═════════════════ */}
+            {activeTab === "signup" && (
+              <form onSubmit={handleSignUp} className="space-y-3.5">
+                {/* Role Selector */}
+                <div className="space-y-1">
+                  <Label className="text-xs font-bold text-slate-700">Select Role</Label>
+                  <div className="grid grid-cols-5 p-1 bg-slate-100 rounded-xl gap-1">
+                    {roleButtons.map((r) => (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => {
+                          setSignupRole(r.id);
+                          setSignupForm({ ...signupForm, roleSpecificId: "" });
+                        }}
+                        className={cn(
+                          "py-2 px-1 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all flex flex-col items-center gap-0.5",
+                          signupRole === r.id
+                            ? "bg-white text-blue-600 shadow-sm font-black"
+                            : "text-slate-500 hover:text-slate-800"
+                        )}
+                      >
+                        <r.icon className="w-3.5 h-3.5" />
+                        <span>{r.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Full Name */}
+                <div className="space-y-1">
+                  <Label className="text-xs font-bold text-slate-700">Full Name</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Input
+                      value={signupForm.fullName}
+                      onChange={(e) => setSignupForm({ ...signupForm, fullName: e.target.value })}
+                      placeholder={signupRole === "STUDENT" ? "e.g. John Doe" : "e.g. Prof. John Doe"}
+                      className="h-10 pl-9 rounded-xl border-slate-200 text-sm font-medium"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Email */}
+                <div className="space-y-1">
+                  <Label className="text-xs font-bold text-slate-700">Email Address</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Input
+                      type="email"
+                      value={signupForm.email}
+                      onChange={(e) => setSignupForm({ ...signupForm, email: e.target.value })}
+                      placeholder="name@college.edu"
+                      autoComplete="email"
+                      className="h-10 pl-9 rounded-xl border-slate-200 text-sm font-medium"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Role-Specific ID */}
+                <div className="space-y-1">
+                  <Label className="text-xs font-bold text-slate-700">
+                    {signupRole === "TEACHER" ? "Faculty Employee ID" :
+                     signupRole === "PRINCIPAL" ? "Principal Admin ID" :
+                     signupRole === "ADMIN" ? "Administrator ID" :
+                     signupRole === "STUDENT" ? "Roll / Register Number" : "Student's Roll Number"}
+                  </Label>
+                  <div className="relative">
+                    <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-500" />
+                    <Input
+                      value={signupForm.roleSpecificId}
+                      onChange={(e) => setSignupForm({ ...signupForm, roleSpecificId: e.target.value })}
+                      placeholder={
+                        signupRole === "TEACHER" ? "e.g. EMP-CS-101" :
+                        signupRole === "PRINCIPAL" ? "e.g. PRIN-01" :
+                        signupRole === "ADMIN" ? "e.g. ADMIN-01" :
+                        signupRole === "STUDENT" ? "e.g. CS-101" : "e.g. CS-101"
+                      }
+                      className="h-10 pl-9 rounded-xl border-blue-100 bg-blue-50/20 text-sm font-medium"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Phone */}
+                <div className="space-y-1">
+                  <Label className="text-xs font-bold text-slate-700">Mobile Number (Optional)</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Input
+                      type="tel"
+                      value={signupForm.phone}
+                      onChange={(e) => setSignupForm({ ...signupForm, phone: e.target.value })}
+                      placeholder="+91 98450 00000"
+                      className="h-10 pl-9 rounded-xl border-slate-200 text-sm font-medium"
+                    />
+                  </div>
+                </div>
+
+                {/* Password */}
+                <div className="space-y-1">
+                  <Label className="text-xs font-bold text-slate-700">Create Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Input
+                      type="password"
+                      value={signupForm.password}
+                      onChange={(e) => setSignupForm({ ...signupForm, password: e.target.value })}
+                      placeholder="At least 6 characters"
+                      autoComplete="new-password"
+                      className="h-10 pl-9 rounded-xl border-slate-200 text-sm font-medium"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md flex items-center justify-center gap-2 transition-all active:scale-[0.99] mt-2"
+                  disabled={isRegistering}
+                >
+                  {isRegistering ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Creating Account...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Create Account &amp; Enter</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </Button>
+
+                {/* Switch back to Sign In */}
+                <div className="pt-1 text-center">
+                  <p className="text-xs text-slate-500">
+                    Already registered?{" "}
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("signin")}
+                      className="text-blue-600 font-bold hover:underline"
+                    >
+                      Sign in here
+                    </button>
+                  </p>
+                </div>
+              </form>
+            )}
           </Card>
         </div>
 
@@ -309,8 +548,8 @@ export default function LoginPage() {
                     <GraduationCap className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900">Student Credential Recovery</h3>
-                    <p className="text-[11px] text-slate-500">Find your Register Number &amp; default DOB password</p>
+                    <h3 className="text-sm font-bold text-slate-900">Student Directory Search</h3>
+                    <p className="text-[11px] text-slate-500">Search registered students</p>
                   </div>
                 </div>
                 <button
@@ -324,12 +563,12 @@ export default function LoginPage() {
 
               <div className="p-5 space-y-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700">Search by Name or Register No:</label>
+                  <label className="text-xs font-bold text-slate-700">Search by Name or Roll No:</label>
                   <input
                     type="text"
                     value={lookupQuery}
                     onChange={(e) => handleLookup(e.target.value)}
-                    placeholder="e.g. Aarav, Ishani, CS-11, 21CS042"
+                    placeholder="e.g. John, CS-101"
                     className="w-full h-10 px-3 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -342,10 +581,10 @@ export default function LoginPage() {
                       <div
                         key={i}
                         onClick={() => {
-                          setValue("identifier", s.roll_number);
+                          setIdentifier(s.roll_number);
                           setShowDobHelper(false);
                           toast.info(`Selected ${s.name}`, {
-                            description: `Register No: ${s.roll_number}. Enter password: ${s.dob_hint} (in DDMMYYYY format)`
+                            description: `Roll No: ${s.roll_number}. Enter your password to sign in.`
                           });
                         }}
                         className="p-3 rounded-xl border border-slate-100 bg-slate-50/70 hover:bg-blue-50/60 hover:border-blue-200 cursor-pointer transition-all space-y-1"
@@ -357,20 +596,15 @@ export default function LoginPage() {
                           </span>
                         </div>
                         <div className="text-[11px] text-slate-500 flex items-center justify-between pt-0.5">
-                          <span>{s.class_name}</span>
-                          <span className="font-semibold text-emerald-700">DOB: {s.dob_hint}</span>
+                          <span>{s.class_name || "Enrolled Student"}</span>
                         </div>
                       </div>
                     ))
                   ) : (
                     <div className="py-6 text-center text-xs text-slate-500">
-                      Type your name or roll number above to retrieve your credentials.
+                      No matching records found. Create an account via the Create Account tab.
                     </div>
                   )}
-                </div>
-
-                <div className="p-3 rounded-xl bg-amber-50 border border-amber-200/80 text-[11px] text-amber-900 leading-relaxed">
-                  💡 <strong>Password Rule:</strong> Your default password is your Date of Birth in <span className="font-mono font-bold">DDMMYYYY</span> format without spaces or symbols. (Example: Born 15-Aug-2004 $\rightarrow$ enter <span className="font-mono font-bold">15082004</span>).
                 </div>
               </div>
 
@@ -387,11 +621,11 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* Footer */}
-        <div className="max-w-7xl mx-auto w-full flex flex-col items-center justify-center gap-2 py-3">
+        {/* Footer: Powered by Brandex Hyperlink */}
+        <div className="max-w-7xl mx-auto w-full flex flex-col items-center justify-center gap-2 py-3 z-10">
           <PoweredByBrandex variant="footer" />
           <p className="text-[11px] text-slate-400 font-medium">
-            Attendex OS • Multi-Tenant Institutional Governance • Secured with PostgreSQL Row Level Security
+            Attendex OS • Secured with PostgreSQL Row Level Security
           </p>
         </div>
       </div>
