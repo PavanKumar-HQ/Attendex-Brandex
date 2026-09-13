@@ -6,6 +6,11 @@ import { POST as decideLeave } from "@/app/api/leave/decide/route";
 import { POST as submitGatepass } from "@/app/api/gatepass/submit/route";
 import { POST as submitMarks } from "@/app/api/marks/submit/route";
 import { POST as bookProctorSlot } from "@/app/api/proctor/book/route";
+import { POST as registerUser } from "@/app/api/auth/register/route";
+import { POST as submitAttendance } from "@/app/api/attendance/submit/route";
+import { POST as promoteStudents } from "@/app/api/promotion/route";
+import { POST as createStaff } from "@/app/api/admin/staff/create/route";
+import { GET as studentLookup } from "@/app/api/auth/student-lookup/route";
 import { studentServicesService } from "@/services/student-services.service";
 
 test("ADVERSARIAL ATTACK 1: Inverted Date Range (End Date Before Start Date)", async () => {
@@ -153,3 +158,122 @@ test("ADVERSARIAL ATTACK 7: Marks Submission Out-of-Bounds Payload Protection", 
   // Service must cap or handle invalid boundaries
   assert.ok(res.status === 200 || res.status === 400);
 });
+
+test("ADVERSARIAL ATTACK 8: Privilege Escalation - Public Registration Attempting Admin or Faculty Role", async () => {
+  // Attack payload: an unauthenticated actor sends role: "ADMIN"
+  const adminAttemptReq = new NextRequest("http://localhost:3000/api/auth/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      fullName: "Malicious Actor",
+      email: "hacker@evil.com",
+      password: "HackedPassword123!",
+      role: "ADMIN"
+    })
+  });
+
+  const adminRes = await registerUser(adminAttemptReq);
+  assert.equal(adminRes.status, 403, "Public registration must reject ADMIN role creation with HTTP 403 Forbidden");
+  const adminJson = await adminRes.json();
+  assert.equal(adminJson.success, false);
+  assert.ok(adminJson.message.includes("can only be provisioned by an Institutional Administrator"));
+
+  // Attack payload: an unauthenticated actor sends role: "TEACHER"
+  const teacherAttemptReq = new NextRequest("http://localhost:3000/api/auth/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      fullName: "Fake Teacher",
+      email: "faketeacher@college.edu",
+      password: "FacultyPass123!",
+      role: "TEACHER"
+    })
+  });
+
+  const teacherRes = await registerUser(teacherAttemptReq);
+  assert.equal(teacherRes.status, 403, "Public registration must reject TEACHER role creation with HTTP 403 Forbidden");
+});
+
+test("ADVERSARIAL ATTACK 9: RBAC Enforcement - Student Cookie Attempting Restricted Mutation APIs", async () => {
+  // A student attempts to submit class attendance
+  const studentAttendanceReq = new NextRequest("http://localhost:3000/api/attendance/submit", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Cookie": "attendex_demo_session=STUDENT"
+    },
+    body: JSON.stringify({
+      classId: "00000000-0000-0000-0000-000000000001",
+      date: "2026-09-13",
+      records: []
+    })
+  });
+
+  const attendanceRes = await submitAttendance(studentAttendanceReq);
+  assert.equal(attendanceRes.status, 403, "Student session must be blocked from attendance submission with 403 Forbidden");
+
+  // A student attempts to submit grade marks
+  const studentMarksReq = new NextRequest("http://localhost:3000/api/marks/submit", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Cookie": "attendex_demo_session=STUDENT"
+    },
+    body: JSON.stringify({
+      classId: "00000000-0000-0000-0000-000000000001",
+      subjectId: "00000000-0000-0000-0000-000000000001",
+      marks: []
+    })
+  });
+
+  const marksRes = await submitMarks(studentMarksReq);
+  assert.equal(marksRes.status, 403, "Student session must be blocked from marks submission with 403");
+
+  // A student attempts to trigger student promotions
+  const studentPromoReq = new NextRequest("http://localhost:3000/api/promotion", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Cookie": "attendex_demo_session=STUDENT"
+    },
+    body: JSON.stringify({
+      class_ids: ["00000000-0000-0000-0000-000000000001"]
+    })
+  });
+
+  const promoRes = await promoteStudents(studentPromoReq);
+  assert.equal(promoRes.status, 403, "Student session must be blocked from promotion with 403");
+});
+
+test("ADVERSARIAL ATTACK 10: Unauthorized Staff Provisioning Attempt", async () => {
+  // A student or unauthenticated caller attempts to call staff provisioning
+  const unauthStaffReq = new NextRequest("http://localhost:3000/api/admin/staff/create", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Cookie": "attendex_demo_session=STUDENT"
+    },
+    body: JSON.stringify({
+      fullName: "Infiltrator",
+      email: "infiltrator@college.edu",
+      role: "ADMIN"
+    })
+  });
+
+  const staffRes = await createStaff(unauthStaffReq);
+  assert.equal(staffRes.status, 403, "Staff provisioning must reject student session with 403 Forbidden");
+});
+
+test("ADVERSARIAL ATTACK 11: Roster Scraping Prevention on Student Directory Lookup", async () => {
+  // Empty query attempt to dump entire database roster
+  const emptyQueryReq = new NextRequest("http://localhost:3000/api/auth/student-lookup?q=", {
+    method: "GET"
+  });
+
+  const lookupRes = await studentLookup(emptyQueryReq);
+  assert.equal(lookupRes.status, 200);
+  const json = await lookupRes.json();
+  assert.equal(json.results.length, 0, "Empty query must return 0 results, preventing directory dumping");
+  assert.ok(json.message.includes("at least 2 characters"));
+});
+

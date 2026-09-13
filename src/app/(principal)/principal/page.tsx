@@ -13,10 +13,17 @@ import {
   ArrowRight,
   Activity,
   Layers,
-  Sparkles
+  Sparkles,
+  UserPlus,
+  Plus,
+  Mail,
+  Lock,
+  BadgeCheck
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { PageTransition } from "@/components/ui/page-transition";
 import { Header } from "@/components/layout/header";
 import { universalWorkflow, UniversalLeaveRequest, UniversalGatepassRequest } from "@/lib/workflow-engine";
@@ -28,6 +35,18 @@ export default function PrincipalDashboardPage() {
   const [leaves, setLeaves] = useState<UniversalLeaveRequest[]>([]);
   const [gatepasses, setGatepasses] = useState<UniversalGatepassRequest[]>([]);
   const [pulse, setPulse] = useState({ totalStudents: 0, totalClasses: 0, overallAttendance: 0 });
+
+  // Staff Provisioning State
+  const [isProvisionOpen, setIsProvisionOpen] = useState(false);
+  const [isProvisioning, setIsProvisioning] = useState(false);
+  const [staffForm, setStaffForm] = useState({
+    fullName: "",
+    email: "",
+    role: "TEACHER",
+    designation: "Assistant Professor",
+    employeeId: "",
+    password: ""
+  });
 
   const loadData = async () => {
     try {
@@ -93,12 +112,56 @@ export default function PrincipalDashboardPage() {
     }
   };
 
+  const handleProvisionStaff = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!staffForm.fullName.trim() || !staffForm.email.trim()) {
+      toast.error("Full Name and Institutional Email are required.");
+      return;
+    }
+    setIsProvisioning(true);
+    try {
+      const res = await fetch("/api/admin/staff/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(staffForm)
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(data.message || "Faculty / Staff account provisioned!");
+        setIsProvisionOpen(false);
+        setStaffForm({
+          fullName: "",
+          email: "",
+          role: "TEACHER",
+          designation: "Assistant Professor",
+          employeeId: "",
+          password: ""
+        });
+      } else {
+        toast.error(data.message || "Failed to provision account.");
+      }
+    } catch {
+      toast.error("Network error while creating staff account.");
+    } finally {
+      setIsProvisioning(false);
+    }
+  };
+
   const totalPending = leaves.length + gatepasses.length;
 
   return (
     <PageTransition>
       <div className="space-y-6">
-        <Header title="Executive Office" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <Header title="Executive Office" />
+          <Button
+            onClick={() => setIsProvisionOpen(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm flex items-center gap-2 h-9 px-4 rounded-xl"
+          >
+            <UserPlus className="w-4 h-4" />
+            <span>Provision Faculty &amp; Staff</span>
+          </Button>
+        </div>
 
         {/* Executive 4-Metric Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -249,6 +312,139 @@ export default function PrincipalDashboardPage() {
             </div>
           )}
         </Card>
+
+        {/* Staff Provisioning Modal */}
+        {isProvisionOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
+            <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full p-6 space-y-5">
+              <div className="flex items-start justify-between pb-3 border-b border-slate-100">
+                <div>
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200 mb-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Executive Authority</span>
+                  </div>
+                  <h3 className="text-base font-bold text-slate-900">Provision Faculty &amp; Staff Account</h3>
+                  <p className="text-xs text-slate-500">
+                    Create institutional accounts for professors, department heads, or administrators.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsProvisionOpen(false)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                >
+                  <XCircle className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleProvisionStaff} className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-slate-700">Account Role</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: "TEACHER", label: "Faculty" },
+                      { id: "PRINCIPAL", label: "Principal / HOD" },
+                      { id: "ADMIN", label: "Admin" }
+                    ].map((r) => (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => setStaffForm({ ...staffForm, role: r.id })}
+                        className={cn(
+                          "py-2 text-xs font-bold rounded-lg border transition-all",
+                          staffForm.role === r.id
+                            ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                            : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+                        )}
+                      >
+                        {r.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold text-slate-700">Full Name *</Label>
+                    <Input
+                      required
+                      placeholder="e.g. Dr. Ramesh Gupta"
+                      value={staffForm.fullName}
+                      onChange={(e) => setStaffForm({ ...staffForm, fullName: e.target.value })}
+                      className="h-9 text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold text-slate-700">Institutional Email *</Label>
+                    <Input
+                      required
+                      type="email"
+                      placeholder="prof.ramesh@college.edu"
+                      value={staffForm.email}
+                      onChange={(e) => setStaffForm({ ...staffForm, email: e.target.value })}
+                      className="h-9 text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold text-slate-700">Academic Designation</Label>
+                    <Input
+                      placeholder="e.g. Associate Professor"
+                      value={staffForm.designation}
+                      onChange={(e) => setStaffForm({ ...staffForm, designation: e.target.value })}
+                      className="h-9 text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold text-slate-700">Employee ID</Label>
+                    <Input
+                      placeholder="e.g. FAC-2026-042"
+                      value={staffForm.employeeId}
+                      onChange={(e) => setStaffForm({ ...staffForm, employeeId: e.target.value })}
+                      className="h-9 text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-slate-700">Initial Password</Label>
+                  <Input
+                    type="password"
+                    placeholder="Defaults to ChangeMe@2026 if blank"
+                    value={staffForm.password}
+                    onChange={(e) => setStaffForm({ ...staffForm, password: e.target.value })}
+                    className="h-9 text-xs"
+                  />
+                  <p className="text-[11px] text-slate-400">
+                    The member will be prompted to change their password upon initial login.
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsProvisionOpen(false)}
+                    disabled={isProvisioning}
+                    className="h-9 text-xs font-semibold"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={isProvisioning}
+                    className="h-9 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    {isProvisioning ? "Provisioning..." : "Create Account"}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </PageTransition>
   );

@@ -10,25 +10,13 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    if (!query) {
-      const { data, error } = await supabase
-        .from("students")
-        .select("id, roll_number, register_number, name, classes(name)")
-        .limit(20);
-
-      if (error || !data) {
-        return NextResponse.json({ success: true, count: 0, directory: [] });
-      }
-
-      const directory = data.map((s: any) => ({
-        roll_number: s.roll_number,
-        register_number: s.register_number,
-        name: s.name,
-        class_name: s.classes?.name || "Enrolled Student",
-        dob_hint: "DDMMYYYY format"
-      }));
-
-      return NextResponse.json({ success: true, count: directory.length, directory });
+    if (!query || query.length < 2) {
+      return NextResponse.json({ 
+        success: true, 
+        count: 0, 
+        results: [], 
+        message: "Search query of at least 2 characters is required." 
+      });
     }
 
     const { data, error } = await supabase

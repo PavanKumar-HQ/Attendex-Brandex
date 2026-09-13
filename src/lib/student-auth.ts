@@ -160,7 +160,7 @@ export async function authenticateStudentCredentials(
       const { data: dbStudent, error } = await supabase
         .from("students")
         .select("*, classes(*)")
-        .or(`roll_number.ilike.%${query}%,register_number.ilike.%${query}%,email.ilike.%${query}%`)
+        .or(`roll_number.ilike.${query},register_number.ilike.${query},email.ilike.${query}`)
         .maybeSingle();
 
       if (!error && dbStudent) {
@@ -319,7 +319,7 @@ export async function resolveActiveStudentAsync(rollNumber?: string | null): Pro
         const { data: dbStudent } = await supabase
           .from("students")
           .select("*, classes(*)")
-          .or(`roll_number.ilike.%${cleanId}%,register_number.ilike.%${cleanId}%,email.ilike.%${cleanId}%`)
+          .or(`roll_number.ilike.${cleanId},register_number.ilike.${cleanId},email.ilike.${cleanId}`)
           .maybeSingle();
 
         if (dbStudent) {

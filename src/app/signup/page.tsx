@@ -11,13 +11,13 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { PoweredByBrandex } from "@/components/ui/powered-by-brandex";
 
-type UserRole = "STUDENT" | "TEACHER" | "PRINCIPAL" | "ADMIN" | "PARENT";
+type UserRole = "STUDENT" | "PARENT";
 
 export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   
-  const [role, setRole] = useState<UserRole>("TEACHER");
+  const [role, setRole] = useState<UserRole>("STUDENT");
   
   const [formData, setFormData] = useState({
     fullName: "",
@@ -40,7 +40,7 @@ export default function SignupPage() {
           email: formData.email,
           phone: formData.phone,
           password: formData.password,
-          role: role === "ADMIN" ? "SUPER_ADMIN" : role,
+          role: role,
           roleSpecificId: formData.roleSpecificId
         })
       });
@@ -56,9 +56,6 @@ export default function SignupPage() {
       });
 
       const redirectPath = 
-        role === "ADMIN" ? "/super-admin" :
-        role === "PRINCIPAL" ? "/principal" :
-        role === "TEACHER" ? "/dashboard" :
         role === "STUDENT" ? "/student/dashboard" :
         role === "PARENT" ? "/parent/dashboard" : "/dashboard";
 
@@ -74,9 +71,6 @@ export default function SignupPage() {
   };
 
   const rolesConfig: { id: UserRole; label: string; icon: any }[] = [
-    { id: "TEACHER", label: "Faculty", icon: GraduationCap },
-    { id: "PRINCIPAL", label: "Principal", icon: Building },
-    { id: "ADMIN", label: "Admin", icon: Crown },
     { id: "STUDENT", label: "Student", icon: User },
     { id: "PARENT", label: "Guardian", icon: Users },
   ];
@@ -98,42 +92,46 @@ export default function SignupPage() {
         </div>
       </div>
 
+      {/* Main Card */}
       <motion.div 
-        initial={{ opacity: 0, y: 12 }}
+        initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-lg bg-white rounded-3xl p-8 sm:p-10 shadow-xl shadow-slate-200/50 border border-slate-200/80 relative z-10 my-4"
+        transition={{ duration: 0.3 }}
+        className="w-full max-w-lg bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 z-10 space-y-5 my-6"
       >
-        <div className="text-center space-y-3 mb-6">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-slate-900 text-white shadow-lg shadow-slate-900/20 mx-auto">
-            <GraduationCap className="w-6 h-6 text-blue-400" />
+        <div className="space-y-1 text-center">
+          <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-blue-100 shadow-2xs">
+            <GraduationCap className="w-6 h-6" />
           </div>
-          <div>
-            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-              Create Your Account
-            </h1>
-            <p className="text-xs text-slate-500 mt-1">
-              Select your role to enroll into the Attendex Institutional OS
-            </p>
-          </div>
-          
-          {/* Role Switcher */}
-          <div className="grid grid-cols-5 p-1 bg-slate-100 rounded-2xl gap-1">
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Create Institutional Profile</h1>
+          <p className="text-xs text-slate-500 font-medium">Self-registration for enrolled students and legal guardians</p>
+        </div>
+
+        {/* Security Notice */}
+        <div className="p-3 bg-amber-50/80 border border-amber-200/80 rounded-xl text-amber-900 text-xs flex items-start gap-2.5">
+          <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+          <p className="text-[11px] text-amber-800 leading-snug">
+            <strong>Staff Notice:</strong> Faculty, Principal, and Admin profiles are provisioned directly by Institutional Administration. Self-registration is restricted to Students & Guardians.
+          </p>
+        </div>
+
+        {/* Role Selector */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold text-slate-700">Account Type</label>
+          <div className="grid grid-cols-2 p-1 bg-slate-100/90 rounded-2xl gap-1">
             {rolesConfig.map((r) => (
               <button
                 key={r.id}
                 type="button"
-                onClick={() => {
-                  setRole(r.id);
-                  setFormData({ ...formData, roleSpecificId: "" });
-                }}
+                onClick={() => setRole(r.id)}
                 className={cn(
-                  "py-2 px-1 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all flex flex-col items-center gap-1",
+                  "py-2.5 px-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2",
                   role === r.id 
                     ? "bg-white text-blue-600 shadow-sm font-black" 
                     : "text-slate-500 hover:text-slate-800"
                 )}
               >
-                <r.icon className="w-3.5 h-3.5" />
+                <r.icon className="w-4 h-4" />
                 <span>{r.label}</span>
               </button>
             ))}
@@ -165,7 +163,7 @@ export default function SignupPage() {
                 type="email" 
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder={role === "STUDENT" ? "e.g. rollno@college.edu or personal email" : "e.g. prof.name@college.edu"} 
+                placeholder={role === "STUDENT" ? "e.g. rollno@college.edu or personal email" : "e.g. parent.email@domain.com"} 
                 autoComplete="email"
                 className="h-11 pl-10 rounded-xl border-slate-200 bg-white focus:bg-white text-sm font-medium"
                 required
@@ -176,22 +174,14 @@ export default function SignupPage() {
           {/* Role-Specific ID */}
           <div className="space-y-1">
             <label className="text-xs font-bold text-slate-700">
-              {role === "TEACHER" ? "Faculty Employee ID" :
-               role === "PRINCIPAL" ? "Principal Admin ID" :
-               role === "ADMIN" ? "Admin Staff ID" :
-               role === "STUDENT" ? "Roll / Register Number" : "Student / Ward Roll Number"}
+              {role === "STUDENT" ? "Roll / Register Number" : "Student / Ward Roll Number"}
             </label>
             <div className="relative">
               <ShieldCheck className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-500" />
               <Input 
                 value={formData.roleSpecificId}
                 onChange={(e) => setFormData({ ...formData, roleSpecificId: e.target.value })}
-                placeholder={
-                  role === "TEACHER" ? "e.g. EMP-CS-101" :
-                  role === "PRINCIPAL" ? "e.g. PRIN-01" :
-                  role === "ADMIN" ? "e.g. ADMIN-01" :
-                  role === "STUDENT" ? "e.g. CS-11 or 21CS042" : "e.g. CS-11 (Child's Roll Number)"
-                } 
+                placeholder={role === "STUDENT" ? "e.g. CS-11 or 21CS042" : "e.g. CS-11 (Child's Roll Number)"} 
                 className="h-11 pl-10 rounded-xl border-blue-100 bg-blue-50/20 focus:bg-white text-sm font-medium"
                 required
               />

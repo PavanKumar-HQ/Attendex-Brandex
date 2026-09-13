@@ -2,10 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { INSTITUTIONAL_STUDENTS } from "@/lib/student-auth";
 import { computePasswordHash } from "@/lib/server-auth";
+import { verifyServerRole } from "@/lib/rbac-guard";
 import { randomUUID } from "node:crypto";
 
 export async function POST(req: NextRequest) {
   try {
+    // 0. Zero-Trust RBAC: Only Super Admin can trigger database bulk-seeding
+    const auth = verifyServerRole(req, ["ADMIN", "SUPER_ADMIN"]);
+    if (!auth.authorized) {
+      return auth.errorResponse!;
+    }
+
     if (!isSupabaseConfigured) {
       return NextResponse.json({
         success: false,

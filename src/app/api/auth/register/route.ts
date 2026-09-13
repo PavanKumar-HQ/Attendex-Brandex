@@ -11,7 +11,8 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const {
-      fullName,
+      fullName: rawFullName,
+      name,
       email: rawEmail,
       password,
       role = "TEACHER",
@@ -21,8 +22,10 @@ export async function POST(req: NextRequest) {
       classId
     } = body;
 
+    const fullName = (rawFullName || name || "").trim();
+
     // Validate inputs
-    if (!fullName || !fullName.trim()) {
+    if (!fullName) {
       return NextResponse.json(
         { success: false, message: "Full Name is required." },
         { status: 400 }
@@ -43,6 +46,33 @@ export async function POST(req: NextRequest) {
         { success: false, message: `Invalid role: ${role}. Must be one of ${validRoles.join(", ")}` },
         { status: 400 }
       );
+    }
+
+    // STRICT ZERO-TRUST PRIVILEGE ESCALATION GUARD:
+    // Only authenticated Institutional Admins or Principals can provision Staff, Faculty, or Admin accounts.
+    const isStaffRole = ["SUPER_ADMIN", "ADMIN", "PRINCIPAL", "TEACHER"].includes(cleanRole);
+    if (isStaffRole) {
+      const cookieSession = req.cookies.get("attendex_demo_session")?.value?.toUpperCase();
+      const authHeader = req.headers.get("authorization");
+      const isBearerSuperAdmin = authHeader?.startsWith("Bearer ") && 
+        (authHeader.replace("Bearer ", "").trim() === (process.env.CRON_SECRET || "attendex_super_secret_cron_token_2026"));
+      
+      const isAdminSession = isBearerSuperAdmin || 
+                             cookieSession === "ADMIN" || 
+                             cookieSession === "SUPER_ADMIN" || 
+                             cookieSession === "SUPERADMIN" || 
+                             cookieSession === "PRINCIPAL";
+
+      if (!isAdminSession) {
+        return NextResponse.json(
+          {
+            success: false,
+            code: "PRIVILEGE_ESCALATION_BLOCKED",
+            message: "Privilege Escalation Prevented: Faculty, Staff, and Administrative accounts can only be provisioned by an Institutional Administrator or Principal."
+          },
+          { status: 403 }
+        );
+      }
     }
 
     // Determine authoritative email

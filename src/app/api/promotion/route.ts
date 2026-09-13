@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { serverState } from "@/lib/server-state";
+import { verifyServerRole } from "@/lib/rbac-guard";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export async function POST(req: NextRequest) {
   try {
+    // 0. Zero-Trust RBAC: Only Institutional Admin or Principal can execute cohort promotion
+    const auth = verifyServerRole(req, ["ADMIN", "SUPER_ADMIN", "PRINCIPAL"]);
+    if (!auth.authorized) {
+      return auth.errorResponse!;
+    }
+
     const body = await req.json();
     const { class_ids } = body;
 

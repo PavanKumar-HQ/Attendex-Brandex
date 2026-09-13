@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { serverState } from "@/lib/server-state";
 import { cacheManager } from "@/lib/cache-manager";
+import { verifyServerRole } from "@/lib/rbac-guard";
 import { randomUUID } from "node:crypto";
 
 export const dynamic = "force-dynamic";
@@ -9,6 +10,12 @@ export const revalidate = 0;
 
 export async function POST(req: NextRequest) {
   try {
+    // 0. Zero-Trust RBAC: Only Faculty, Principals, or Administrators can submit attendance
+    const auth = verifyServerRole(req, ["TEACHER", "ADMIN", "PRINCIPAL", "SUPER_ADMIN"]);
+    if (!auth.authorized) {
+      return auth.errorResponse!;
+    }
+
     const raw = await req.json();
 
     const classId = raw.classId || raw.class_id;

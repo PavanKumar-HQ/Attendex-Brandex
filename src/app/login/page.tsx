@@ -32,7 +32,7 @@ import {
 import { PoweredByBrandex } from "@/components/ui/powered-by-brandex";
 
 type AuthTab = "signin" | "signup";
-type SignupRole = "TEACHER" | "STUDENT" | "PRINCIPAL" | "ADMIN" | "PARENT";
+type SignupRole = "STUDENT" | "PARENT";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -44,9 +44,9 @@ export default function LoginPage() {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
 
-  // Sign Up state
+  // Sign Up state (Only Student and Parent self-registration permitted)
   const [isRegistering, setIsRegistering] = useState(false);
-  const [signupRole, setSignupRole] = useState<SignupRole>("TEACHER");
+  const [signupRole, setSignupRole] = useState<SignupRole>("STUDENT");
   const [signupForm, setSignupForm] = useState({
     fullName: "",
     email: "",
@@ -54,32 +54,6 @@ export default function LoginPage() {
     password: "",
     roleSpecificId: ""
   });
-
-  // Credential helper state
-  const [showDobHelper, setShowDobHelper] = useState(false);
-  const [lookupQuery, setLookupQuery] = useState("");
-  const [lookupResults, setLookupResults] = useState<any[]>([]);
-  const [isLookingUp, setIsLookingUp] = useState(false);
-
-  const handleLookup = async (q: string) => {
-    setLookupQuery(q);
-    if (!q || q.trim().length < 2) {
-      setLookupResults([]);
-      return;
-    }
-    setIsLookingUp(true);
-    try {
-      const res = await fetch(`/api/auth/student-lookup?q=${encodeURIComponent(q.trim())}`);
-      const json = await res.json();
-      if (json.success) {
-        setLookupResults(json.results || []);
-      }
-    } catch {
-      setLookupResults([]);
-    } finally {
-      setIsLookingUp(false);
-    }
-  };
 
   // ─── Sign In Submission ───
   const handleSignIn = async (e: React.FormEvent) => {
@@ -186,7 +160,7 @@ export default function LoginPage() {
           email: signupForm.email,
           phone: signupForm.phone,
           password: signupForm.password,
-          role: signupRole === "ADMIN" ? "SUPER_ADMIN" : signupRole,
+          role: signupRole,
           roleSpecificId: signupForm.roleSpecificId
         })
       });
@@ -202,11 +176,7 @@ export default function LoginPage() {
       });
 
       const redirectPath = 
-        signupRole === "ADMIN" ? "/super-admin" :
-        signupRole === "PRINCIPAL" ? "/principal" :
-        signupRole === "TEACHER" ? "/dashboard" :
-        signupRole === "STUDENT" ? "/student/dashboard" :
-        signupRole === "PARENT" ? "/parent/dashboard" : "/dashboard";
+        signupRole === "STUDENT" ? "/student/dashboard" : "/parent/dashboard";
 
       setTimeout(() => {
         window.location.href = redirectPath;
@@ -220,10 +190,7 @@ export default function LoginPage() {
   };
 
   const roleButtons: { id: SignupRole; label: string; icon: any }[] = [
-    { id: "TEACHER", label: "Faculty", icon: GraduationCap },
     { id: "STUDENT", label: "Student", icon: User },
-    { id: "PRINCIPAL", label: "Principal", icon: Building2 },
-    { id: "ADMIN", label: "Admin", icon: Crown },
     { id: "PARENT", label: "Guardian", icon: Users },
   ];
 
@@ -329,24 +296,12 @@ export default function LoginPage() {
                 </div>
 
                 <div className="p-3 bg-blue-50/70 border border-blue-200/60 rounded-xl text-[11px] text-blue-900 space-y-1">
-                  <div className="font-bold flex items-center justify-between text-blue-950">
-                    <span className="flex items-center gap-1.5">
-                      <GraduationCap className="w-3.5 h-3.5 text-blue-600" />
-                      Student Sign-In Tip:
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowDobHelper(true);
-                        handleLookup("");
-                      }}
-                      className="text-blue-700 underline font-semibold hover:text-blue-950 text-[11px]"
-                    >
-                      Search Roster
-                    </button>
+                  <div className="font-bold flex items-center gap-1.5 text-blue-950">
+                    <GraduationCap className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Student Sign-In:</span>
                   </div>
                   <p className="text-slate-600 text-[10px] leading-relaxed">
-                    Use your Roll Number (e.g. <code className="bg-white px-1 py-0.5 rounded text-blue-800 font-mono">CS-101</code>) and Date of Birth in DDMMYYYY format.
+                    Enter your assigned Roll Number (e.g. <code className="bg-white px-1 py-0.5 rounded text-blue-800 font-mono">CS-101</code>) or institutional email and your password.
                   </p>
                 </div>
 
@@ -387,10 +342,18 @@ export default function LoginPage() {
             {/* ═════════════════ CREATE ACCOUNT TAB ═════════════════ */}
             {activeTab === "signup" && (
               <form onSubmit={handleSignUp} className="space-y-3.5">
+                {/* Security Advisory */}
+                <div className="p-2.5 bg-amber-50/80 border border-amber-200/80 rounded-xl text-amber-900 text-xs flex items-start gap-2">
+                  <Shield className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                  <p className="text-[11px] text-amber-800 leading-snug">
+                    <strong>Staff Access:</strong> Faculty and Principal accounts are provisioned exclusively by Institutional Registry. Self-registration is strictly for Students & Guardians.
+                  </p>
+                </div>
+
                 {/* Role Selector */}
                 <div className="space-y-1">
-                  <Label className="text-xs font-bold text-slate-700">Select Role</Label>
-                  <div className="grid grid-cols-5 p-1 bg-slate-100 rounded-xl gap-1">
+                  <Label className="text-xs font-bold text-slate-700">Account Type</Label>
+                  <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-xl gap-1">
                     {roleButtons.map((r) => (
                       <button
                         key={r.id}
@@ -400,7 +363,7 @@ export default function LoginPage() {
                           setSignupForm({ ...signupForm, roleSpecificId: "" });
                         }}
                         className={cn(
-                          "py-2 px-1 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all flex flex-col items-center gap-0.5",
+                          "py-2 px-1 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5",
                           signupRole === r.id
                             ? "bg-white text-blue-600 shadow-sm font-black"
                             : "text-slate-500 hover:text-slate-800"
@@ -448,22 +411,14 @@ export default function LoginPage() {
                 {/* Role-Specific ID */}
                 <div className="space-y-1">
                   <Label className="text-xs font-bold text-slate-700">
-                    {signupRole === "TEACHER" ? "Faculty Employee ID" :
-                     signupRole === "PRINCIPAL" ? "Principal Admin ID" :
-                     signupRole === "ADMIN" ? "Administrator ID" :
-                     signupRole === "STUDENT" ? "Roll / Register Number" : "Student's Roll Number"}
+                    {signupRole === "STUDENT" ? "Roll / Register Number" : "Ward's Roll Number"}
                   </Label>
                   <div className="relative">
                     <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-500" />
                     <Input
                       value={signupForm.roleSpecificId}
                       onChange={(e) => setSignupForm({ ...signupForm, roleSpecificId: e.target.value })}
-                      placeholder={
-                        signupRole === "TEACHER" ? "e.g. EMP-CS-101" :
-                        signupRole === "PRINCIPAL" ? "e.g. PRIN-01" :
-                        signupRole === "ADMIN" ? "e.g. ADMIN-01" :
-                        signupRole === "STUDENT" ? "e.g. CS-101" : "e.g. CS-101"
-                      }
+                      placeholder={signupRole === "STUDENT" ? "e.g. CS-101 or 21CS042" : "e.g. CS-101"}
                       className="h-10 pl-9 rounded-xl border-blue-100 bg-blue-50/20 text-sm font-medium"
                       required
                     />
@@ -537,89 +492,6 @@ export default function LoginPage() {
             )}
           </Card>
         </div>
-
-        {/* Student Credential Recovery / DOB Helper Modal */}
-        {showDobHelper && (
-          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-              <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                <div className="flex items-center gap-2">
-                  <div className="p-2 bg-blue-100 text-blue-700 rounded-lg">
-                    <GraduationCap className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900">Student Directory Search</h3>
-                    <p className="text-[11px] text-slate-500">Search registered students</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowDobHelper(false)}
-                  className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <div className="p-5 space-y-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700">Search by Name or Roll No:</label>
-                  <input
-                    type="text"
-                    value={lookupQuery}
-                    onChange={(e) => handleLookup(e.target.value)}
-                    placeholder="e.g. John, CS-101"
-                    className="w-full h-10 px-3 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
-                  {isLookingUp ? (
-                    <div className="py-6 text-center text-xs text-slate-400">Searching registry...</div>
-                  ) : lookupResults.length > 0 ? (
-                    lookupResults.map((s, i) => (
-                      <div
-                        key={i}
-                        onClick={() => {
-                          setIdentifier(s.roll_number);
-                          setShowDobHelper(false);
-                          toast.info(`Selected ${s.name}`, {
-                            description: `Roll No: ${s.roll_number}. Enter your password to sign in.`
-                          });
-                        }}
-                        className="p-3 rounded-xl border border-slate-100 bg-slate-50/70 hover:bg-blue-50/60 hover:border-blue-200 cursor-pointer transition-all space-y-1"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-slate-900">{s.name}</span>
-                          <span className="text-[11px] font-mono font-bold text-blue-700 bg-blue-100/70 px-1.5 py-0.5 rounded">
-                            {s.roll_number}
-                          </span>
-                        </div>
-                        <div className="text-[11px] text-slate-500 flex items-center justify-between pt-0.5">
-                          <span>{s.class_name || "Enrolled Student"}</span>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="py-6 text-center text-xs text-slate-500">
-                      No matching records found. Create an account via the Create Account tab.
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="p-3.5 bg-slate-50 border-t border-slate-100 text-right">
-                <button
-                  type="button"
-                  onClick={() => setShowDobHelper(false)}
-                  className="px-4 py-2 text-xs font-bold bg-slate-900 text-white rounded-lg hover:bg-slate-800"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Footer: Powered by Brandex Hyperlink */}
         <div className="max-w-7xl mx-auto w-full flex flex-col items-center justify-center gap-2 py-3 z-10">

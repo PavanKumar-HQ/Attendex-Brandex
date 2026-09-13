@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { serverState } from "@/lib/server-state";
 import { cacheManager } from "@/lib/cache-manager";
+import { verifyServerRole } from "@/lib/rbac-guard";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
 
@@ -21,6 +22,12 @@ const submitMarksSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    // 0. Zero-Trust RBAC: Only Faculty, Principals, or Administrators can evaluate marks
+    const auth = verifyServerRole(req, ["TEACHER", "ADMIN", "PRINCIPAL", "SUPER_ADMIN"]);
+    if (!auth.authorized) {
+      return auth.errorResponse!;
+    }
+
     const body = await req.json();
     const validated = submitMarksSchema.parse(body);
 

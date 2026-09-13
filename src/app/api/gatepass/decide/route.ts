@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { z } from "zod";
 import { serverState } from "@/lib/server-state";
+import { verifyServerRole } from "@/lib/rbac-guard";
 
 const decideGatepassSchema = z.object({
   gatepassId: z.string().optional(),
@@ -13,6 +14,12 @@ const decideGatepassSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    // 0. Zero-Trust RBAC: Only Faculty, Warden, or Administrators can decide gatepass
+    const auth = verifyServerRole(req, ["TEACHER", "ADMIN", "PRINCIPAL", "SUPER_ADMIN"]);
+    if (!auth.authorized) {
+      return auth.errorResponse!;
+    }
+
     const body = await req.json();
     const validated = decideGatepassSchema.parse(body);
     const targetId = validated.gatepassId || validated.id;

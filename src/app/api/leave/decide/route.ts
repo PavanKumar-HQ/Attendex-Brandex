@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { z } from "zod";
 import { serverState } from "@/lib/server-state";
+import { verifyServerRole } from "@/lib/rbac-guard";
 
 const decideLeaveSchema = z.object({
   leaveId: z.string().min(1),
@@ -11,6 +12,12 @@ const decideLeaveSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    // 0. Zero-Trust RBAC: Only Faculty, Principals, or Administrators can decide leave
+    const auth = verifyServerRole(req, ["TEACHER", "ADMIN", "PRINCIPAL", "SUPER_ADMIN"]);
+    if (!auth.authorized) {
+      return auth.errorResponse!;
+    }
+
     const body = await req.json();
     const validated = decideLeaveSchema.parse(body);
 

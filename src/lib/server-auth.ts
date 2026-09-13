@@ -62,7 +62,7 @@ export async function verifyStudentServerAuth(
       const { data: dbStudent, error } = await supabase
         .from("students")
         .select("*, classes(*)")
-        .or(`roll_number.ilike.%${cleanId}%,register_number.ilike.%${cleanId}%,email.ilike.%${cleanId}%`)
+        .or(`roll_number.ilike.${cleanId},register_number.ilike.${cleanId},email.ilike.${cleanId}`)
         .maybeSingle();
 
       if (!error && dbStudent) {
@@ -162,7 +162,7 @@ export async function verifyStaffServerAuth(
       const { data: profile, error } = await supabase
         .from("user_profiles")
         .select("*")
-        .or(`email.ilike.%${cleanId}%,phone.ilike.%${cleanId}%`)
+        .or(`email.ilike.${cleanId},phone.ilike.${cleanId}`)
         .maybeSingle();
 
       if (!error && profile) {
