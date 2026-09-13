@@ -14,7 +14,8 @@ import {
   Users, 
   UserCheck,
   Building2,
-  ExternalLink
+  ExternalLink,
+  Lock
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -55,6 +56,15 @@ export function UserMenu() {
     toast.success("Signed out successfully");
     setOpen(false);
     window.location.href = "/login";
+  };
+
+  const handleLockWorkspace = () => {
+    sessionStorage.setItem("attendex_workspace_locked", "true");
+    window.dispatchEvent(new Event("attendex_lock_state_change"));
+    setOpen(false);
+    toast.info("Workspace Locked", {
+      description: "Use your device lock screen biometrics to resume."
+    });
   };
 
   const profilePath = role === "STUDENT" 
@@ -177,6 +187,18 @@ export function UserMenu() {
               <span>Notifications & Alerts</span>
             </div>
           </Link>
+
+          <button
+            type="button"
+            onClick={handleLockWorkspace}
+            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-50 font-medium transition-colors text-left"
+          >
+            <div className="flex items-center gap-2.5">
+              <Lock className="w-4 h-4 text-blue-600" />
+              <span>Lock Workspace</span>
+            </div>
+            <span className="text-[10px] text-blue-600 font-bold bg-blue-50 border border-blue-200/60 px-1.5 py-0.5 rounded">Biometric</span>
+          </button>
         </div>
 
         {/* Institutional Active Session Status */}

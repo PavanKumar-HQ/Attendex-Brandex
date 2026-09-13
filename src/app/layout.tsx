@@ -9,6 +9,7 @@ import { Providers } from "@/components/providers";
 import { AppLoader } from "@/components/ui/app-loader";
 import { BrandexSplash } from "@/components/ui/brandex-splash";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
+import { WorkspaceLockOverlay } from "@/components/layout/workspace-lock-overlay";
 
 const outfit = Outfit({ 
   subsets: ["latin"],
@@ -66,6 +67,7 @@ export default function RootLayout({
         <MobileBottomNav />
         <Toaster />
         <UniversalPwaInstallPrompt />
+        <WorkspaceLockOverlay />
       </body>
     </html>
   );

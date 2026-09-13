@@ -16,7 +16,6 @@ function bufferToBase64(buffer: ArrayBuffer): string {
 
 // Helper to convert Base64 or Base64URL to ArrayBuffer
 function base64ToBuffer(base64: string): ArrayBuffer {
-  // Convert URL-safe base64 to standard base64 if needed
   let normalized = base64.replace(/-/g, "+").replace(/_/g, "/");
   while (normalized.length % 4 !== 0) {
     normalized += "=";
@@ -29,10 +28,26 @@ function base64ToBuffer(base64: string): ArrayBuffer {
   return buffer.buffer;
 }
 
+export function getSafeRpId(): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  const hostname = window.location.hostname;
+  if (!hostname || hostname === "localhost") return "localhost";
+  
+  // W3C WebAuthn spec disallows IP addresses in rp.id
+  const isIpv4 = /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname);
+  const isIpv6 = hostname.includes(":");
+  if (isIpv4 || isIpv6) {
+    return undefined; // Omit so browser defaults to document origin
+  }
+  return hostname;
+}
+
 export interface BiometricDevice {
   type: "FACE_ID" | "TOUCH_ID" | "FINGERPRINT" | "WINDOWS_HELLO" | "BIOMETRIC";
   label: string;
   platform: "iOS" | "Android" | "macOS" | "Windows" | "Other";
+  lockScreenName: string;
+  permissionDescription: string;
   isSupported: boolean;
   isPlatformAuthenticatorAvailable: boolean;
 }
@@ -53,8 +68,10 @@ export function detectDeviceBiometrics(): BiometricDevice {
   if (typeof window === "undefined") {
     return {
       type: "BIOMETRIC",
-      label: "Biometric Sensor",
+      label: "Lock Screen Biometrics",
       platform: "Other",
+      lockScreenName: "Device Lock Screen Biometrics / PIN",
+      permissionDescription: "Attendex requests permission to authenticate using your device's lock screen security.",
       isSupported: false,
       isPlatformAuthenticatorAvailable: false,
     };
@@ -74,38 +91,49 @@ export function detectDeviceBiometrics(): BiometricDevice {
     typeof window.PublicKeyCredential !== "undefined"
   );
 
+  if (isAndroid) {
+    return {
+      type: "FINGERPRINT",
+      label: "Android Lock Screen Biometrics",
+      platform: "Android",
+      lockScreenName: "Android Fingerprint, Face Unlock, or Lock Screen PIN/Pattern",
+      permissionDescription: "Attendex requires permission to invoke Android's lock screen biometric prompt (Fingerprint, Face unlock, or Lock Screen PIN). Verification occurs entirely on your device.",
+      isSupported,
+      isPlatformAuthenticatorAvailable: isSupported
+    };
+  }
+
+  if (isWindows) {
+    return {
+      type: "WINDOWS_HELLO",
+      label: "Windows Hello Lock Screen",
+      platform: "Windows",
+      lockScreenName: "Windows Hello Fingerprint, Facial Recognition, or Windows PIN",
+      permissionDescription: "Attendex requires permission to access Windows Hello lock screen authentication. You will be prompted with your Windows security fingerprint, face, or PIN.",
+      isSupported,
+      isPlatformAuthenticatorAvailable: isSupported
+    };
+  }
+
+  if (isMac) {
+    return {
+      type: "TOUCH_ID",
+      label: "macOS Touch ID & Password",
+      platform: "macOS",
+      lockScreenName: "Apple Touch ID or Mac Administrator Password",
+      permissionDescription: "Attendex requires permission to invoke Apple Touch ID or your Mac login password to authenticate your workspace.",
+      isSupported,
+      isPlatformAuthenticatorAvailable: isSupported
+    };
+  }
+
   if (isIOS) {
     return {
       type: "FACE_ID",
       label: "Apple Face ID / Touch ID",
       platform: "iOS",
-      isSupported,
-      isPlatformAuthenticatorAvailable: isSupported
-    };
-  }
-  if (isAndroid) {
-    return {
-      type: "FINGERPRINT",
-      label: "Android Fingerprint / Biometric",
-      platform: "Android",
-      isSupported,
-      isPlatformAuthenticatorAvailable: isSupported
-    };
-  }
-  if (isMac) {
-    return {
-      type: "TOUCH_ID",
-      label: "Apple Touch ID",
-      platform: "macOS",
-      isSupported,
-      isPlatformAuthenticatorAvailable: isSupported
-    };
-  }
-  if (isWindows) {
-    return {
-      type: "WINDOWS_HELLO",
-      label: "Windows Hello",
-      platform: "Windows",
+      lockScreenName: "Apple Face ID, Touch ID, or Device Passcode",
+      permissionDescription: "Attendex requires permission to access Apple Face ID or Touch ID using your device's Secure Enclave.",
       isSupported,
       isPlatformAuthenticatorAvailable: isSupported
     };
@@ -113,8 +141,10 @@ export function detectDeviceBiometrics(): BiometricDevice {
 
   return {
     type: "BIOMETRIC",
-    label: "Hardware Biometric Authenticator",
+    label: "Lock Screen Biometrics",
     platform: "Other",
+    lockScreenName: "Physical Device Lock Screen (Fingerprint / PIN)",
+    permissionDescription: "Attendex requires permission to authenticate using your device's native lock screen credentials.",
     isSupported,
     isPlatformAuthenticatorAvailable: isSupported
   };
@@ -124,12 +154,15 @@ export function useWebAuthn() {
   const [isLoading, setIsLoading] = useState(false);
   const [device, setDevice] = useState<BiometricDevice>({
     type: "BIOMETRIC",
-    label: "Biometric Sensor",
+    label: "Lock Screen Biometrics",
     platform: "Other",
+    lockScreenName: "Device Lock Screen Biometrics",
+    permissionDescription: "Attendex requires permission to authenticate with device biometrics.",
     isSupported: false,
     isPlatformAuthenticatorAvailable: false,
   });
   const [enrolledPasskey, setEnrolledPasskey] = useState<StoredPasskey | null>(null);
+  const [hasPermission, setHasPermission] = useState(false);
 
   useEffect(() => {
     const dev = detectDeviceBiometrics();
@@ -144,20 +177,35 @@ export function useWebAuthn() {
         .catch(() => {});
     }
 
-    // Check local storage for enrollment
+    // Check local storage for enrollment & permission
     try {
       const stored = localStorage.getItem("attendex_biometric_passkey");
       if (stored) {
         setEnrolledPasskey(JSON.parse(stored));
       }
+      const perm = localStorage.getItem("attendex_biometric_permission_granted");
+      if (perm === "true") {
+        setHasPermission(true);
+      }
     } catch {}
   }, []);
 
+  const grantPermission = () => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("attendex_biometric_permission_granted", "true");
+        setHasPermission(true);
+      } catch {}
+    }
+  };
+
   const registerPasskey = async (): Promise<boolean> => {
     setIsLoading(true);
+    grantPermission();
+
     try {
       if (typeof window === "undefined" || !window.PublicKeyCredential) {
-        throw new Error("Biometric authentication is not supported by this browser. Please use a modern browser (Safari, Chrome, Edge) with HTTPS or localhost.");
+        throw new Error("Biometric authentication is not supported on this browser. Please use Chrome, Safari, or Edge with HTTPS or localhost.");
       }
 
       // 1. Resolve active user
@@ -190,13 +238,13 @@ export function useWebAuthn() {
       const challenge = crypto.getRandomValues(new Uint8Array(32));
       const userID = new TextEncoder().encode(userId);
 
-      const hostname = window.location.hostname === "localhost" ? "localhost" : window.location.hostname;
+      const safeRpId = getSafeRpId();
 
       const options: PublicKeyCredentialCreationOptions = {
         challenge,
         rp: {
           name: "Attendex",
-          id: hostname,
+          ...(safeRpId ? { id: safeRpId } : {})
         },
         user: {
           id: userID,
@@ -204,14 +252,15 @@ export function useWebAuthn() {
           displayName: userName,
         },
         pubKeyCredParams: [
-          { alg: -7, type: "public-key" },  // ES256 (P-256) - iOS / Android / Mac
-          { alg: -257, type: "public-key" } // RS256 - Windows Hello
+          { alg: -7, type: "public-key" },   // ES256 (P-256) - Android, iOS, macOS
+          { alg: -257, type: "public-key" }, // RS256 - Windows Hello
+          { alg: -8, type: "public-key" }    // Ed25519
         ],
         timeout: 60000,
         attestation: "none",
         authenticatorSelection: {
-          authenticatorAttachment: "platform", // Directs device to native Face ID, Touch ID, or Android Biometric
-          userVerification: "preferred",
+          authenticatorAttachment: "platform", // Directs device to native Face ID, Touch ID, Android Biometric or Windows Hello
+          userVerification: "required",        // Strictly requires OS lock screen authentication (Fingerprint / Face / PIN)
           residentKey: "preferred",
           requireResidentKey: false
         }
@@ -219,14 +268,12 @@ export function useWebAuthn() {
 
       const credential = await navigator.credentials.create({ publicKey: options }) as PublicKeyCredential | null;
       if (!credential) {
-        throw new Error("Biometric enrollment cancelled or timed out.");
+        throw new Error("Lock screen authentication cancelled or timed out.");
       }
 
       const response = credential.response as AuthenticatorAttestationResponse;
       let publicKeyBase64 = "";
 
-      // Cross-platform key extraction:
-      // Chrome 119+ supports getPublicKey(); iOS Safari & Firefox use attestationObject
       if (typeof (response as any).getPublicKey === "function") {
         try {
           const pk = (response as any).getPublicKey();
@@ -269,16 +316,15 @@ export function useWebAuthn() {
         } catch {}
       }
 
-      toast.success(`${device.label} Enrolled!`, {
-        description: "Your device biometrics are bound. You can now log in securely without entering a password."
+      toast.success(`${device.label} Bound!`, {
+        description: "Your device lock screen credentials are now authorized for single-touch access."
       });
       return true;
     } catch (err: any) {
       console.warn("Passkey Registration Exception:", err);
-      // Clean, human-friendly error messages without technical jargon
-      let message = err.message || "Failed to register biometrics.";
+      let message = err.message || "Failed to register lock screen credentials.";
       if (err.name === "NotAllowedError" || err.message?.includes("cancelled")) {
-        message = "Biometric setup was cancelled or timed out.";
+        message = "Lock screen verification was cancelled or timed out.";
       } else if (err.name === "SecurityError") {
         message = "Biometrics require a secure HTTPS connection or localhost.";
       }
@@ -291,6 +337,8 @@ export function useWebAuthn() {
 
   const authenticateWithPasskey = async (): Promise<{ success: boolean; user?: StoredPasskey }> => {
     setIsLoading(true);
+    grantPermission();
+
     try {
       if (typeof window === "undefined" || !window.PublicKeyCredential) {
         throw new Error("Biometric authentication is not supported by this browser.");
@@ -304,13 +352,13 @@ export function useWebAuthn() {
       }
 
       const challenge = crypto.getRandomValues(new Uint8Array(32));
-      const hostname = window.location.hostname === "localhost" ? "localhost" : window.location.hostname;
+      const safeRpId = getSafeRpId();
 
       const requestOptions: PublicKeyCredentialRequestOptions = {
         challenge,
         timeout: 60000,
-        rpId: hostname,
-        userVerification: "preferred"
+        userVerification: "required", // Strictly prompts for OS lock screen biometric (Fingerprint, Face, or PIN)
+        ...(safeRpId ? { rpId: safeRpId } : {})
       };
 
       if (stored?.rawId) {
@@ -325,7 +373,7 @@ export function useWebAuthn() {
 
       const assertion = await navigator.credentials.get({ publicKey: requestOptions }) as PublicKeyCredential | null;
       if (!assertion) {
-        throw new Error("Biometric verification did not return credentials.");
+        throw new Error("Lock screen authentication did not return verification.");
       }
 
       // Set user session cookies and local storage
@@ -347,16 +395,16 @@ export function useWebAuthn() {
       const roll = localStorage.getItem("attendex_student_roll") || "CS-11";
       document.cookie = `attendex_student_roll=${encodeURIComponent(roll)}; path=/; max-age=86400`;
 
-      toast.success("Biometric Scan Verified", {
+      toast.success("Lock Screen Identity Verified", {
         description: `Welcome back, ${activeUser.userName}!`
       });
 
       return { success: true, user: activeUser };
     } catch (err: any) {
       console.warn("Passkey Auth Exception:", err);
-      let message = err.message || "Biometric authentication failed.";
+      let message = err.message || "Lock screen authentication failed.";
       if (err.name === "NotAllowedError" || err.message?.includes("cancelled")) {
-        message = "Biometric scan was cancelled.";
+        message = "Lock screen verification was cancelled.";
       }
       toast.error(message);
       return { success: false };
@@ -368,19 +416,23 @@ export function useWebAuthn() {
   const removePasskey = () => {
     localStorage.removeItem("attendex_biometric_passkey");
     localStorage.removeItem("attendex_passkey_enabled");
+    localStorage.removeItem("attendex_biometric_permission_granted");
     setEnrolledPasskey(null);
-    toast.success("Biometric Binding Removed", {
-      description: "You can re-enroll your fingerprint or Face ID at any time."
+    setHasPermission(false);
+    toast.success("Lock Screen Biometric Binding Removed", {
+      description: "You can re-enroll your lock screen credentials at any time."
     });
   };
 
   return {
     registerPasskey,
     authenticateWithPasskey,
+    grantPermission,
     removePasskey,
     isLoading,
     device,
     isEnrolled: Boolean(enrolledPasskey),
-    enrolledPasskey
+    enrolledPasskey,
+    hasPermission
   };
 }
