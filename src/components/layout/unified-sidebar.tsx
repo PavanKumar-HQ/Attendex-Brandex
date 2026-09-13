@@ -57,12 +57,12 @@ interface SidebarLink {
 }
 
 const TEACHER_LINKS: SidebarLink[] = [
-  { name: "Command Center", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Mark Attendance", href: "/attendance", icon: CheckCircle },
-  { name: "CIA Evaluation", href: "/results/manage", icon: AwardIcon },
+  { name: "Internal Marks", href: "/results/manage", icon: AwardIcon },
   { name: "Class Timetable", href: "/timetable", icon: Calendar },
-  { name: "Subject Registry", href: "/subjects", icon: Library },
-  { name: "Enrolled Students", href: "/students", icon: Users },
+  { name: "Subjects", href: "/subjects", icon: Library },
+  { name: "Students", href: "/students", icon: Users },
   { name: "Campus Pulse", href: "/pulse", icon: Activity },
   { name: "Leaderboard", href: "/leaderboard", icon: Trophy },
   { name: "Sports & Clubs", href: "/sports", icon: Medal },
@@ -72,11 +72,11 @@ const TEACHER_LINKS: SidebarLink[] = [
 const ADMIN_LINKS: SidebarLink[] = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Mark Attendance", href: "/attendance", icon: CheckCircle },
-  { name: "Campus Telemetry", href: "/pulse", icon: Activity },
+  { name: "Campus Activity", href: "/pulse", icon: Activity },
   { name: "Students", href: "/students", icon: Users },
   { name: "Classes", href: "/classes", icon: GraduationCap },
   { name: "Subjects", href: "/subjects", icon: Library },
-  { name: "CIA Marks", href: "/results/manage", icon: AwardIcon },
+  { name: "Internal Marks", href: "/results/manage", icon: AwardIcon },
   { name: "Results & Exams", href: "/results", icon: BookOpen },
   { name: "Timetable", href: "/timetable", icon: Calendar },
   { name: "Promotions", href: "/promotion", icon: RefreshCcw },
@@ -106,31 +106,31 @@ const PARENT_LINKS: SidebarLink[] = [
   { name: "Class Timetable", href: "/parent/timetable", icon: Calendar },
   { name: "Leave & Exemption", href: "/parent/leave", icon: FileCheck2 },
   { name: "Academic Calendar", href: "/parent/calendar", icon: CalendarDays },
-  { name: "Fee & Dues Ledger", href: "/parent/fees", icon: Receipt },
+  { name: "Fee Details", href: "/parent/fees", icon: Receipt },
   { name: "Proctor Advisory", href: "/parent/proctor", icon: Phone },
   { name: "Conduct & Discipline", href: "/parent/conduct", icon: Shield },
   { name: "Notifications", href: "/parent/notifications", icon: Bell },
 ];
 
 const PRINCIPAL_LINKS: SidebarLink[] = [
-  { name: "Executive Overview", href: "/principal", icon: LayoutDashboard },
-  { name: "Campus Telemetry", href: "/pulse", icon: Activity },
+  { name: "Dashboard", href: "/principal", icon: LayoutDashboard },
+  { name: "Campus Activity", href: "/pulse", icon: Activity },
   { name: "Classes & Batches", href: "/classes", icon: GraduationCap },
   { name: "Curriculum & Subjects", href: "/subjects", icon: Library },
-  { name: "CIA Marks Review", href: "/results/manage", icon: AwardIcon },
+  { name: "Internal Marks", href: "/results/manage", icon: AwardIcon },
   { name: "Semester Results", href: "/results", icon: BookOpen },
   { name: "Academic Promotions", href: "/promotion", icon: RefreshCcw },
-  { name: "Institutional Audit", href: "/audit", icon: SearchCode },
-  { name: "Student Registry", href: "/students", icon: Users },
-  { name: "Attendance Terminal", href: "/attendance", icon: CheckCircle },
+  { name: "Audit Logs", href: "/audit", icon: SearchCode },
+  { name: "Students", href: "/students", icon: Users },
+  { name: "Mark Attendance", href: "/attendance", icon: CheckCircle },
   { name: "Academic Leaderboard", href: "/leaderboard", icon: Trophy },
   { name: "Notifications", href: "/notifications", icon: Bell },
 ];
 
 const SUPER_ADMIN_LINKS: SidebarLink[] = [
-  { name: "Platform Overview", href: "/super-admin", icon: LayoutDashboard },
-  { name: "Institutional Nodes", href: "/super-admin", icon: Building2 },
-  { name: "Audit Ledger", href: "/audit", icon: SearchCode },
+  { name: "Overview", href: "/super-admin", icon: LayoutDashboard },
+  { name: "Colleges & Branches", href: "/super-admin", icon: Building2 },
+  { name: "Audit Logs", href: "/audit", icon: SearchCode },
   { name: "Platform Settings", href: "/settings", icon: Settings },
 ];
 

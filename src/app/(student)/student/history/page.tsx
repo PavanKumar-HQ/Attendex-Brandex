@@ -130,13 +130,13 @@ export default function StudentHistoryPage() {
             <div className="space-y-1.5">
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 text-xs font-bold border border-blue-100">
-                  Biometric &amp; Lecture Telemetry
+                  Lecture Attendance Records
                 </span>
                 <span className="text-xs font-semibold text-slate-400">October 2026</span>
               </div>
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Attendance Audit Ledger</h1>
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Daily Attendance History</h1>
               <p className="text-xs text-slate-500 font-medium">
-                Detailed timestamped record of every lecture session cross-verified with classroom attendance.
+                Complete record of attended and missed lecture sessions.
               </p>
             </div>
 

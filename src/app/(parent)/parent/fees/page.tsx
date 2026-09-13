@@ -111,7 +111,7 @@ export default function ParentFeesPage() {
   return (
     <PageTransition>
       <div className="flex flex-col min-h-screen w-full bg-slate-50">
-        <Header title="Fees & Dues Ledger" showBack />
+        <Header title="Fee Details" showBack />
 
         <div className="flex-1 w-full max-w-5xl mx-auto px-4 md:px-6 py-6 md:py-8 space-y-6">
           {/* Summary Card */}
@@ -123,7 +123,7 @@ export default function ParentFeesPage() {
                 </span>
                 <span className="text-xs font-semibold text-slate-400">Reg: {studentRoll}</span>
               </div>
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Institutional Fee Ledger</h1>
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">College Fee Statement</h1>
               <p className="text-xs text-slate-500 font-medium">
                 Verified financial transactions, tuition invoices, and tax clearance receipts for {studentName}.
               </p>
@@ -148,7 +148,7 @@ export default function ParentFeesPage() {
 
           {/* Ledger Table */}
           <Card className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Transaction &amp; Fee Component Ledger</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Fee Breakdown &amp; Payment History</h3>
             <div className="rounded-xl border border-slate-200 overflow-hidden">
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 text-[11px] font-semibold text-slate-500 border-b border-slate-200">

@@ -11,7 +11,7 @@ export interface BrandingConfig {
 export const DEFAULT_BRANDING: BrandingConfig = {
   name: "Attendex",
   shortName: "Attendex",
-  logoUrl: "/icons/KLE_logo.jpg",
+  logoUrl: "/icons/icon-192.png",
   primaryColor: "#0f172a", // slate-900
   accentColor: "#2563eb",  // blue-600
   faviconUrl: "/favicon.ico",

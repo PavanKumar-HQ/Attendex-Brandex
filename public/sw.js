@@ -1,14 +1,12 @@
-const CACHE_NAME = 'attendex-v5';
-const DATA_CACHE_NAME = 'attendex-data-v5';
+const CACHE_NAME = 'attendex-v6';
+const DATA_CACHE_NAME = 'attendex-data-v6';
 
 const CORE_ASSETS = [
   '/',
   '/login',
   '/manifest.json',
-  '/brandex-logo.png',
   '/icons/icon-192.png',
-  '/icons/icon-512.png',
-  '/icons/KLE_logo.jpg'
+  '/icons/icon-512.png'
 ];
 
 // 1. Installation: Safe, non-blocking core asset caching

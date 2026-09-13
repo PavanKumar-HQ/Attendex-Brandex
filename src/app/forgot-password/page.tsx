@@ -287,20 +287,20 @@ export default function ForgotPasswordPage() {
               </div>
               <div className="space-y-1">
                  <h3 className="text-slate-900 font-bold text-sm">Credentials Successfully Updated</h3>
-                 <p className="text-slate-600 text-xs leading-relaxed">
-                   Your new credentials have been encrypted and committed to the database. You can now log in securely.
-                 </p>
-              </div>
-              <Link href="/login" className="block w-full py-3 bg-slate-900 text-white font-bold text-xs rounded-xl hover:bg-slate-800 transition-all shadow-sm">
-                Proceed to Secure Sign In
-              </Link>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                  <p className="text-slate-600 text-xs leading-relaxed">
+                    Your password has been updated successfully. You can now log in with your new password.
+                  </p>
+               </div>
+               <Link href="/login" className="block w-full py-3 bg-slate-900 text-white font-bold text-xs rounded-xl hover:bg-slate-800 transition-all shadow-sm">
+                 Proceed to Sign In
+               </Link>
+             </motion.div>
+           )}
+         </AnimatePresence>
 
-        <div className="text-center pt-2 border-t border-slate-100">
-           <p className="text-[10px] font-bold text-slate-400 tracking-wider">ATTENDEX CRYPTOGRAPHIC SECURITY ENGINE</p>
-        </div>
+         <div className="text-center pt-2 border-t border-slate-100">
+            <p className="text-[10px] font-bold text-slate-400 tracking-wider">ATTENDEX ACCOUNT RECOVERY</p>
+         </div>
       </motion.div>
     </div>
   );

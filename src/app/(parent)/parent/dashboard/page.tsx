@@ -93,7 +93,7 @@ export default function ParentDashboard() {
                     Parent <span className="text-slate-500 font-normal">Dashboard</span>
                 </h1>
                 <p className="text-xs sm:text-sm text-slate-500 font-medium max-w-2xl">
-                    Real-time academic telemetry and evaluation records for <strong className="text-slate-900">{student.name}</strong> ({student.classes?.name}).
+                    Academic attendance and performance records for <strong className="text-slate-900">{student.name}</strong> ({student.classes?.name}).
                 </p>
             </div>
             

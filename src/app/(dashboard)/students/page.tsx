@@ -421,11 +421,11 @@ export default function StudentsPage() {
                               <UserRoundPen className="w-4 h-4 text-blue-600" /> Edit Profile
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleAction('history', st)} className="rounded-lg p-2.5 flex items-center gap-2 font-medium text-xs">
-                              <History className="w-4 h-4 text-emerald-600" /> Attendance Ledger
+                              <History className="w-4 h-4 text-emerald-600" /> Attendance Records
                             </DropdownMenuItem>
                             <div className="h-px bg-slate-100 my-1" />
                             <DropdownMenuItem onClick={() => handleAction('delete', st)} className="rounded-lg p-2.5 flex items-center gap-2 font-medium text-xs text-rose-600 focus:text-rose-600 focus:bg-rose-50">
-                              <Trash2 className="w-4 h-4" /> Purge Record
+                              <Trash2 className="w-4 h-4" /> Delete Student
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -457,11 +457,11 @@ export default function StudentsPage() {
                             <UserRoundPen className="w-4 h-4 text-blue-600" /> Edit Profile
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleAction('history', st)} className="rounded-xl p-3 flex items-center gap-3 font-bold text-xs">
-                            <History className="w-4 h-4 text-emerald-600" /> Attendance Ledger
+                            <History className="w-4 h-4 text-emerald-600" /> Attendance Records
                           </DropdownMenuItem>
                           <div className="h-px bg-slate-50 my-2" />
                           <DropdownMenuItem onClick={() => handleAction('delete', st)} className="rounded-xl p-3 flex items-center gap-3 font-bold text-xs text-rose-600 focus:text-rose-600 focus:bg-rose-50/50">
-                            <Trash2 className="w-4 h-4" /> Purge Record
+                            <Trash2 className="w-4 h-4" /> Delete Student
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

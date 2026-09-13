@@ -21,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
   
   return {
     title: brandName,
-    description: "Advanced institutional command center for high-performance academic tracking.",
+    description: "Simple and reliable attendance and student academic management portal.",
     manifest: "/manifest.json",
     appleWebApp: {
       capable: true,
@@ -29,7 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title: brandName,
     },
     icons: {
-      apple: "/icons/KLE_logo.jpg",
+      apple: "/icons/icon-192.png",
     },
     other: {
       "apple-mobile-web-app-capable": "yes",

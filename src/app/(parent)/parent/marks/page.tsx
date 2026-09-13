@@ -135,7 +135,7 @@ export default function ParentMarksPage() {
         <header className="flex items-center justify-between">
             <div>
                 <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Academic Progress Report</h1>
-                <p className="text-slate-500 font-semibold uppercase tracking-wider text-[10px] mt-1">Real-time evaluation ledger for {student?.name || "Your Ward"}</p>
+                <p className="text-slate-500 font-semibold uppercase tracking-wider text-[10px] mt-1">Marks and progress records for {student?.name || "Your Ward"}</p>
             </div>
             <button 
               onClick={() => toast.success("Academic Target Saved", { description: "Target CGPA benchmark set to 8.8 for upcoming semester examinations." })}

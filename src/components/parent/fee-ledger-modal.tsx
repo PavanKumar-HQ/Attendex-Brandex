@@ -84,7 +84,7 @@ export function FeeLedgerModal({
         triggerButton || (
           <Button variant="outline" className="h-10 px-4 rounded-xl border-slate-200 text-slate-700 font-semibold text-xs hover:bg-slate-50 flex items-center gap-2">
             <Receipt className="w-4 h-4 text-emerald-600" />
-            <span>Fee Ledger</span>
+            <span>Fee Details</span>
           </Button>
         )
       } />
@@ -101,7 +101,7 @@ export function FeeLedgerModal({
                   <span className="text-xs font-semibold text-slate-400">Academic Year 2026-27</span>
                 </div>
                 <DialogTitle className="text-xl font-bold text-slate-900">
-                  Institutional Fee &amp; Dues Ledger
+                  College Fee &amp; Payment Details
                 </DialogTitle>
               </div>
             </div>

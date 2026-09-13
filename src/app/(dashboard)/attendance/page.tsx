@@ -181,7 +181,7 @@ export default function AttendancePage() {
     },
     onSuccess: () => {
       const periodsCount = selectedLecture.startsWith('DP') ? 2 : 1;
-      toast.success("Academic Roll-Call Finalized", {
+      toast.success("Attendance Saved Successfully", {
         description: `Recorded attendance for ${periodsCount} period(s) across ${students.length} students.`
       });
       setIsConfirmOpen(false);
@@ -304,7 +304,7 @@ export default function AttendancePage() {
         <Header 
           title={
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 min-w-0">
-              <span className="text-slate-900 font-bold text-base sm:text-lg md:text-xl tracking-tight">Roll-Call Execution</span>
+              <span className="text-slate-900 font-bold text-base sm:text-lg md:text-xl tracking-tight">Mark Attendance</span>
               <span className="text-[11px] sm:text-xs font-semibold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 truncate max-w-[160px] sm:max-w-none">
                 {currentClassName}
               </span>

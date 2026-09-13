@@ -143,7 +143,7 @@ export default function MarksManagementPage() {
   return (
     <PageTransition>
       <div className="flex flex-col min-h-full space-y-6">
-        <Header title="CIA Evaluation Ledger" showBack />
+        <Header title="Internal Assessment Marks" showBack />
         
         <div className="space-y-6">
           {/* Top Controls Toolbar */}

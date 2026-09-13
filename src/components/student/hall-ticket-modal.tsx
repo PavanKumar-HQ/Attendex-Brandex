@@ -82,8 +82,8 @@ export function HallTicketModal({
       const finalY = (doc as any).lastAutoTable.finalY + 20;
       doc.setFontSize(9);
       doc.setTextColor(100);
-      doc.text("1. Candidates must produce this verified digital token along with official ID card at the examination hall.", 14, finalY);
-      doc.text("2. Verification QR code is cryptographically signed by Attendex Controller of Examinations.", 14, finalY + 6);
+      doc.text("1. Candidates must produce this verified hall ticket along with official ID card at the examination hall.", 14, finalY);
+      doc.text("2. Verification QR code is digitally certified by the Controller of Examinations.", 14, finalY + 6);
       
       doc.setFontSize(10);
       doc.setTextColor(15, 23, 42);

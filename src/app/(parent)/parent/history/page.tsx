@@ -192,7 +192,7 @@ export default function ParentHistoryPage() {
 
       autoTable(doc, {
         startY: 42,
-        head: [['Date', 'Session Timing', 'Subject Title', 'Course Code', 'Telemetry Status']],
+        head: [['Date', 'Session Timing', 'Subject Title', 'Course Code', 'Status']],
         body: tableRows,
         theme: 'grid',
         headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontStyle: 'bold' },
@@ -220,7 +220,7 @@ export default function ParentHistoryPage() {
                 </span>
                 <span className="text-xs font-semibold text-slate-400">Ward: Rahul Deshmukh (21CS042)</span>
               </div>
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Daily Lecture Telemetry Log</h1>
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Daily Lecture Attendance Log</h1>
               <p className="text-xs text-slate-500 font-medium">
                 Day-by-day breakdown of all attended lectures, laboratory sessions, and absence alerts.
               </p>
@@ -312,7 +312,7 @@ export default function ParentHistoryPage() {
             {loading ? (
               <div className="py-16 flex flex-col items-center justify-center text-slate-400 gap-2">
                 <Loader2 className="w-6 h-6 animate-spin text-slate-500" />
-                <span className="text-xs font-medium">Fetching lecture telemetry logs from database...</span>
+                <span className="text-xs font-medium">Loading lecture attendance records...</span>
               </div>
             ) : filteredLogs.length === 0 ? (
               <Card className="p-12 text-center border-dashed border-slate-300 bg-white rounded-2xl space-y-2">

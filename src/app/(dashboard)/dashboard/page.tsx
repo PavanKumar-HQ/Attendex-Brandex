@@ -148,7 +148,7 @@ export default function DashboardPage() {
 
   const handleExportExcel = () => {
     setIsGenerating('XLS');
-    toast.loading("Compiling Monthly Ledger...");
+    toast.loading("Exporting Monthly Attendance...");
 
     setTimeout(() => {
       const ledgerData = [
@@ -159,19 +159,19 @@ export default function DashboardPage() {
 
       const worksheet = XLSX.utils.json_to_sheet(ledgerData);
       const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance Ledger");
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance Report");
       
-      XLSX.writeFile(workbook, "Attendex_monthly_ledger.xlsx");
+      XLSX.writeFile(workbook, "Attendex_monthly_attendance.xlsx");
       setIsGenerating(null);
       toast.dismiss();
-      toast.success("Monthly Ledger (XLS) exported successfully!");
+      toast.success("Monthly Attendance (XLS) exported successfully!");
     }, 1000);
   };
 
   return (
     <PageTransition>
       <div className="flex flex-col min-h-full space-y-6">
-        <Header title="Command Center" />
+        <Header title="Dashboard" />
 
         {/* Institutional Welcome & Status Banner */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-blue-50/80 via-indigo-50/30 to-slate-50 border border-blue-100/80 rounded-2xl p-4 sm:p-5 shadow-2xs">
@@ -180,7 +180,7 @@ export default function DashboardPage() {
               Welcome back, {currentUser?.name || userProfile?.full_name || "Faculty Member"}! 👋
             </h2>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Faculty Command Center • Real-Time Attendance &amp; Operations Registry
+              Faculty Dashboard • Attendance &amp; Class Management
             </p>
           </div>
           <div className="flex items-center gap-2 text-xs font-semibold text-blue-700 bg-white border border-blue-200/80 px-3 py-1.5 rounded-xl shadow-2xs shrink-0 self-start sm:self-center">
@@ -296,7 +296,7 @@ export default function DashboardPage() {
                   onClick={() => router.push('/results')}
                 >
                   <BookOpen className="w-4 h-4 text-blue-600" />
-                  <span>Merit Ledger</span>
+                  <span>Exam Results</span>
                 </Button>
                 <Button 
                   variant="outline" 
@@ -330,7 +330,7 @@ export default function DashboardPage() {
 
             {/* Official Export Reports */}
             <Card className="p-5 border-slate-200 shadow-sm rounded-xl bg-white space-y-4">
-              <h3 className="text-sm font-bold text-slate-900">Institutional Exports</h3>
+              <h3 className="text-sm font-bold text-slate-900">Reports &amp; Exports</h3>
               <div className="space-y-2.5">
                 <Button 
                   variant="outline" 
@@ -354,7 +354,7 @@ export default function DashboardPage() {
                 >
                   <div className="flex items-center gap-2">
                     {isGenerating === 'XLS' ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileSpreadsheet className="w-4 h-4 text-emerald-600" />}
-                    <span>Consolidated Ledger (XLS)</span>
+                    <span>Attendance Report (XLS)</span>
                   </div>
                   <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
                 </Button>

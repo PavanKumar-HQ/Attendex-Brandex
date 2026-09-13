@@ -77,11 +77,11 @@ export function StudentProfile({ student, onClose }: StudentProfileProps) {
       ]) || [];
 
       doc.setFontSize(12);
-      doc.text("Subject-wise Attendance Ledger", 14, 85);
+      doc.text("Subject-wise Attendance Records", 14, 85);
 
       autoTable(doc, {
           startY: 90,
-          head: [["Course Blueprint", "Ratio (P/T)", "Percentage", "Status"]],
+          head: [["Subject", "Ratio (P/T)", "Percentage", "Status"]],
           body: subjectData,
           theme: "grid",
           headStyles: { fillColor: [15, 23, 42] }

@@ -148,7 +148,7 @@ export default function ResultsPage() {
   return (
     <PageTransition>
       <div className="flex flex-col min-h-full space-y-6">
-        <Header title="Examination Ledger" />
+        <Header title="Examination Results" />
         
         <div className="space-y-6">
           {/* Institutional Metric Stats Grid */}
@@ -172,7 +172,7 @@ export default function ResultsPage() {
               value={`${stats.count} Classes`} 
               icon={GraduationCap} 
               color="amber" 
-              caption="Synchronized in Ledger"
+              caption="Recorded in System"
             />
           </div>
 
@@ -275,10 +275,10 @@ export default function ResultsPage() {
                         <Button 
                           variant="outline" 
                           size="sm"
-                          onClick={() => toast.info(`Auditing marks ledger for ${res.class_name} Section ${res.section}`)}
+                          onClick={() => toast.info(`Viewing marks for ${res.class_name} Section ${res.section}`)}
                           className="w-full h-8 text-xs font-semibold text-slate-700 border-slate-200 hover:bg-slate-100 rounded-lg"
                         >
-                          View Grade Ledger
+                          View Grade Report
                         </Button>
                       </div>
                     </div>

@@ -55,9 +55,6 @@ export function BrandexSplash() {
                 <h1 className="text-2xl sm:text-3xl font-black tracking-[0.22em] text-slate-900 uppercase">
                   Brandex
                 </h1>
-                <span className="text-[10px] uppercase tracking-[0.25em] text-blue-600 font-extrabold block mt-0.5">
-                  Academic Operating System
-                </span>
               </div>
             </motion.div>
 

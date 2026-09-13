@@ -136,8 +136,8 @@ export function UniversalPwaInstallPrompt() {
 </head>
 <body>
   <div class="card">
-    <h2 style="margin:0 0 0.5rem 0;">Attendex Academic OS</h2>
-    <p style="color:#64748b; font-size:0.875rem; margin:0 0 1rem 0;">Launching native application environment...</p>
+    <h2 style="margin:0 0 0.5rem 0;">Attendex App</h2>
+    <p style="color:#64748b; font-size:0.875rem; margin:0 0 1rem 0;">Opening Attendex...</p>
     <a class="btn" href="${origin}/?source=launcher">Launch Attendex</a>
   </div>
   <script>
@@ -287,7 +287,7 @@ export function UniversalPwaInstallPrompt() {
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-500 font-medium">
-                    Native speed, offline mode &amp; 0ms launch
+                    Fast, simple, and works offline
                   </p>
                 </div>
               </div>
@@ -315,7 +315,7 @@ export function UniversalPwaInstallPrompt() {
             {/* Platform description */}
             <div className="mt-2.5 bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-[11px] text-slate-600 leading-relaxed">
               <p>
-                Optimized for <strong>{platformMeta.name}</strong>. Enjoy full offline access, biometric login, and push alerts directly on your device.
+                Optimized for <strong>{platformMeta.name}</strong>. Enjoy quick offline access, easy login, and push alerts directly on your device.
               </p>
             </div>
 

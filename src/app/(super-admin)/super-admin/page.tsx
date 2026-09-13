@@ -72,10 +72,10 @@ export default function SuperAdminPlatformPage() {
           <div>
             <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold mb-2">
               <Server className="w-3.5 h-3.5 text-blue-600" />
-              <span>Attendex Multi-Tenant Cloud Operating System</span>
+              <span>Attendex Central Administration</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Platform Command Center</h1>
-            <p className="text-xs text-slate-500 font-medium mt-1">Global management across all registered institutional nodes and principals</p>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Super Admin Dashboard</h1>
+            <p className="text-xs text-slate-500 font-medium mt-1">Manage colleges, departments, and administrator accounts</p>
           </div>
 
           <Button
@@ -83,7 +83,7 @@ export default function SuperAdminPlatformPage() {
             className="h-10 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg px-4 flex items-center gap-2 shadow-sm"
           >
             <Plus className="w-4 h-4" />
-            <span>Provision Institution</span>
+            <span>Add College</span>
           </Button>
         </div>
 

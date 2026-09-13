@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "Attendex | Institutional Academic Cloud",
+  "name": "Attendex | College Management Portal",
   "short_name": "Attendex",
-  "description": "Enterprise institutional command center for high-performance academic tracking, gatepass control, and student telemetry.",
+  "description": "Simple and reliable attendance and student academic management portal.",
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
@@ -44,28 +44,28 @@
     {
       "name": "Student Dashboard",
       "short_name": "Dashboard",
-      "description": "View live academic attendance and standing",
+      "description": "View attendance and academic standing",
       "url": "/student/dashboard",
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
-      "name": "Digital Gatepass",
-      "short_name": "Gatepass",
-      "description": "Generate QR gatepass and campus exit slip",
-      "url": "/student/gatepass",
+      "name": "Attendance History",
+      "short_name": "History",
+      "description": "View daily lecture attendance records",
+      "url": "/student/history",
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
-      "name": "Attendance Terminal",
+      "name": "Mark Attendance",
       "short_name": "Attendance",
-      "description": "Faculty batch attendance roll-call",
+      "description": "Record daily class attendance",
       "url": "/attendance",
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Parent Portal",
       "short_name": "Parent",
-      "description": "Monitor ward telemetry and fee ledgers",
+      "description": "View student attendance and fees",
       "url": "/parent/dashboard",
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     }

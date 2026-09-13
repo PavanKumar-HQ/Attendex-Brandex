@@ -42,9 +42,9 @@ export function MobileBottomNav() {
   ];
 
   const facultyTabs = [
-    { href: "/dashboard", label: "Command", icon: LayoutDashboard },
-    { href: "/attendance", label: "Roll-Call", icon: CalendarCheck },
-    { href: "/results/manage", label: "Results", icon: Award },
+    { href: "/dashboard", label: "Home", icon: LayoutDashboard },
+    { href: "/attendance", label: "Attendance", icon: CalendarCheck },
+    { href: "/results/manage", label: "Marks", icon: Award },
     { href: "/subjects", label: "Subjects", icon: GraduationCap },
   ];
 

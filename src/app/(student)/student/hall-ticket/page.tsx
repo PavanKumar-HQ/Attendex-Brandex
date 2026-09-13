@@ -101,8 +101,8 @@ export default function StudentHallTicketPage() {
       const finalY = (doc as any).lastAutoTable.finalY + 18;
       doc.setFontSize(9);
       doc.setTextColor(100);
-      doc.text("1. Candidates must present this verified admit pass with institution ID at entrance gates.", 14, finalY);
-      doc.text("2. Verification QR is cryptographically signed by Attendex Examination Controller.", 14, finalY + 6);
+      doc.text("1. Candidates must present this verified hall ticket with college ID at entrance gates.", 14, finalY);
+      doc.text("2. Verification QR code is digitally certified by the Controller of Examinations.", 14, finalY + 6);
       
       doc.setFontSize(10);
       doc.setTextColor(15, 23, 42);

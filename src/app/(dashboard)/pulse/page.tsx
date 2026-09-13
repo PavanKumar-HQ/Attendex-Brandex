@@ -61,12 +61,12 @@ export default function PulsePage() {
   return (
     <PageTransition>
       <div className="flex flex-col min-h-full space-y-6">
-        <Header title="Campus Telemetry" />
+        <Header title="Campus Activity" />
         
         {isLoading ? (
             <div className="flex-1 py-24 flex flex-col items-center justify-center">
                 <RefreshCcw className="w-8 h-8 text-blue-500 animate-spin mb-4" />
-                <p className="text-sm font-semibold text-slate-500">Loading Telemetry...</p>
+                <p className="text-sm font-semibold text-slate-500">Loading Data...</p>
             </div>
         ) : !stats ? null : (
         <div className="space-y-6">
@@ -162,7 +162,7 @@ export default function PulsePage() {
             <div className="space-y-4">
               <Card className="p-5 border-slate-200 rounded-xl bg-white shadow-sm space-y-4">
                 <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                  <h4 className="text-sm font-bold text-slate-900">Audit & Sync Telemetry</h4>
+                  <h4 className="text-sm font-bold text-slate-900">Recent Activity</h4>
                   <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">
                     Live
                   </span>

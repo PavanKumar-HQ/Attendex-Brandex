@@ -212,7 +212,7 @@ export function MobileAppShowcase() {
                   <div>
                     <h3 className="text-base font-bold text-slate-900">Sign In to View Your Record</h3>
                     <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                      Authenticate with your Roll Number to inspect your real attendance ledger, Continuous Internal Assessment (CIA) marks, and request digital gatepasses.
+                      Sign in with your Roll Number to check your attendance, internal marks, and exam eligibility.
                     </p>
                   </div>
 
@@ -238,15 +238,15 @@ export function MobileAppShowcase() {
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-bold text-indigo-700 uppercase tracking-wider bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200 flex items-center gap-1">
                       <GraduationCap className="w-3 h-3" />
-                      Faculty Command Center
+                      Faculty Portal
                     </span>
                     <span className="text-[10px] font-semibold text-slate-400">Live Database</span>
                   </div>
 
                   <div>
-                    <h3 className="text-base font-bold text-slate-900">Faculty Authentication</h3>
+                    <h3 className="text-base font-bold text-slate-900">Faculty Sign In</h3>
                     <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                      Log in to record Period 1–6 classroom attendance, evaluate continuous CIA grades, and export official university exam eligibility rosters.
+                      Log in to mark daily class attendance, enter internal marks, and view student reports.
                     </p>
                   </div>
 
@@ -312,9 +312,9 @@ export function MobileAppShowcase() {
                   </div>
 
                   <div>
-                    <h3 className="text-base font-bold text-slate-900">Administrative Governance</h3>
+                    <h3 className="text-base font-bold text-slate-900">Administration Portal</h3>
                     <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                      Authorized institutional executives sign in for campus-wide telemetry, immutable audit ledgers, and department shortage interventions.
+                      Principal and administrators sign in to view college attendance, department reports, and manage college operations.
                     </p>
                   </div>
 
@@ -346,19 +346,20 @@ export function MobileAppShowcase() {
               </p>
             </div>
 
-            {/* Quick Institutional Modules (Link to login) */}
-            <div>
-              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2.5 px-1">
-                Academic Modules
-              </h3>
+            {/* Quick Navigation / Features Preview */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Essential Features</h3>
+                <span className="text-[10px] font-semibold text-blue-600">Explore System</span>
+              </div>
               <div className="grid grid-cols-2 gap-2.5">
                 <Link href="/login" className="p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-blue-300 active:scale-[0.98] transition-all flex flex-col justify-between h-24 shadow-2xs">
                   <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
                     <CheckCircle className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-900">Attendance Roll-Call</h4>
-                    <p className="text-[10px] text-slate-500">Period 1–6 Marking</p>
+                    <h4 className="text-xs font-bold text-slate-900">Mark Attendance</h4>
+                    <p className="text-[10px] text-slate-500">Fast Attendance Marking</p>
                   </div>
                 </Link>
 
@@ -367,7 +368,7 @@ export function MobileAppShowcase() {
                     <Award className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-900">CIA Evaluation</h4>
+                    <h4 className="text-xs font-bold text-slate-900">Internal Marks</h4>
                     <p className="text-[10px] text-slate-500">Continuous Assessment</p>
                   </div>
                 </Link>
@@ -377,8 +378,8 @@ export function MobileAppShowcase() {
                     <QrCode className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-900">Digital Gatepass</h4>
-                    <p className="text-[10px] text-slate-500">Cryptographic QR Nonce</p>
+                    <h4 className="text-xs font-bold text-slate-900">Exam Hall Ticket</h4>
+                    <p className="text-[10px] text-slate-500">Official Exam Pass</p>
                   </div>
                 </Link>
 
@@ -518,7 +519,7 @@ export function MobileAppShowcase() {
                       <CheckCircle className="w-4 h-4" />
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-slate-900">Roll-Call Session</h4>
+                      <h4 className="text-xs font-bold text-slate-900">Mark Attendance</h4>
                       <p className="text-[10px] text-slate-500">Period 1–6 Marking</p>
                     </div>
                   </Link>
@@ -528,8 +529,8 @@ export function MobileAppShowcase() {
                       <Award className="w-4 h-4" />
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-slate-900">CIA Evaluation</h4>
-                      <p className="text-[10px] text-slate-500">Continuous Grading</p>
+                      <h4 className="text-xs font-bold text-slate-900">Internal Marks</h4>
+                      <p className="text-[10px] text-slate-500">Continuous Assessment</p>
                     </div>
                   </Link>
 
@@ -539,7 +540,7 @@ export function MobileAppShowcase() {
                     </div>
                     <div>
                       <h4 className="text-xs font-bold text-slate-900">Student Directory</h4>
-                      <p className="text-[10px] text-slate-500">Live Search & CRUD</p>
+                      <p className="text-[10px] text-slate-500">Directory &amp; Search</p>
                     </div>
                   </Link>
 
@@ -549,14 +550,14 @@ export function MobileAppShowcase() {
                     </div>
                     <div>
                       <h4 className="text-xs font-bold text-slate-900">Campus Pulse</h4>
-                      <p className="text-[10px] text-slate-500">Telemetry Engine</p>
+                      <p className="text-[10px] text-slate-500">Live Activity</p>
                     </div>
                   </Link>
                 </div>
 
                 <Link href="/dashboard" className="block">
                   <Button variant="outline" className="w-full rounded-2xl border-slate-200 text-xs font-bold py-4 text-slate-700 shadow-2xs">
-                    Launch Full Faculty Command Center →
+                    Open Faculty Dashboard →
                   </Button>
                 </Link>
               </motion.div>
@@ -624,8 +625,8 @@ export function MobileAppShowcase() {
                       <Receipt className="w-4 h-4" />
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-slate-900">Fee Ledger</h4>
-                      <p className="text-[10px] text-slate-500">Term Dues Record</p>
+                      <h4 className="text-xs font-bold text-slate-900">Fee Details</h4>
+                      <p className="text-[10px] text-slate-500">Receipts &amp; Dues</p>
                     </div>
                   </Link>
 
@@ -655,7 +656,7 @@ export function MobileAppShowcase() {
                   <h2 className="text-base font-bold text-slate-900 mt-0.5">
                     {session.studentName || session.email || "Executive Administrator"}
                   </h2>
-                  <p className="text-xs text-slate-500">Principal Office • Institutional Management Console</p>
+                  <p className="text-xs text-slate-500">Principal Office • College Administration</p>
 
                   <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
                     <div>
@@ -680,7 +681,7 @@ export function MobileAppShowcase() {
                     </div>
                     <div>
                       <h4 className="text-xs font-bold text-slate-900">Campus Pulse</h4>
-                      <p className="text-[10px] text-slate-500">Department Metrics</p>
+                      <p className="text-[10px] text-slate-500">College Attendance</p>
                     </div>
                   </Link>
 
@@ -689,15 +690,15 @@ export function MobileAppShowcase() {
                       <ShieldCheck className="w-4 h-4" />
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-slate-900">Audit Ledger</h4>
-                      <p className="text-[10px] text-slate-500">Immutable Trail</p>
+                      <h4 className="text-xs font-bold text-slate-900">Audit Logs</h4>
+                      <p className="text-[10px] text-slate-500">System Activity</p>
                     </div>
                   </Link>
                 </div>
 
                 <Link href="/principal" className="block">
                   <Button className="w-full rounded-2xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs py-4 shadow-sm">
-                    Open Executive Console →
+                    Open Principal Dashboard →
                   </Button>
                 </Link>
               </motion.div>

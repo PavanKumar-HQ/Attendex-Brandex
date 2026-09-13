@@ -32,7 +32,7 @@ const ACADEMIC_EVENTS = [
     month: "November 2026",
     events: [
       { date: "Nov 02 - Nov 15", title: "Semester Break & Inter-Collegiate Tech Symposium", type: "Break / Events", status: "Upcoming", badge: "Vacation" },
-      { date: "Nov 20, 2026", title: "Final Semester Grade Ledger Publication", type: "Results", status: "Upcoming", badge: "Grades" },
+      { date: "Nov 20, 2026", title: "Final Semester Examination Results", type: "Results", status: "Upcoming", badge: "Grades" },
     ]
   },
   {
