@@ -20,16 +20,29 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+      // In development / localhost mode, unregister any active workers to avoid dev server & HMR clashes
+      const isDev = process.env.NODE_ENV === "development" || 
+                    window.location.hostname === "localhost" || 
+                    window.location.hostname === "127.0.0.1";
+
+      if (isDev) {
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          for (const registration of registrations) {
+            registration.unregister();
+          }
+        }).catch(() => {});
+        return;
+      }
+
       navigator.serviceWorker
         .register("/sw.js")
         .then((reg) => {
-          // Check for service worker updates
           reg.onupdatefound = () => {
             const installingWorker = reg.installing;
             if (installingWorker) {
               installingWorker.onstatechange = () => {
                 if (installingWorker.state === "installed" && navigator.serviceWorker.controller) {
-                  // New update available
+                  // New version available
                 }
               };
             }
