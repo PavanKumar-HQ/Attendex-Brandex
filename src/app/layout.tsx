@@ -29,6 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title: brandName,
     },
     icons: {
+      icon: "/favicon.ico",
       apple: "/icons/icon-192.png",
     },
     other: {
