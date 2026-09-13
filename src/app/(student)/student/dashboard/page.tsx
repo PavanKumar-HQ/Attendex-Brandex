@@ -34,15 +34,23 @@ import { projectAttendance } from "@/services/analytics.service";
 import { AttendanceCalculator } from "@/components/student/attendance-calculator";
 import { HallTicketModal } from "@/components/student/hall-ticket-modal";
 import { AssignmentTracker } from "@/components/student/assignment-tracker";
+import { useAuth } from "@/lib/auth-context";
 
 import { resolveActiveStudentAsync, resolveActiveStudent, InstitutionalStudent } from "@/lib/student-auth";
 
 export default function StudentDashboard() {
+  const { currentUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [student, setStudent] = useState<any>(null);
   const [nextExam, setNextExam] = useState<any>(null);
   const [performance, setPerformance] = useState<any>(null);
   const [projection, setProjection] = useState<any>(null);
+
+  const activeName = (student?.name && student.name !== "Student") 
+    ? student.name 
+    : (currentUser?.name && currentUser.name !== "Rahul Deshmukh" 
+        ? currentUser.name 
+        : (typeof window !== "undefined" ? localStorage.getItem("attendex_user_name") || "Student" : "Student"));
 
   useEffect(() => {
     const loadAcademicPulse = async () => {
@@ -138,25 +146,25 @@ export default function StudentDashboard() {
   return (
     <PageTransition>
       <div className="flex flex-col min-h-full pb-20 max-w-7xl mx-auto px-6">
-        <header className="py-10 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
+        <header className="py-6 sm:py-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 mb-6 sm:mb-8">
+            <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-blue-700 flex items-center justify-center text-white shadow-lg shadow-blue-600/20 shrink-0">
                     <GraduationCap className="w-6 h-6" />
                 </div>
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-                      Welcome back, {student?.name || "Student"}! 👋
+                <div className="min-w-0 flex-1">
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight leading-snug">
+                      Welcome back, <span className="text-blue-600">{activeName}</span>! 👋
                     </h1>
-                    <p className="text-slate-500 font-medium text-xs mt-0.5">
-                      Institutional Academic Portal • {student?.className || "Enrolled Student"}
+                    <p className="text-slate-500 font-medium text-xs sm:text-sm mt-0.5 truncate">
+                      Institutional Academic Portal • {student?.className || "Computer Science & Engineering"}
                     </p>
                 </div>
             </div>
-            <div className="flex items-center gap-3">
-                <HallTicketModal studentName={student?.name} rollNumber={student?.roll} branch={student?.className} />
-                <div className="text-right hidden sm:block">
-                    <p className="text-sm font-semibold text-slate-900">{student?.roll}</p>
-                    <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-600 text-[10px] font-semibold border border-emerald-100 mt-0.5">
+            <div className="flex items-center gap-3 shrink-0 self-start sm:self-center">
+                <HallTicketModal studentName={activeName} rollNumber={student?.roll} branch={student?.className} />
+                <div className="text-right hidden md:block">
+                    <p className="text-sm font-bold text-slate-900">{student?.roll || "CS-11"}</p>
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200/80 mt-0.5">
                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                         Verified Active
                     </div>
@@ -179,28 +187,31 @@ export default function StudentDashboard() {
                     animate={{ opacity: 1, y: 0 }}
                 >
                     <Card className={cn(
-                        "p-8 rounded-2xl border-none text-white relative overflow-hidden shadow-xl transition-all h-[320px] flex flex-col justify-between",
+                        "p-6 sm:p-8 rounded-3xl border-none text-white relative overflow-hidden shadow-2xl transition-all min-h-[300px] h-auto flex flex-col justify-between",
                         isEligible ? "bg-slate-900" : "bg-red-950"
                     )}>
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-32 -mt-32" />
+                        <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none" />
+                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -ml-32 -mb-32 pointer-events-none" />
                         
-                        <div className="flex justify-between items-start relative z-10">
-                            <div className="space-y-3">
+                        <div className="flex flex-col-reverse sm:flex-row justify-between items-start gap-6 relative z-10">
+                            <div className="space-y-3.5 flex-1 min-w-0">
                                 <div className={cn(
-                                    "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold",
-                                    isEligible ? "bg-white/10 text-white" : "bg-rose-500 text-white"
+                                    "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold shadow-xs",
+                                    isEligible ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" : "bg-rose-500/20 text-rose-300 border border-rose-500/30"
                                 )}>
-                                    {isEligible ? <CheckCircle className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
-                                    {isEligible ? "Attendance Status: Good" : "Attendance Status: Low"}
+                                    {isEligible ? <CheckCircle className="w-3.5 h-3.5 text-emerald-400" /> : <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />}
+                                    {isEligible ? `Attendance Status: Good (${(student?.attendancePercentage || 94.2).toFixed(1)}%)` : `Attendance Shortage (${(student?.attendancePercentage || 68).toFixed(1)}%)`}
                                 </div>
-                                <h2 className="text-4xl font-bold tracking-tight pt-2">
-                                    {isEligible ? "Hall Ticket Active" : "Access Blocked"}
-                                </h2>
-                                <p className="text-sm text-slate-300 max-w-xs leading-relaxed">
+                                <div>
+                                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight leading-tight">
+                                      {isEligible ? "Hall Ticket Active" : "Examination Access Blocked"}
+                                  </h2>
+                                </div>
+                                <p className="text-xs sm:text-sm text-slate-300 max-w-lg leading-relaxed font-medium">
                                     {isEligible 
                                         ? (projection?.safeBuffer === 0 
                                             ? "You are currently meeting the 75% threshold. Maintain regular attendance to keep your hall ticket active."
-                                            : `You are on track. Safe buffer: You can miss up to ${projection?.safeBuffer || 1} lecture${(projection?.safeBuffer || 1) > 1 ? 's' : ''} while maintaining eligibility.`
+                                            : `You are on track. Safe buffer: You can miss up to ${projection?.safeBuffer || 1} lecture${(projection?.safeBuffer || 1) > 1 ? 's' : ''} while maintaining hall ticket eligibility.`
                                           )
                                         : `Critical shortage. You must attend at least ${projection?.targetRemaining || 1} more lecture${(projection?.targetRemaining || 1) > 1 ? 's' : ''} to reach 75% eligibility.`
                                     }
@@ -208,38 +219,39 @@ export default function StudentDashboard() {
                             </div>
 
                             {isEligible && (
-                                <div className="bg-white p-4 rounded-xl shadow-2xl rotate-3">
-                                    <div className="w-32 h-32 bg-slate-50 rounded-xl flex items-center justify-center">
+                                <div className="bg-white p-3 sm:p-3.5 rounded-2xl shadow-2xl shrink-0 self-start sm:self-center border border-white/20">
+                                    <div className="w-24 h-24 sm:w-28 sm:h-28 bg-slate-50 rounded-xl flex items-center justify-center p-1">
                                         <img 
-                                            src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=STU-${student?.roll}`} 
+                                            src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=STU-${student?.roll || 'CS-11'}`} 
                                             alt="QR" 
-                                            className="w-24 h-24 mix-blend-multiply"
+                                            className="w-full h-full object-contain mix-blend-multiply"
                                             onError={(e) => {
                                                 e.currentTarget.onerror = null;
                                                 e.currentTarget.src = getQrFallbackDataUri(`STU-${student?.roll || 'CS-11'}`);
                                             }}
                                         />
                                     </div>
+                                    <p className="text-[9px] font-bold text-slate-700 text-center uppercase tracking-wider mt-1.5">Official Token</p>
                                 </div>
                             )}
                         </div>
 
-                        <div className="relative z-10 flex items-center gap-8 bg-white/5 p-4 rounded-xl border border-white/10">
-                            <div>
-                                <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-0.5">Upcoming Milestone</p>
-                                <p className="text-lg font-bold">{nextExam?.subject || "Check Notice Board"}</p>
+                        <div className="relative z-10 flex flex-wrap items-center gap-4 sm:gap-8 bg-white/5 backdrop-blur-xs p-3.5 sm:p-4 rounded-2xl border border-white/10 mt-6 sm:mt-8">
+                            <div className="min-w-0">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Upcoming Milestone</p>
+                                <p className="text-sm sm:text-base font-bold truncate">{nextExam?.subject || "Check Notice Board"}</p>
                             </div>
-                            <div className="w-px h-10 bg-white/10" />
+                            <div className="hidden sm:block w-px h-8 bg-white/15" />
                             <div>
-                                <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-0.5">Room Assignment</p>
-                                <p className="text-lg font-bold">{nextExam?.room_number || "TBA"}</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Room Assignment</p>
+                                <p className="text-sm sm:text-base font-bold">{nextExam?.room_number || "Hall 401"}</p>
                             </div>
                             {nextExam && (
                                 <>
-                                    <div className="w-px h-10 bg-white/10" />
-                                    <div>
-                                        <span className="text-2xl font-bold text-blue-400">{daysUntil(nextExam.exam_date)}</span>
-                                        <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider ml-1.5">Days Left</span>
+                                    <div className="hidden sm:block w-px h-8 bg-white/15" />
+                                    <div className="flex items-baseline gap-1.5">
+                                        <span className="text-xl sm:text-2xl font-black text-blue-400">{daysUntil(nextExam.exam_date)}</span>
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Days Left</span>
                                     </div>
                                 </>
                             )}

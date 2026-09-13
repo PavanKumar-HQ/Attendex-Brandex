@@ -31,8 +31,15 @@ import autoTable from "jspdf-autotable";
 
 import { resolveActiveStudent, InstitutionalStudent } from "@/lib/student-auth";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 export default function StudentGatepassPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace("/student/dashboard");
+  }, [router]);
+
   const [passType, setPassType] = useState("Weekend Hostel Pass (Hometown)");
   const [outDate, setOutDate] = useState("");
   const [outTime, setOutTime] = useState("");

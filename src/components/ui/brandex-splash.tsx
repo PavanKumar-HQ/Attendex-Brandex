@@ -41,16 +41,27 @@ export function BrandexSplash() {
           </div>
 
           <div className="relative z-10 flex flex-col items-center text-center px-6">
-            {/* Brandex Core Typography (No photo/image) */}
+            {/* Brandex Official Logo */}
             <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 10 }}
+              initial={{ scale: 0.85, opacity: 0, y: 12 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              className="flex flex-col items-center gap-1.5"
+              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+              className="relative p-3.5 sm:p-4 rounded-2xl bg-white shadow-xl shadow-blue-600/10 border border-slate-200/80"
             >
-              <h1 className="text-2xl sm:text-3xl font-black tracking-[0.2em] text-slate-900 uppercase">
-                Brandex
-              </h1>
+              <img
+                src="/brandex-logo.png"
+                alt="Brandex Logo"
+                className="h-12 sm:h-14 w-auto object-contain"
+              />
+            </motion.div>
+
+            {/* Subtitle animation */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+              className="mt-5 flex flex-col items-center gap-1.5"
+            >
               <span className="text-xs uppercase tracking-[0.25em] text-blue-600 font-bold">
                 Powered by Brandex
               </span>

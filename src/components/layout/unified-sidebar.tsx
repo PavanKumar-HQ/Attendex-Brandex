@@ -95,7 +95,6 @@ const STUDENT_LINKS: SidebarLink[] = [
   { name: "Assignments & Labs", href: "/student/assignments", icon: CheckSquare },
   { name: "Safe Margin Calculator", href: "/student/calculator", icon: Calculator },
   { name: "Career & Placements", href: "/student/placement", icon: Briefcase },
-  { name: "Digital Gatepass", href: "/student/gatepass", icon: Ticket },
   { name: "Exam Hall Ticket", href: "/student/hall-ticket", icon: QrCode },
   { name: "My Profile", href: "/student/profile", icon: UserRound },
 ];

@@ -440,13 +440,13 @@ export function MobileAppShowcase() {
 
                 {/* Quick Student App Tiles */}
                 <div className="grid grid-cols-2 gap-2.5">
-                  <Link href="/student/gatepass" className="p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-blue-300 active:scale-[0.98] transition-all flex flex-col justify-between h-24 shadow-2xs">
+                  <Link href="/student/hall-ticket" className="p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-blue-300 active:scale-[0.98] transition-all flex flex-col justify-between h-24 shadow-2xs">
                     <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
                       <QrCode className="w-4 h-4" />
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-slate-900">Digital Gatepass</h4>
-                      <p className="text-[10px] text-slate-500">QR Token Request</p>
+                      <h4 className="text-xs font-bold text-slate-900">Exam Hall Ticket</h4>
+                      <p className="text-[10px] text-slate-500">Active Hall Pass</p>
                     </div>
                   </Link>
 

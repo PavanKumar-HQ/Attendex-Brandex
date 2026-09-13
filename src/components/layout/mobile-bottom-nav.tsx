@@ -28,7 +28,7 @@ export function MobileBottomNav() {
 
   const studentTabs = [
     { href: "/student/dashboard", label: "Home", icon: LayoutDashboard },
-    { href: "/student/gatepass", label: "Gatepass", icon: QrCode },
+    { href: "/student/history", label: "Attendance", icon: CalendarCheck },
     { href: "/student/marks", label: "Marks", icon: Award },
     { href: "/student/hall-ticket", label: "Exam Pass", icon: FileSpreadsheet },
     { href: "/student/profile", label: "Profile", icon: UserCircle2 },
