@@ -202,16 +202,12 @@ export default function LoginPage() {
         <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-100/40 rounded-full blur-[120px] -ml-64 -mb-64 pointer-events-none" />
 
         {/* Top Header */}
-        <div className="max-w-7xl mx-auto w-full flex items-center justify-between py-2 z-10">
-          <div className="flex items-center gap-2.5 text-slate-900 font-bold tracking-tight">
-            <div className="w-8 h-8 bg-slate-900 text-white rounded-lg flex items-center justify-center shadow-sm">
+        <div className="max-w-7xl mx-auto w-full flex items-center justify-between py-3 z-10">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 bg-slate-900 text-white rounded-xl flex items-center justify-center shadow-sm">
               <GraduationCap className="w-4 h-4 text-blue-400" />
             </div>
-            <span>Attendex <span className="text-xs font-semibold text-slate-500">Academic Operating System</span></span>
-          </div>
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200/80 px-3 py-1.5 rounded-full shadow-sm">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Multi-Tenant Institutional Cloud</span>
+            <span className="font-extrabold text-slate-900 text-base tracking-tight">Attendex</span>
           </div>
         </div>
 
