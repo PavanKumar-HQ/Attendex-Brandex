@@ -504,9 +504,6 @@ export default function LoginPage() {
         {/* Footer: Powered by Brandex Hyperlink */}
         <div className="max-w-7xl mx-auto w-full flex flex-col items-center justify-center gap-2 py-3 z-10">
           <PoweredByBrandex variant="footer" />
-          <p className="text-[11px] text-slate-400 font-medium">
-            Attendex OS • Secured with PostgreSQL Row Level Security
-          </p>
         </div>
       </div>
     </PageTransition>

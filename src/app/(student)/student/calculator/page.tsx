@@ -28,7 +28,7 @@ export default function StudentCalculatorPage() {
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-2">
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-bold border border-blue-200 flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5" /> University 75% Rule Engine
+                <Sparkles className="w-3.5 h-3.5" /> University 75% Attendance Rule
               </span>
             </div>
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
@@ -46,7 +46,7 @@ export default function StudentCalculatorPage() {
           <Card className="p-6 rounded-2xl bg-slate-900 text-white shadow-xl space-y-4">
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
               <Info className="w-4 h-4 text-blue-400" />
-              Institutional Attendance Guidelines (KLE Tech Ordinance)
+              Attendance Guidelines &amp; Examination Eligibility
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-300">
               <div className="p-3 bg-white/10 rounded-xl border border-white/10 space-y-1">

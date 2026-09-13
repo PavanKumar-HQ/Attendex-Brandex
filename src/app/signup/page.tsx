@@ -246,7 +246,7 @@ export default function SignupPage() {
           </Link>
           <div className="flex items-center gap-1 text-emerald-600 font-bold text-[11px]">
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>PostgreSQL Secured</span>
+            <span>Secure &amp; Encrypted</span>
           </div>
         </div>
       </motion.div>
