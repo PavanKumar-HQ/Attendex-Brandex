@@ -59,6 +59,7 @@ export async function POST(req: NextRequest) {
 
     // Bulk or single
     if (Array.isArray(body)) {
+      const dbRows: any[] = [];
       for (const item of body) {
         const student = {
           id: item.id || `stud-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
@@ -85,20 +86,22 @@ export async function POST(req: NextRequest) {
         };
         serverState.addStudent(student);
 
-        // Async try Supabase sync
-        if (isSupabaseConfigured) {
-          supabase.from("students").upsert({
-            institution_id: "00000000-0000-0000-0000-000000000001",
-            roll_number: student.roll_number,
-            register_number: student.register_number,
-            name: student.name,
-            email: student.email,
-            dob: student.dob,
-            password_hash: computePasswordHash(student.dob),
-            attendance_percentage: student.attendance_percentage,
-            cgpa: student.cgpa
-          }, { onConflict: "institution_id,roll_number" }).then();
-        }
+        dbRows.push({
+          institution_id: "00000000-0000-0000-0000-000000000001",
+          roll_number: student.roll_number,
+          register_number: student.register_number,
+          name: student.name,
+          email: student.email,
+          dob: student.dob,
+          password_hash: computePasswordHash(student.dob),
+          attendance_percentage: student.attendance_percentage,
+          cgpa: student.cgpa
+        });
+      }
+
+      // Batch upsert to eliminate N+1 database queries
+      if (isSupabaseConfigured && dbRows.length > 0) {
+        supabase.from("students").upsert(dbRows, { onConflict: "institution_id,roll_number" }).then();
       }
 
       serverState.addAuditLog({

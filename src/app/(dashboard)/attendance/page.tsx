@@ -43,6 +43,7 @@ import { AttendanceSyncDialog } from "@/components/attendance/sync-dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useStudents, useClasses } from "@/hooks/use-academic";
 import { academicService } from "@/services/academic";
+import { useDebounce } from "@/hooks/use-debounce";
 
 export default function AttendancePage() {
   const [selectedClassId, setSelectedClassId] = useState<string>("");
@@ -280,14 +281,16 @@ export default function AttendancePage() {
     }
   };
 
+  const debouncedSearch = useDebounce(search, 250);
+
   const filteredStudents = useMemo(() => {
     return students.filter((s: any) => {
-      const matchesSearch = fuzzySearch(search, `${s.name} ${s.roll_number || s.rollNumber}`);
+      const matchesSearch = fuzzySearch(debouncedSearch, `${s.name} ${s.roll_number || s.rollNumber}`);
       const matchesSection = selectedSection === "all" || s.section === selectedSection;
       const matchesBatch = selectedBatch === "all" || s.batch === selectedBatch;
       return matchesSearch && matchesSection && matchesBatch;
     });
-  }, [search, selectedSection, selectedBatch, students]);
+  }, [debouncedSearch, selectedSection, selectedBatch, students]);
 
   const presentCount = students.length - absentIds.size - onDutyIds.size - medicalIds.size;
   const absentCount = absentIds.size;
