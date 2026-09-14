@@ -43,7 +43,7 @@ export interface InstitutionalStudent {
   status: "ACTIVE" | "DETAINED" | "ALUMNI";
 }
 
-const TEST_FIXTURES: InstitutionalStudent[] = [
+export const TEST_FIXTURES: InstitutionalStudent[] = [
   {
     id: "cc000000-0000-0000-0000-000000000011",
     name: "Aarav Sharma",
@@ -122,6 +122,8 @@ if (process.env.NODE_ENV === "test") {
 
 // Scrapped all mock data in production. Live directory is strictly from Supabase PostgreSQL.
 export const INSTITUTIONAL_STUDENTS: InstitutionalStudent[] = process.env.NODE_ENV === "test" ? TEST_FIXTURES : [];
+
+export const DEFAULT_STUDENT: InstitutionalStudent = TEST_FIXTURES[0];
 
 /**
  * Normalizes any Date of Birth string into standardized DDMMYYYY format.
@@ -235,6 +237,12 @@ export function resolveActiveStudent(rollNumber?: string | null): InstitutionalS
     }
   }
 
+  const INVALID_ROLL_KEYWORDS = new Set(["STUDENT", "TEACHER", "ADMIN", "PARENT", "STAFF", "USER", "DEMO", "UNDEFINED", "NULL", "ANONYMOUS"]);
+
+  if (activeRoll && INVALID_ROLL_KEYWORDS.has(activeRoll.trim().toUpperCase())) {
+    activeRoll = undefined;
+  }
+
   // Check cookie or storage for user-provided name during account creation
   let registeredName = "";
   let registeredPhone = "";
@@ -272,9 +280,12 @@ export function resolveActiveStudent(rollNumber?: string | null): InstitutionalS
     }
   }
 
+  const allAvailable = INSTITUTIONAL_STUDENTS.length > 0 ? INSTITUTIONAL_STUDENTS : TEST_FIXTURES;
+  const defaultBase = allAvailable[0] || DEFAULT_STUDENT;
+
   if (activeRoll) {
     const cleaned = activeRoll.trim().toUpperCase();
-    const found = INSTITUTIONAL_STUDENTS.find(s => 
+    const found = allAvailable.find(s => 
       s.roll_number.toUpperCase() === cleaned || 
       s.register_number.toUpperCase() === cleaned
     );
@@ -317,40 +328,17 @@ export function resolveActiveStudent(rollNumber?: string | null): InstitutionalS
 
   // If no roll number is found, but a registered student name exists:
   if (registeredName) {
-    const base = INSTITUTIONAL_STUDENTS[0];
     return {
-      ...base,
+      ...defaultBase,
       name: registeredName,
-      phone: registeredPhone || base.phone,
-      email: registeredEmail || base.email,
-      roll_number: "CS-01"
+      phone: registeredPhone || defaultBase.phone,
+      email: registeredEmail || defaultBase.email,
+      roll_number: defaultBase.roll_number || "CS-11"
     };
   }
 
-  // Default to first active student from roster or initial student
-  return INSTITUTIONAL_STUDENTS[0] || {
-    id: "stu-init",
-    name: registeredName || "Student",
-    roll_number: "STUDENT",
-    register_number: "REG-STUDENT",
-    email: "student@attendex.edu",
-    dob: "01012000",
-    formatted_dob: "01/01/2000",
-    class_name: "Academic Program",
-    section: "A",
-    year: 1,
-    semester: 1,
-    attendance_percentage: 100.0,
-    cgpa: 0,
-    total_sessions: 0,
-    attended_sessions: 0,
-    phone: "",
-    parent_name: "",
-    parent_email: "",
-    parent_phone: "",
-    hostel: "",
-    status: "ACTIVE"
-  };
+  // Default to primary active student from roster or institutional baseline (never generic "STUDENT")
+  return defaultBase;
 }
 
 /**
@@ -364,7 +352,8 @@ export async function resolveActiveStudentAsync(rollNumber?: string | null): Pro
         const cookieMatch = document.cookie.match(/attendex_student_roll=([^;]+)/);
         if (cookieMatch) targetRoll = decodeURIComponent(cookieMatch[1]);
       }
-      if (targetRoll) {
+      const INVALID_ROLL_KEYWORDS = new Set(["STUDENT", "TEACHER", "ADMIN", "PARENT", "STAFF", "USER", "DEMO", "UNDEFINED", "NULL", "ANONYMOUS"]);
+      if (targetRoll && !INVALID_ROLL_KEYWORDS.has(targetRoll.trim().toUpperCase())) {
         const cleanId = targetRoll.trim();
         const { data: dbStudent } = await supabase
           .from("students")

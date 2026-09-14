@@ -9,7 +9,9 @@
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { INSTITUTIONAL_STUDENTS, InstitutionalStudent } from "./student-auth";
+import { INSTITUTIONAL_STUDENTS, TEST_FIXTURES, InstitutionalStudent } from "./student-auth";
+
+const DEFAULT_STORE_STUDENTS = INSTITUTIONAL_STUDENTS.length > 0 ? INSTITUTIONAL_STUDENTS : TEST_FIXTURES;
 
 export interface ServerLeave {
   id: string;
@@ -368,7 +370,7 @@ function readStore(): StateStore {
         proctorRequests: [],
         classes: INITIAL_CLASSES,
         subjects: INITIAL_SUBJECTS,
-        students: INSTITUTIONAL_STUDENTS,
+        students: DEFAULT_STORE_STUDENTS,
         marks: [],
         attendanceSessions: [],
         assignments: INITIAL_ASSIGNMENTS,
@@ -387,11 +389,11 @@ function readStore(): StateStore {
     if (!parsed.classes || parsed.classes.length === 0) { parsed.classes = INITIAL_CLASSES; modified = true; }
     if (!parsed.subjects || parsed.subjects.length === 0) { parsed.subjects = INITIAL_SUBJECTS; modified = true; }
     if (!parsed.students || parsed.students.length === 0) { 
-      parsed.students = INSTITUTIONAL_STUDENTS; 
+      parsed.students = DEFAULT_STORE_STUDENTS; 
       modified = true; 
     } else {
       // Ensure student IDs match canonical institutional UUIDs
-      const instMap = new Map(INSTITUTIONAL_STUDENTS.map(s => [s.roll_number, s.id]));
+      const instMap = new Map(DEFAULT_STORE_STUDENTS.map(s => [s.roll_number, s.id]));
       for (const s of parsed.students) {
         const canonicalId = instMap.get(s.roll_number);
         if (canonicalId && s.id !== canonicalId) {

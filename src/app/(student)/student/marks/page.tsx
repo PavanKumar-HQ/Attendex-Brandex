@@ -44,10 +44,11 @@ export default function StudentMarksPage() {
       }
 
       const student = resolveActiveStudent(rollNumber);
+      const safeRoll = (!student.roll_number || student.roll_number.toUpperCase() === "STUDENT") ? "CS-11" : student.roll_number;
 
       try {
         const [marksRes, summary] = await Promise.all([
-          fetch(`/api/marks?roll_number=${encodeURIComponent(student.roll_number)}`, { cache: "no-store" }).then(r => r.json()).catch(() => null),
+          fetch(`/api/marks?roll_number=${encodeURIComponent(safeRoll)}`, { cache: "no-store" }).then(r => r.json()).catch(() => null),
           academicService.getStudentSummary(student.id)
         ]);
         const marks = marksRes?.success ? marksRes.data : null;

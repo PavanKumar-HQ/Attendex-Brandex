@@ -6,7 +6,9 @@ import { GET as parentWardGET } from "@/app/api/parent/ward/route";
 import { POST as assignmentsPOST } from "@/app/api/assignments/route";
 import { POST as promotionPOST } from "@/app/api/promotion/route";
 import { GET as pulseGET } from "@/app/api/pulse/route";
+import { GET as marksGET, POST as marksPOST } from "@/app/api/marks/route";
 import { serverState } from "@/lib/server-state";
+import { resolveActiveStudent } from "@/lib/student-auth";
 import { NextRequest } from "next/server";
 
 test("SECURITY: Student Lookup must never disclose cleartext password or raw DOB", async () => {
@@ -240,5 +242,35 @@ test("MARKS PIPELINE: Real-time sync reflects teacher submission directly into s
   assert.strictEqual(cs401Record.ciaTotal, 5);
   assert.ok(cs401Record.final_marks >= 16.0, `Expected final marks >= 16.0, got ${cs401Record.final_marks}`);
   assert.strictEqual(cs401Record.grade, "A+");
+});
+
+test("ROBUSTNESS: Marks endpoint and resolveActiveStudent handle role keywords like STUDENT without 404", async () => {
+  // 1. Verify resolveActiveStudent never returns roll_number "STUDENT"
+  const studentFromRole = resolveActiveStudent("STUDENT");
+  assert.notStrictEqual(studentFromRole.roll_number, "STUDENT", "resolveActiveStudent('STUDENT') must not set roll_number to 'STUDENT'");
+  assert.strictEqual(studentFromRole.roll_number, "CS-11", "Default student must have valid institutional roll_number (CS-11)");
+
+  const studentFromNull = resolveActiveStudent(null);
+  assert.notStrictEqual(studentFromNull.roll_number, "STUDENT");
+  assert.strictEqual(studentFromNull.roll_number, "CS-11");
+
+  // 2. Query /api/marks?roll_number=STUDENT
+  const marksReq = new NextRequest("http://localhost:3000/api/marks?roll_number=STUDENT");
+  const marksRes = await marksGET(marksReq);
+  const marksJson = await marksRes.json();
+
+  assert.strictEqual(marksRes.status, 200, "Query with roll_number=STUDENT must return 200 OK, not 404");
+  assert.strictEqual(marksJson.success, true);
+  assert.ok(Array.isArray(marksJson.data), "Must return marks data array");
+  assert.ok(marksJson.data.length > 0, "Must return subjects for student");
+
+  // 3. Query /api/parent/ward?roll_number=STUDENT
+  const wardReq = new NextRequest("http://localhost:3000/api/parent/ward?roll_number=STUDENT");
+  const wardRes = await parentWardGET(wardReq);
+  const wardJson = await wardRes.json();
+
+  assert.strictEqual(wardRes.status, 200, "Ward query with roll_number=STUDENT must return 200 OK");
+  assert.strictEqual(wardJson.success, true);
+  assert.strictEqual(wardJson.data.student.roll_number, "CS-11");
 });
 

@@ -20,7 +20,8 @@ export async function GET(req: NextRequest) {
     const students = serverState.getStudents();
     let student: any = null;
 
-    if (roll) {
+    const isRoleKeyword = roll && ["STUDENT", "DEMO", "USER", "DEFAULT"].includes(roll.trim().toUpperCase());
+    if (roll && !isRoleKeyword) {
       student = students.find(s => s.roll_number.toLowerCase() === roll!.toLowerCase() || s.id === roll);
       if (!student) {
         return NextResponse.json({
