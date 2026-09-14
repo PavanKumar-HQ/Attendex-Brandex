@@ -93,8 +93,8 @@ export function BiometricPermissionModal({
 
             {/* Header Icon */}
             <div className="flex items-center gap-3.5 mb-5">
-              <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-blue-700 text-white flex items-center justify-center shadow-lg shadow-blue-600/25 shrink-0">
-                <SensorIcon className="w-6 h-6" />
+              <div className="w-13 h-13 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-md shadow-slate-900/15 shrink-0">
+                <SensorIcon className="w-6 h-6 text-blue-400" />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 flex-wrap">

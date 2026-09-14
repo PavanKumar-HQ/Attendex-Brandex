@@ -131,7 +131,10 @@ export function FeeLedgerModal({
                   </div>
                   <div className="text-right shrink-0">
                     <span className="text-xs font-bold text-slate-900">{item.amount}</span>
-                    <span className="block text-[10px] font-bold text-emerald-600 uppercase">Paid ✓</span>
+                    <span className="flex items-center justify-end gap-1 text-[10px] font-bold text-emerald-600 uppercase">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
+                      <span>Paid</span>
+                    </span>
                   </div>
                 </div>
               ))}

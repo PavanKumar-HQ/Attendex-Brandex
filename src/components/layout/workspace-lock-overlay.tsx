@@ -15,14 +15,12 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useWebAuthn } from "@/hooks/use-webauthn";
-import { BiometricPermissionModal } from "@/components/auth/biometric-permission-modal";
 import { toast } from "sonner";
 import { haptics } from "@/lib/haptics";
 
 export function WorkspaceLockOverlay() {
   const [isLocked, setIsLocked] = useState(false);
   const [userName, setUserName] = useState("Member");
-  const [permissionModalOpen, setPermissionModalOpen] = useState(false);
   const { authenticateWithPasskey, device, isLoading } = useWebAuthn();
 
   useEffect(() => {
@@ -44,18 +42,13 @@ export function WorkspaceLockOverlay() {
     return () => window.removeEventListener("attendex_lock_state_change", handleLockEvent);
   }, []);
 
-  const handleUnlockClick = () => {
+  const handleUnlockClick = async () => {
     haptics.light();
-    setPermissionModalOpen(true);
-  };
-
-  const handleUnlockConfirm = async () => {
     const res = await authenticateWithPasskey();
     if (res.success) {
       haptics.success();
       sessionStorage.removeItem("attendex_workspace_locked");
       setIsLocked(false);
-      setPermissionModalOpen(false);
       window.dispatchEvent(new Event("attendex_lock_state_change"));
       toast.success("Workspace Unlocked", {
         description: `Welcome back, ${userName}!`
@@ -85,8 +78,8 @@ export function WorkspaceLockOverlay() {
           className="w-full max-w-sm text-center bg-white/10 border border-white/20 p-8 rounded-3xl shadow-2xl backdrop-blur-md text-white"
         >
           {/* Lock Icon */}
-          <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-blue-700 flex items-center justify-center text-white shadow-xl shadow-blue-500/30 mb-5">
-            <Lock className="w-8 h-8 text-white" />
+          <div className="mx-auto w-16 h-16 rounded-2xl bg-slate-900 border border-slate-700/80 flex items-center justify-center text-white shadow-xl shadow-black/40 mb-5">
+            <Lock className="w-8 h-8 text-blue-400" />
           </div>
 
           <h2 className="text-xl font-extrabold tracking-tight">Workspace Locked</h2>
@@ -125,16 +118,6 @@ export function WorkspaceLockOverlay() {
           </div>
         </motion.div>
       </div>
-
-      {/* Permission & Confirmation Modal */}
-      <BiometricPermissionModal
-        isOpen={permissionModalOpen}
-        onClose={() => setPermissionModalOpen(false)}
-        onConfirm={handleUnlockConfirm}
-        device={device}
-        actionType="UNLOCK"
-        isLoading={isLoading}
-      />
     </>
   );
 }

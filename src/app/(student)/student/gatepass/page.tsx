@@ -20,7 +20,8 @@ import {
   AlertCircle,
   Building,
   UserCheck,
-  Loader2
+  Loader2,
+  Lock
 } from "lucide-react";
 import { toast } from "sonner";
 import { getQrFallbackDataUri } from "@/lib/qr-helper";
@@ -316,8 +317,9 @@ export default function StudentGatepassPage() {
                   <p className="text-xs text-slate-600 mt-0.5">
                     Your exit request to <span className="font-semibold text-slate-800">{pendingPass.destination || "destination"}</span> is awaiting Warden/Faculty approval.
                   </p>
-                  <p className="text-[11px] text-amber-700 font-medium mt-1">
-                    🔒 Single-use security exit QR code will ONLY be issued once approved.
+                  <p className="text-[11px] text-amber-700 font-medium mt-1 flex items-center gap-1.5">
+                    <Lock className="w-3 h-3 text-amber-700 shrink-0" />
+                    <span>Single-use security exit QR code will ONLY be issued once approved.</span>
                   </p>
                 </div>
               </div>

@@ -27,7 +27,8 @@ import {
   BookOpen,
   Layers,
   GraduationCap,
-  ShieldCheck
+  ShieldCheck,
+  AlertTriangle
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
@@ -465,9 +466,22 @@ export default function AttendancePage() {
               <Activity className="w-4 h-4 text-blue-400" />
             </div>
             <h3 className="text-2xl font-extrabold text-white">{attendanceRate}%</h3>
-            <p className="text-[11px] text-emerald-400 font-medium">
-              {attendanceRate >= 85 ? "✓ Optimal Cohort Standing" : "⚠ Defaulter Threshold"}
-            </p>
+            <div className={cn(
+              "text-[11px] font-medium flex items-center gap-1.5",
+              attendanceRate >= 85 ? "text-emerald-400" : "text-amber-400"
+            )}>
+              {attendanceRate >= 85 ? (
+                <>
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                  <span>Optimal Cohort Standing</span>
+                </>
+              ) : (
+                <>
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                  <span>Defaulter Threshold</span>
+                </>
+              )}
+            </div>
           </Card>
         </div>
 

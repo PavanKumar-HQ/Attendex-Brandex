@@ -32,7 +32,6 @@ import {
 } from "lucide-react";
 import { PoweredByBrandex } from "@/components/ui/powered-by-brandex";
 import { useWebAuthn } from "@/hooks/use-webauthn";
-import { BiometricPermissionModal } from "@/components/auth/biometric-permission-modal";
 
 type AuthTab = "signin" | "signup";
 type SignupRole = "STUDENT" | "PARENT";
@@ -61,18 +60,12 @@ export default function LoginPage() {
   // Biometric Authentication Hook (Cross-platform for Android, iOS, Windows, Mac)
   const { authenticateWithPasskey, device } = useWebAuthn();
   const [isAuthenticatingBiometric, setIsAuthenticatingBiometric] = useState(false);
-  const [isBiometricModalOpen, setIsBiometricModalOpen] = useState(false);
 
-  const openBiometricLoginModal = () => {
-    setIsBiometricModalOpen(true);
-  };
-
-  const handleBiometricModalConfirm = async () => {
+  const handleBiometricLogin = async () => {
     setIsAuthenticatingBiometric(true);
     try {
       const result = await authenticateWithPasskey();
       if (result.success && result.user) {
-        setIsBiometricModalOpen(false);
         const role = (result.user.userRole || "STUDENT").toUpperCase();
         const redirectPath = 
           role === "SUPER_ADMIN" || role === "ADMIN" ? "/super-admin" :
@@ -82,7 +75,7 @@ export default function LoginPage() {
 
         setTimeout(() => {
           window.location.href = redirectPath;
-        }, 500);
+        }, 400);
       }
     } finally {
       setIsAuthenticatingBiometric(false);
@@ -411,7 +404,7 @@ export default function LoginPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={openBiometricLoginModal}
+                  onClick={handleBiometricLogin}
                   disabled={isAuthenticatingBiometric || isSigningIn}
                   className="w-full h-11 rounded-xl border-slate-200 bg-slate-50/80 hover:bg-blue-50/70 hover:border-blue-300 text-slate-700 font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-2xs"
                 >
@@ -611,16 +604,6 @@ export default function LoginPage() {
         <div className="max-w-7xl mx-auto w-full flex flex-col items-center justify-center gap-2 py-3 z-10">
           <PoweredByBrandex variant="footer" />
         </div>
-
-        {/* Lock Screen Biometrics Permission & Consent Modal */}
-        <BiometricPermissionModal
-          isOpen={isBiometricModalOpen}
-          onClose={() => setIsBiometricModalOpen(false)}
-          onConfirm={handleBiometricModalConfirm}
-          device={device}
-          actionType="LOGIN"
-          isLoading={isAuthenticatingBiometric}
-        />
       </div>
     </PageTransition>
   );

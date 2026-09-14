@@ -225,8 +225,9 @@ export default function PrincipalDashboardPage() {
           </div>
 
           {totalPending === 0 ? (
-            <div className="py-12 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200 text-xs text-slate-500">
-              ✓ All institutional clearance requests reviewed. Zero pending tasks.
+            <div className="py-12 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200 text-xs text-slate-500 flex items-center justify-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>All institutional clearance requests reviewed. Zero pending tasks.</span>
             </div>
           ) : (
             <div className="space-y-3">

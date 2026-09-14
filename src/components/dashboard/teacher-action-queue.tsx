@@ -337,8 +337,9 @@ export function TeacherActionQueue() {
         </div>
 
         {totalPending === 0 ? (
-          <div className="py-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200 text-xs text-slate-500">
-            ✓ All student exemption requests, gatepass items, and proctor consultation queries processed. Zero pending tasks.
+          <div className="py-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200 text-xs text-slate-500 flex items-center justify-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>All student exemption requests, gatepass items, and proctor consultation queries processed. Zero pending tasks.</span>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

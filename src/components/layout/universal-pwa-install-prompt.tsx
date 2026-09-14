@@ -85,6 +85,11 @@ export function UniversalPwaInstallPrompt() {
     try {
       const origin = typeof window !== "undefined" ? window.location.origin : "";
 
+      if (platform === "ios") {
+        // iOS Safari does not support file-based downloads for PWA installation
+        return;
+      }
+
       if (platform === "windows") {
         const content = `[InternetShortcut]\r\nURL=${origin}/?source=windows_desktop\r\nIconFile=${origin}/favicon.ico\r\nIconIndex=0\r\n`;
         const blob = new Blob([content], { type: "application/internet-shortcut" });
@@ -170,6 +175,14 @@ export function UniversalPwaInstallPrompt() {
 
   const handleInstallClick = async () => {
     setInstalling(true);
+
+    if (platform === "ios") {
+      // iOS Safari does not support automated prompt or downloaded files
+      // Open step-by-step visual instructions directly
+      setShowInstructions(true);
+      setInstalling(false);
+      return;
+    }
 
     if (deferredPrompt) {
       try {
@@ -333,6 +346,8 @@ export function UniversalPwaInstallPrompt() {
                     ? "Installing..."
                     : deferredPrompt
                     ? "Install App (1-Tap)"
+                    : platform === "ios"
+                    ? "Add to Home Screen (iOS)"
                     : "Install & Download App"}
                 </span>
               </Button>

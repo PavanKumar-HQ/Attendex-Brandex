@@ -14,7 +14,8 @@ import {
   PieChart,
   RefreshCcw,
   Clock,
-  Download
+  Download,
+  CheckCircle2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -173,7 +174,10 @@ export default function PulsePage() {
                       <p className="text-xs font-semibold text-slate-800 leading-snug">{req.text}</p>
                       <div className="flex justify-between items-center text-[10px] text-slate-400 font-medium">
                         <span>{req.time}</span>
-                        <span className="text-emerald-700 font-semibold">✓ Verified</span>
+                        <span className="text-emerald-700 font-semibold flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
+                          <span>Verified</span>
+                        </span>
                       </div>
                     </div>
                   ))}

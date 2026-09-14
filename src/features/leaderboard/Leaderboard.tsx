@@ -106,7 +106,21 @@ export function Leaderboard() {
                     : 'bg-orange-50/70 border-orange-200'
                 }`}
               >
-                <div className="text-3xl mb-2">{index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}</div>
+                <div className="mb-2.5">
+                  {index === 0 ? (
+                    <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600 shadow-xs">
+                      <Trophy className="w-6 h-6" />
+                    </div>
+                  ) : index === 1 ? (
+                    <div className="w-10 h-10 rounded-xl bg-slate-200 flex items-center justify-center text-slate-700 shadow-xs">
+                      <Medal className="w-6 h-6" />
+                    </div>
+                  ) : (
+                    <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600 shadow-xs">
+                      <Award className="w-6 h-6" />
+                    </div>
+                  )}
+                </div>
                 <div className="font-bold text-sm text-slate-900">{entry.studentName}</div>
                 <div className="text-[11px] font-medium text-slate-500">{entry.section}</div>
                 <div className="mt-2 text-lg font-extrabold text-slate-900">{entry.marks} <span className="text-xs font-normal text-slate-500">/ 20</span></div>

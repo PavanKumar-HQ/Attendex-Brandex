@@ -20,7 +20,6 @@ import { Card } from "@/components/ui/card";
 import { haptics } from "@/lib/haptics";
 import { useWebAuthn } from "@/hooks/use-webauthn";
 import { motion, AnimatePresence } from "framer-motion";
-import { BiometricPermissionModal } from "@/components/auth/biometric-permission-modal";
 
 export function PasskeyCard() {
   const { 
@@ -30,45 +29,30 @@ export function PasskeyCard() {
     isLoading, 
     device, 
     isEnrolled, 
-    enrolledPasskey,
-    hasPermission
+    enrolledPasskey
   } = useWebAuthn();
 
   const [isTesting, setIsTesting] = useState(false);
-  const [permissionModalOpen, setPermissionModalOpen] = useState(false);
-  const [permissionAction, setPermissionAction] = useState<"ENROLL" | "UNLOCK">("ENROLL");
 
-  const openEnrollPermission = () => {
+  const handleEnroll = async () => {
     haptics.light();
-    setPermissionAction("ENROLL");
-    setPermissionModalOpen(true);
-  };
-
-  const openTestPermission = () => {
-    haptics.light();
-    setPermissionAction("UNLOCK");
-    setPermissionModalOpen(true);
-  };
-
-  const handleModalConfirm = async () => {
-    if (permissionAction === "ENROLL") {
-      const ok = await registerPasskey();
-      if (ok) {
-        haptics.success();
-        setPermissionModalOpen(false);
-      } else {
-        haptics.error();
-      }
+    const ok = await registerPasskey();
+    if (ok) {
+      haptics.success();
     } else {
-      setIsTesting(true);
-      const result = await authenticateWithPasskey();
-      setIsTesting(false);
-      if (result.success) {
-        haptics.success();
-        setPermissionModalOpen(false);
-      } else {
-        haptics.error();
-      }
+      haptics.error();
+    }
+  };
+
+  const handleTest = async () => {
+    haptics.light();
+    setIsTesting(true);
+    const result = await authenticateWithPasskey();
+    setIsTesting(false);
+    if (result.success) {
+      haptics.success();
+    } else {
+      haptics.error();
     }
   };
 
@@ -96,8 +80,8 @@ export function PasskeyCard() {
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
           <div className="space-y-3 max-w-xl">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-blue-700 text-white flex items-center justify-center shadow-lg shadow-blue-600/20 shrink-0">
-                <SensorIcon className="w-6 h-6" />
+              <div className="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-md shadow-slate-900/15 shrink-0">
+                <SensorIcon className="w-6 h-6 text-blue-400" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
@@ -147,7 +131,7 @@ export function PasskeyCard() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={openTestPermission}
+                      onClick={handleTest}
                       disabled={isTesting || isLoading}
                       className="h-8 px-3 rounded-xl bg-white border-emerald-300 text-emerald-800 hover:bg-emerald-100/60 text-xs font-bold shadow-2xs"
                     >
@@ -174,7 +158,7 @@ export function PasskeyCard() {
           <div className="shrink-0 w-full md:w-auto">
             {!isEnrolled ? (
               <Button 
-                onClick={openEnrollPermission}
+                onClick={handleEnroll}
                 disabled={isLoading}
                 className="w-full md:w-auto flex items-center justify-center gap-2.5 h-13 px-7 rounded-2xl bg-slate-900 text-white shadow-xl hover:bg-slate-800 transition-all font-bold text-sm group"
               >
@@ -210,16 +194,6 @@ export function PasskeyCard() {
           ))}
         </div>
       </Card>
-
-      {/* Permission & Access Consent Modal */}
-      <BiometricPermissionModal
-        isOpen={permissionModalOpen}
-        onClose={() => setPermissionModalOpen(false)}
-        onConfirm={handleModalConfirm}
-        device={device}
-        actionType={permissionAction}
-        isLoading={isLoading || isTesting}
-      />
     </>
   );
 }
