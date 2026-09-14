@@ -15,14 +15,14 @@ import {
   Clock, 
   AlertCircle, 
   FileCheck,
-  CheckCircle2
+  CheckCircle2,
+  BadgeCheck
 } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 import { resolveActiveStudent, InstitutionalStudent } from "@/lib/student-auth";
-import { getQrFallbackDataUri } from "@/lib/qr-helper";
 
 export default function StudentHallTicketPage() {
   const [isExporting, setIsExporting] = useState(false);
@@ -102,7 +102,7 @@ export default function StudentHallTicketPage() {
       doc.setFontSize(9);
       doc.setTextColor(100);
       doc.text("1. Candidates must present this verified hall ticket with college ID at entrance gates.", 14, finalY);
-      doc.text("2. Verification QR code is digitally certified by the Controller of Examinations.", 14, finalY + 6);
+      doc.text("2. Hall ticket is digitally certified and verified by the Controller of Examinations.", 14, finalY + 6);
       
       doc.setFontSize(10);
       doc.setTextColor(15, 23, 42);
@@ -171,17 +171,13 @@ export default function StudentHallTicketPage() {
                 </div>
               </div>
 
-              <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col items-center shrink-0">
-                <img 
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=ATTENDEX-VERIFIED-PASS-${student.rollNumber}`} 
-                  alt="QR Token" 
-                  className="w-24 h-24"
-                  onError={(e) => {
-                    e.currentTarget.onerror = null;
-                    e.currentTarget.src = getQrFallbackDataUri(`ATTENDEX-VERIFIED-PASS-${student.rollNumber}`);
-                  }}
-                />
-                <span className="text-[9px] font-mono font-bold text-slate-400 mt-1">VERIFIED QR PASS</span>
+              <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 shadow-xs flex flex-col items-center justify-center shrink-0 min-w-[140px] text-center">
+                <BadgeCheck className="w-10 h-10 text-emerald-600 mb-1.5" />
+                <span className="text-xs font-mono font-bold text-emerald-950 uppercase tracking-wider">OFFICIAL PASS</span>
+                <span className="text-[11px] font-mono text-emerald-700 font-semibold mt-0.5">#{student.rollNumber}</span>
+                <span className="text-[9px] bg-emerald-200/70 text-emerald-900 font-bold px-2 py-0.5 rounded mt-2 uppercase tracking-wide">
+                  EXAM VERIFIED
+                </span>
               </div>
             </div>
 

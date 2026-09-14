@@ -3,11 +3,10 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { QrCode, Download, Printer, CheckCircle2, ShieldCheck, Building2, Calendar, Award } from "lucide-react";
+import { BadgeCheck, Download, Printer, CheckCircle2, ShieldCheck, Building2, Calendar, Award } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { getQrFallbackDataUri } from "@/lib/qr-helper";
 
 interface HallTicketModalProps {
   studentName?: string;
@@ -83,7 +82,7 @@ export function HallTicketModal({
       doc.setFontSize(9);
       doc.setTextColor(100);
       doc.text("1. Candidates must produce this verified hall ticket along with official ID card at the examination hall.", 14, finalY);
-      doc.text("2. Verification QR code is digitally certified by the Controller of Examinations.", 14, finalY + 6);
+      doc.text("2. Hall ticket is digitally certified and verified by the Controller of Examinations.", 14, finalY + 6);
       
       doc.setFontSize(10);
       doc.setTextColor(15, 23, 42);
@@ -101,7 +100,7 @@ export function HallTicketModal({
       <DialogTrigger render={
         triggerButton || (
           <Button className="h-10 px-4 rounded-xl bg-blue-600 text-white font-semibold text-xs hover:bg-blue-700 transition-all shadow-sm flex items-center gap-2">
-            <QrCode className="w-4 h-4" />
+            <BadgeCheck className="w-4 h-4" />
             <span>Digital Hall Ticket</span>
           </Button>
         )
@@ -130,7 +129,7 @@ export function HallTicketModal({
             </div>
           </DialogHeader>
 
-          {/* Student Profile & QR Code Header */}
+          {/* Student Profile & Verification Header */}
           <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="space-y-1 text-center sm:text-left">
               <h3 className="text-base font-bold text-slate-900">{studentName}</h3>
@@ -138,17 +137,11 @@ export function HallTicketModal({
               <p className="text-xs text-slate-500 font-medium">{semester} • Campus Center Hall 401</p>
             </div>
 
-            <div className="p-2 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col items-center">
-              <img 
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=ATTENDEX-VERIFIED-CANDIDATE-${rollNumber}`} 
-                alt="QR Pass" 
-                className="w-20 h-20"
-                onError={(e) => {
-                  e.currentTarget.onerror = null;
-                  e.currentTarget.src = getQrFallbackDataUri(`ATTENDEX-VERIFIED-CANDIDATE-${rollNumber}`);
-                }}
-              />
-              <span className="text-[9px] font-mono font-semibold text-slate-400 mt-1">SCAN FOR ENTRY</span>
+            <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 shadow-xs flex flex-col items-center justify-center shrink-0 min-w-[120px]">
+              <BadgeCheck className="w-8 h-8 text-emerald-600 mb-1" />
+              <span className="text-[10px] font-mono font-bold text-emerald-950 uppercase tracking-wider">OFFICIAL PASS</span>
+              <span className="text-[9px] font-mono text-emerald-700 font-semibold">#HT-{rollNumber}</span>
+              <span className="text-[8px] bg-emerald-200/70 text-emerald-900 font-bold px-1.5 py-0.5 rounded mt-1">ELIGIBLE</span>
             </div>
           </div>
 

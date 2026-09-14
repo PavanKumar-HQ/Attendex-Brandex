@@ -3,7 +3,6 @@
 import { Header } from "@/components/layout/header";
 import { PageTransition } from "@/components/ui/page-transition";
 import { Card } from "@/components/ui/card";
-import { getQrFallbackDataUri } from "@/lib/qr-helper";
 import { 
   Activity, 
   Users, 
@@ -20,7 +19,8 @@ import {
   AlertTriangle,
   CalendarDays,
   CreditCard,
-  Sparkles
+  Sparkles,
+  BadgeCheck
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -221,19 +221,12 @@ export default function StudentDashboard() {
                             </div>
 
                             {isEligible && (
-                                <div className="bg-white p-3 sm:p-3.5 rounded-2xl shadow-2xl shrink-0 self-start sm:self-center border border-white/20">
-                                    <div className="w-24 h-24 sm:w-28 sm:h-28 bg-slate-50 rounded-xl flex items-center justify-center p-1">
-                                        <img 
-                                            src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=STU-${student?.roll || 'CS-11'}`} 
-                                            alt="QR" 
-                                            className="w-full h-full object-contain mix-blend-multiply"
-                                            onError={(e) => {
-                                                e.currentTarget.onerror = null;
-                                                e.currentTarget.src = getQrFallbackDataUri(`STU-${student?.roll || 'CS-11'}`);
-                                            }}
-                                        />
+                                <div className="bg-white/10 backdrop-blur-md p-4 sm:p-5 rounded-2xl shadow-xl shrink-0 self-start sm:self-center border border-white/20 flex flex-col items-center justify-center min-w-[130px] text-center">
+                                    <div className="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-300 mb-2">
+                                        <BadgeCheck className="w-7 h-7" />
                                     </div>
-                                    <p className="text-[9px] font-bold text-slate-700 text-center uppercase tracking-wider mt-1.5">Official Token</p>
+                                    <p className="text-xs font-bold text-white uppercase tracking-wider">Hall Ticket</p>
+                                    <span className="text-[10px] text-emerald-300 font-semibold mt-0.5">ELIGIBLE &amp; ACTIVE</span>
                                 </div>
                             )}
                         </div>

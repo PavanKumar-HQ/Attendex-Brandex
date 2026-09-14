@@ -11,7 +11,7 @@ export function getCSPHeader() {
     "default-src": ["'self'"],
     "script-src":  ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://apis.google.com"],
     "style-src":   ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-    "img-src":     ["'self'", "data:", "https://*.supabase.co", "https://i.pravatar.cc", "https://api.dicebear.com", "https://images.unsplash.com", "https://api.qrserver.com"],
+    "img-src":     ["'self'", "data:", "https://*.supabase.co", "https://i.pravatar.cc", "https://api.dicebear.com", "https://images.unsplash.com"],
     "font-src":    ["'self'", "https://fonts.gstatic.com"],
     "connect-src": [
       "'self'",

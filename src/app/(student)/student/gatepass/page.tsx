@@ -24,7 +24,6 @@ import {
   Lock
 } from "lucide-react";
 import { toast } from "sonner";
-import { getQrFallbackDataUri } from "@/lib/qr-helper";
 import { universalWorkflow } from "@/lib/workflow-engine";
 import { supabase } from "@/lib/supabase";
 import jsPDF from "jspdf";
@@ -283,20 +282,18 @@ export default function StudentGatepassPage() {
                   </div>
                 </div>
 
-                {/* QR Verification Pass Box */}
-                <div className="p-5 bg-white rounded-2xl text-slate-900 shadow-2xl flex flex-col items-center shrink-0 space-y-2 text-center">
-                  <img 
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=ATTENDEX-GATEPASS-${activePass.id}-${studentInfo.rollNumber}`} 
-                    alt="Security QR" 
-                    className="w-32 h-32"
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = getQrFallbackDataUri(`ATTENDEX-GATEPASS-${activePass.id}-${studentInfo.rollNumber}`);
-                    }}
-                  />
+                {/* Security Pass Verification Card */}
+                <div className="p-5 bg-white rounded-2xl text-slate-900 shadow-2xl flex flex-col items-center justify-center shrink-0 space-y-2 text-center min-w-[150px]">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shadow-xs">
+                    <ShieldCheck className="w-7 h-7" />
+                  </div>
                   <div className="space-y-0.5">
-                    <span className="text-[10px] font-mono font-bold text-slate-500 uppercase block tracking-wider">GATE SCAN QR TOKEN</span>
-                    <span className="text-[9px] font-mono text-emerald-600 font-bold">VERIFIED SECURE</span>
+                    <span className="text-[11px] font-mono font-bold text-slate-900 uppercase block tracking-wider">
+                      PASS #{activePass.id.slice(0, 8).toUpperCase()}
+                    </span>
+                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full inline-block">
+                      EXIT PERMITTED
+                    </span>
                   </div>
                 </div>
               </div>
@@ -319,7 +316,7 @@ export default function StudentGatepassPage() {
                   </p>
                   <p className="text-[11px] text-amber-700 font-medium mt-1 flex items-center gap-1.5">
                     <Lock className="w-3 h-3 text-amber-700 shrink-0" />
-                    <span>Single-use security exit QR code will ONLY be issued once approved.</span>
+                    <span>Single-use security exit clearance token will ONLY be issued once approved.</span>
                   </p>
                 </div>
               </div>
